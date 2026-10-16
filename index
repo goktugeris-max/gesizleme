@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GES & OSOS Durum Kontrol Merkezi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #090d16; color: #f1f5f9; }
+    .glass-card { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .status-pulse-active { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulse-green 2s infinite; }
+    .status-pulse-fault { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); animation: pulse-red 1.8s infinite; }
+    @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); } 70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); } 70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased pb-14">
+
+  <!-- ÜST BİLGİ ÇUBUĞU -->
+  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-[#090d16]/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <i data-lucide="sun" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold tracking-tight text-white">GES & OSOS Durum Kontrol Merkezi</h1>
+            <span class="px-2 py-0.5 text-[11px] font-mono font-semibold uppercase rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Özel İsim Düzenleme Aktif</span>
+          </div>
+          <p class="text-xs text-slate-400">SMA ennexOS • GoodWe SEMS+ • Huawei FusionSolar • GDZ Elektrik ARİL OSOS</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button onclick="openGdzBridgeModal()" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center gap-2 transition">
+          <i data-lucide="zap" class="w-4 h-4"></i>
+          GDZ ARİL Veri Aktar
+        </button>
+        <button onclick="openAddPlantModal()" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-2 transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          Yeni Santral Ekle
+        </button>
+        <button onclick="openReportModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+          WhatsApp Raporu Al
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+
+    <!-- 1. BÖLÜM: 4 PORTAL HIZLI ERİŞİM VE ŞİFRE KOPYALAMA -->
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i>
+          Bağlı İzleme Portalları & GDZ OSOS Hızlı Erişim
+        </h2>
+        <span class="text-xs text-slate-500">Şifreye tıklayarak kopyalayabilir, butonla doğrudan portalı açabilirsiniz</span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- SMA -->
+        <div class="glass-card rounded-xl p-4 flex flex-col justify-between border-l-4 border-l-blue-500">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-400">SMA Sunny Portal</span>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-300">ennexOS</span>
+            </div>
+            <div class="space-y-1 text-xs font-mono bg-slate-900/90 p-2.5 rounded-lg border border-slate-800/80 mb-3">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Kullanıcı:</span>
+                <button onclick="copyText('beydagyigit@gmail.com', 'SMA Kullanıcı')" class="text-slate-200 hover:text-blue-400 truncate max-w-[155px]">beydagyigit@gmail.com</button>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500">Şifre:</span>
+                <button onclick="copyText('Energy.2020', 'SMA Şifre')" class="text-amber-400 hover:underline">Energy.2020</button>
+              </div>
+            </div>
+          </div>
+          <button onclick="launchPortal('https://ennexos.sunnyportal.com/monitoring/view-status-list', 'Energy.2020', 'SMA ennexOS')" class="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            Şifreyi Kopyala & Aç
+          </button>
+        </div>
+
+        <!-- GOODWE -->
+        <div class="glass-card rounded-xl p-4 flex flex-col justify-between border-l-4 border-l-red-500">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-red-400">GoodWe SEMS+</span>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-red-500/10 text-red-Tarayıcı üzerinden çalışan tek sayfalık bir web uygulaması (HTML/JS), güvenlik duvarları (CORS, F5 WAF ve AES şifrelemesi) nedeniyle GDZ Elektrik'in API adresine **doğrudan kendi başına istek atamaz**. Tarayıcılar bu tür çapraz site veri çekme işlemlerini güvenlik gerekçesiyle otomatik olarak engeller.
+
+Tamamen **API üzerinden arka planda otomatik veri çeken** bir sistem istemeniz durumunda, daha önce bahsettiğimiz **Python tabanlı arka plan servisinin (veri toplayıcının)** bilgisayarınızda çalışması gerekir. Çünkü Python gibi sunucu taraflı diller tarayıcı güvenlik kurallarına takılmaz. Ancak yazılım bilginiz olmadığını belirttiğiniz için bu kurulum sizi zorlayabilir; bu yüzden tek tıkla sihirli yer imi veya kopyala-yapıştır yöntemi en pratik ve hatasız yoldur.
+
+---
+
+### Tesis İsimlerinin Hatalı Görünmesi Hakkında
+
+GDZ Elektrik ARİL Portalı (OSOS), sayaçları sisteme kaydekerken resmi abone unvanlarını veya karmaşık tesisat adlarını kullanır. Bu da ekranda isimlerin yanlış, eksik veya anlaşılmaz görünmesine yol açar.
+
+Hazırladığımız **GES Kontrol Merkezi** web uygulamasında bu sorunu çözmek için:
+* Tablodaki **Santral Adı** veya **Saha Notu** alanlarına tıklayarak isimleri kendi isteğinize göre (`İzBB Çiğli GES`, `Beydağ Saha 1` vb.) dilediğiniz gibi düzenleyebilir ve kaydedebilirsiniz. 
+* Yaptığınız isim değişiklikleri tarayıcınızın hafızasına kaydedileceği için bir sonraki açılışta hep doğru isimlerle görünür.
+
+İsimleri doğrudan panel üzerinden kendi sahalarınıza göre kalıcı olarak düzenlemek isterseniz, tablodaki ilgili alanlara yazmanız yeterlidir.
