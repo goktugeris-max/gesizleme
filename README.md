@@ -1,0 +1,2 @@
+# gesizleme
+Ges İzleme 
