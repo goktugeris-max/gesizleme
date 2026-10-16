@@ -71,6 +71,11 @@
       <div id="portalGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
     </section>
 
+    <!-- CANLI VERİ DURUMU -->
+    <section id="liveBar" class="glass-card rounded-xl px-4 py-3 text-xs text-slate-400 flex flex-wrap items-center gap-x-4 gap-y-1">
+      <span class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Otomatik veri yükleniyor...</span>
+    </section>
+
     <!-- 2. ÖZET -->
     <section class="grid grid-cols-2 lg:grid-cols-5 gap-4" id="summaryGrid"></section>
 
@@ -102,6 +107,8 @@
               <th class="text-left px-4 py-3">Santral Adı <span class="normal-case text-slate-500">(düzenlenebilir)</span></th>
               <th class="text-left px-4 py-3">Portal</th>
               <th class="text-right px-4 py-3">Kurulu Güç (kWp)</th>
+              <th class="text-right px-4 py-3">Anlık (kW)</th>
+              <th class="text-right px-4 py-3">Bugün (kWh)</th>
               <th class="text-left px-4 py-3">OSOS / Tesisat No</th>
               <th class="text-left px-4 py-3">Saha Notu <span class="normal-case text-slate-500">(düzenlenebilir)</span></th>
               <th class="text-left px-4 py-3">Son Güncelleme</th>
@@ -199,6 +206,7 @@
       'Çalışıyor':       { dot: 'bg-emerald-500 status-pulse-active', text: 'text-emerald-400', emoji: '✅', issue: false },
       'Arızalı':         { dot: 'bg-red-500 status-pulse-fault',     text: 'text-red-400',     emoji: '⛔', issue: true },
       'Haberleşme Yok':  { dot: 'bg-amber-500',                       text: 'text-amber-400',   emoji: '📡', issue: true },
+      'Beklemede':       { dot: 'bg-sky-500',                         text: 'text-sky-400',     emoji: '🌙', issue: false },
       'Bakımda':         { dot: 'bg-violet-500',                      text: 'text-violet-400',  emoji: '🔧', issue: true },
       'Kontrol Edilmedi':{ dot: 'bg-slate-500',                       text: 'text-slate-400',   emoji: '❔', issue: false },
     };
@@ -227,6 +235,8 @@
     }
     function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(plants)); } catch (e) {} }
     function now() { return new Date().toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }); }
+    function fmt(n) { const v = parseFloat(n); return isNaN(v) ? '—' : v.toLocaleString('tr-TR', { maximumFractionDigits: 1 }); }
+    function norm(s) { return String(s || '').toLocaleLowerCase('tr').replace(/\bges\b/g, '').replace(/[^a-zçğıöşü0-9]/g, ''); }
     function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
     // ================== PORTALLAR ==================
@@ -314,13 +324,15 @@
               </select>
             </div>
           </td>
-          <td class="px-4 py-2.5 font-semibold text-slate-100"><div contenteditable="true" onblur="updateField('${p.id}','name',this.innerText.trim())" class="px-1">${esc(p.name)}</div></td>
+          <td class="px-4 py-2.5 font-semibold text-slate-100"><div contenteditable="true" onblur="updateField('${p.id}','name',this.innerText.trim())" class="px-1">${esc(p.name)}</div>${p.invNote ? `<div class="px-1 mt-0.5 text-[11px] font-normal text-red-300/90">${esc(p.invNote)}</div>` : ''}</td>
           <td class="px-4 py-2.5">
             <select onchange="updateField('${p.id}','portal',this.value)" class="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs">
               ${PORTALS.map(x => `<option ${x.id === p.portal ? 'selected' : ''}>${x.id}</option>`).join('')}
             </select>
           </td>
           <td class="px-4 py-2.5 text-right font-mono"><div contenteditable="true" onblur="updateField('${p.id}','cap',this.innerText.trim().replace(',', '.'))" class="px-1">${esc(p.cap) || '—'}</div></td>
+          <td class="px-4 py-2.5 text-right font-mono text-cyan-300">${p.kw != null && p.kw !== '' ? fmt(p.kw) : '—'}</td>
+          <td class="px-4 py-2.5 text-right font-mono text-amber-300">${p.kwh != null && p.kwh !== '' ? fmt(p.kwh) : '—'}</td>
           <td class="px-4 py-2.5 font-mono text-slate-400"><div contenteditable="true" onblur="updateField('${p.id}','osos',this.innerText.trim())" class="px-1">${esc(p.osos) || '—'}</div></td>
           <td class="px-4 py-2.5 text-slate-300"><div contenteditable="true" onblur="updateField('${p.id}','note',this.innerText.trim())" class="px-1 min-w-[140px]">${esc(p.note) || '<span class=&quot;text-slate-600&quot;>Not ekle...</span>'}</div></td>
           <td class="px-4 py-2.5 font-mono text-slate-500 whitespace-nowrap">${esc(p.updated) || '—'}</td>
@@ -413,7 +425,7 @@
         if (!list.length) return;
         txt += `*${port.title}*\n`;
         list.forEach(p => {
-          txt += `${STATUSES[p.status]?.emoji || '•'} ${p.name}${p.cap ? ` (${p.cap} kWp)` : ''}${p.note ? ` – _${p.note}_` : ''}\n`;
+          txt += `${STATUSES[p.status]?.emoji || '•'} ${p.name}${p.cap ? ` (${p.cap} kWp)` : ''}${p.kwh != null && p.kwh !== '' ? ` – bugün ${fmt(p.kwh)} kWh` : ''}${p.invNote ? ` – ${p.invNote}` : ''}${p.note ? ` – _${p.note}_` : ''}\n`;
         });
         txt += `\n`;
       });
@@ -481,10 +493,54 @@
 
     function renderAll() { renderSummary(); renderTable(); lucide.createIcons(); }
 
+    // ================== OTOMATİK VERİ (GitHub Actions -> data/durum.json) ==================
+    async function loadLive() {
+      const bar = document.getElementById('liveBar');
+      let d;
+      try {
+        const r = await fetch('data/durum.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error(r.status);
+        d = await r.json();
+      } catch (e) {
+        bar.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="cloud-off" class="w-3.5 h-3.5"></i> Otomatik veri henüz yok — tablo elle girilen bilgilerle gösteriliyor.</span>`;
+        lucide.createIcons();
+        return;
+      }
+
+      let matched = 0, added = 0;
+      (d.santraller || []).forEach(s => {
+        let p = plants.find(x => x.portal === s.kaynak && x.kaynakId === s.kaynakId)
+             || plants.find(x => x.portal === s.kaynak && !x.kaynakId && norm(x.name) === norm(s.ad));
+        if (!p) {
+          p = { id: uid(), name: s.ad, portal: s.kaynak, cap: '', status: 'Kontrol Edilmedi', osos: '', note: '', updated: '' };
+          plants.push(p); added++;
+        } else matched++;
+        // Özel isim ve saha notu KORUNUR; yalnızca ölçüm alanları güncellenir
+        p.kaynakId = s.kaynakId;
+        p.status = s.durum || p.status;
+        if (s.kapasite_kwp != null && !p.cap) p.cap = String(s.kapasite_kwp);
+        p.kw = s.anlik_kw;
+        p.kwh = s.bugun_kwh;
+        const sorunlu = (s.invertorler || []).filter(i => i.durum !== 'Çalışıyor' && i.durum !== 'Beklemede');
+        p.invNote = sorunlu.length ? sorunlu.map(i => `${i.ad}: ${i.durum}`).join(' • ') : '';
+        if (s.zaman) p.updated = new Date(s.zaman).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
+      });
+      save(); renderAll();
+
+      const t = d.guncelleme ? new Date(d.guncelleme).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+      const src = Object.entries(d.kaynaklar || {}).map(([k, v]) => v.ok
+        ? `<span class="text-emerald-400">● ${esc(k)} (${v.adet})</span>`
+        : `<span class="text-red-400" title="${esc(v.hata || '')}">● ${esc(k)}: hata</span>`).join('');
+      bar.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Son otomatik veri: <b class="text-slate-200">${t}</b></span>${src}
+        ${added ? `<span class="text-cyan-400">${added} yeni santral eklendi</span>` : ''}`;
+      lucide.createIcons();
+    }
+
     // ================== BAŞLAT ==================
     renderPortals();
     fillSelects();
     renderAll();
+    loadLive();
   </script>
 </body>
 </html>
