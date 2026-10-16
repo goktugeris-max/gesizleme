@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GES & OSOS Durum Kontrol Merkezi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } }
+    }
+  </script>
+  <style>
+    body { background-color: #090d16; color: #f1f5f9; }
+    .glass-card { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .status-pulse-active { animation: pulse-green 2s infinite; }
+    .status-pulse-fault { animation: pulse-red 1.8s infinite; }
+    @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); } 70% { box-shadow: 0 0 0 8px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
+    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239,68,68,.6); } 70% { box-shadow: 0 0 0 8px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
+    [contenteditable]:focus { outline: 1px solid rgba(34,211,238,.6); border-radius: 4px; background: rgba(34,211,238,.06); }
+    [contenteditable]:hover { background: rgba(255,255,255,.04); border-radius: 4px; }
+    .modal-bg { background: rgba(2,6,23,.75); backdrop-filter: blur(4px); }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased pb-14">
+
+  <!-- ÜST BİLGİ ÇUBUĞU -->
+  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-[#090d16]/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <i data-lucide="sun" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-lg font-bold tracking-tight text-white">GES & OSOS Durum Kontrol Merkezi</h1>
+            <span class="px-2 py-0.5 text-[11px] font-mono font-semibold uppercase rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Özel İsim Düzenleme Aktif</span>
+          </div>
+          <p class="text-xs text-slate-400">SMA ennexOS • GoodWe SEMS+ • Huawei FusionSolar • GDZ Elektrik ARİL OSOS</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button onclick="openModal('gdzModal')" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center gap-2 transition">
+          <i data-lucide="zap" class="w-4 h-4"></i> GDZ ARİL Veri Aktar
+        </button>
+        <button onclick="openModal('addModal')" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-2 transition">
+          <i data-lucide="plus" class="w-4 h-4"></i> Yeni Santral Ekle
+        </button>
+        <button onclick="openReportModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition">
+          <i data-lucide="share-2" class="w-4 h-4"></i> WhatsApp Raporu Al
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+
+    <!-- 1. PORTALLAR -->
+    <section>
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i>
+          Bağlı İzleme Portalları & GDZ OSOS Hızlı Erişim
+        </h2>
+        <span class="text-xs text-slate-500">Bilgiye tıklayarak kopyalayabilir, butonla portalı açabilirsiniz</span>
+      </div>
+      <div id="portalGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    </section>
+
+    <!-- 2. ÖZET -->
+    <section class="grid grid-cols-2 lg:grid-cols-5 gap-4" id="summaryGrid"></section>
+
+    <!-- 3. SANTRAL TABLOSU -->
+    <section class="glass-card rounded-xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+          <i data-lucide="list" class="w-4 h-4 text-cyan-400"></i> Santral Durum Listesi
+        </h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <input id="searchBox" oninput="renderTable()" placeholder="Santral ara..." class="px-3 py-1.5 rounded-lg text-xs bg-slate-900 border border-slate-700 text-slate-200 placeholder-slate-500 w-44" />
+          <select id="filterPortal" onchange="renderTable()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-900 border border-slate-700 text-slate-200">
+            <option value="">Tüm portallar</option>
+          </select>
+          <select id="filterStatus" onchange="renderTable()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-900 border border-slate-700 text-slate-200">
+            <option value="">Tüm durumlar</option>
+          </select>
+          <button onclick="exportData()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> Yedek Al</button>
+          <label class="px-3 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 flex items-center gap-1.5 cursor-pointer"><i data-lucide="upload" class="w-3.5 h-3.5"></i> Yedek Yükle
+            <input type="file" accept=".json" class="hidden" onchange="importData(event)" />
+          </label>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs">
+          <thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[11px]">
+            <tr>
+              <th class="text-left px-4 py-3">Durum</th>
+              <th class="text-left px-4 py-3">Santral Adı <span class="normal-case text-slate-500">(düzenlenebilir)</span></th>
+              <th class="text-left px-4 py-3">Portal</th>
+              <th class="text-right px-4 py-3">Kurulu Güç (kWp)</th>
+              <th class="text-left px-4 py-3">OSOS / Tesisat No</th>
+              <th class="text-left px-4 py-3">Saha Notu <span class="normal-case text-slate-500">(düzenlenebilir)</span></th>
+              <th class="text-left px-4 py-3">Son Güncelleme</th>
+              <th class="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody id="plantTable" class="divide-y divide-slate-800/70"></tbody>
+        </table>
+      </div>
+      <p id="emptyMsg" class="hidden p-6 text-center text-slate-500 text-sm">Kayıt bulunamadı.</p>
+    </section>
+
+    <p class="text-[11px] text-slate-500 text-center">Değişiklikler bu tarayıcıya kaydedilir. Başka bilgisayarda aynı verileri görmek için "Yedek Al" / "Yedek Yükle" kullanın.</p>
+  </main>
+
+  <!-- MODAL: YENİ SANTRAL -->
+  <div id="addModal" class="hidden fixed inset-0 z-50 modal-bg flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl w-full max-w-md p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold text-white">Yeni Santral Ekle</h3>
+        <button onclick="closeModal('addModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <input id="newName" placeholder="Santral adı (ör. İzBB Çiğli GES)" class="w-full px-3 py-2 rounded-lg text-sm bg-slate-900 border border-slate-700" />
+      <select id="newPortal" class="w-full px-3 py-2 rounded-lg text-sm bg-slate-900 border border-slate-700"></select>
+      <div class="grid grid-cols-2 gap-3">
+        <input id="newCap" type="number" step="0.01" placeholder="Kurulu güç (kWp)" class="w-full px-3 py-2 rounded-lg text-sm bg-slate-900 border border-slate-700" />
+        <select id="newStatus" class="w-full px-3 py-2 rounded-lg text-sm bg-slate-900 border border-slate-700"></select>
+      </div>
+      <input id="newOsos" placeholder="OSOS / Tesisat No (opsiyonel)" class="w-full px-3 py-2 rounded-lg text-sm bg-slate-900 border border-slate-700" />
+      <input id="newNote" placeholder="Saha notu (opsiyonel)" class="w-full px-3 py-2 rounded-lg text-sm bg-slate-900 border border-slate-700" />
+      <button onclick="addPlant()" class="w-full py-2 rounded-lg text-sm font-semibold bg-cyan-600 hover:bg-cyan-500 text-white">Ekle</button>
+    </div>
+  </div>
+
+  <!-- MODAL: GDZ ARİL -->
+  <div id="gdzModal" class="hidden fixed inset-0 z-50 modal-bg flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl w-full max-w-2xl p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold text-white flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-cyan-400"></i> GDZ ARİL Veri Aktar (Kopyala-Yapıştır)</h3>
+        <button onclick="closeModal('gdzModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <ol class="text-xs text-slate-400 list-decimal pl-5 space-y-1">
+        <li>ARİL portalında sayaç listesini açın, tabloyu seçip kopyalayın (Ctrl+A / Ctrl+C) veya Excel'e aktarıp satırları kopyalayın.</li>
+        <li>Aşağıya yapıştırın. Her satırda <b>Tesisat No</b> ve <b>Unvan</b> bulunmalı (sekme veya noktalı virgülle ayrılmış).</li>
+        <li>Tesisat no tabloda varsa ilgili santral güncellenir; yoksa yeni kayıt açılır. İsimleri sonra tablodan düzeltebilirsiniz, kayıtlı özel isimler korunur.</li>
+      </ol>
+      <textarea id="gdzInput" rows="9" placeholder="4000123456	İZMİR BÜYÜKŞEHİR BLD. ÇİĞLİ GES	Aktif&#10;4000654321;İZBB KÜLTÜRPARK;Haberleşme Yok" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-slate-900 border border-slate-700"></textarea>
+      <div class="flex gap-2">
+        <button onclick="importGdz()" class="flex-1 py-2 rounded-lg text-sm font-semibold bg-cyan-600 hover:bg-cyan-500 text-white">Verileri Aktar</button>
+        <button onclick="document.getElementById('gdzInput').value=''" class="px-4 py-2 rounded-lg text-sm bg-slate-800 border border-slate-700 text-slate-300">Temizle</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: WHATSAPP RAPORU -->
+  <div id="reportModal" class="hidden fixed inset-0 z-50 modal-bg flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl w-full max-w-xl p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold text-white flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4 text-emerald-400"></i> WhatsApp Durum Raporu</h3>
+        <button onclick="closeModal('reportModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <label class="flex items-center gap-2 text-xs text-slate-400">
+        <input type="checkbox" id="onlyIssues" onchange="buildReport()" /> Sadece sorunlu santralleri listele
+      </label>
+      <textarea id="reportText" rows="14" class="w-full px-3 py-2 rounded-lg text-xs font-mono bg-slate-900 border border-slate-700"></textarea>
+      <div class="flex gap-2">
+        <button onclick="copyText(document.getElementById('reportText').value, 'Rapor')" class="flex-1 py-2 rounded-lg text-sm font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center justify-center gap-2"><i data-lucide="copy" class="w-4 h-4"></i> Kopyala</button>
+        <button onclick="sendWhatsApp()" class="flex-1 py-2 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center gap-2"><i data-lucide="send" class="w-4 h-4"></i> WhatsApp'ta Aç</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-lg bg-slate-800 border border-slate-700 text-sm text-white shadow-xl"></div>
+
+  <script>
+    // ================== AYARLAR ==================
+    // Portal giriş bilgileri. Boş olanları kendi bilgilerinizle doldurun.
+    const PORTALS = [
+      { id: 'SMA',    title: 'SMA Sunny Portal',   tag: 'ennexOS',     color: 'blue',
+        url: 'https://ennexos.sunnyportal.com/monitoring/view-status-list',
+        user: 'beydagyigit@gmail.com', pass: 'Energy.2020' },
+      { id: 'GoodWe', title: 'GoodWe SEMS+',       tag: 'SEMS',        color: 'red',
+        url: 'https://www.semsportal.com',
+        user: 'KULLANICI_ADI', pass: 'SIFRE' },
+      { id: 'Huawei', title: 'Huawei FusionSolar', tag: 'FusionSolar', color: 'rose',
+        url: 'https://eu5.fusionsolar.huawei.com',
+        user: 'KULLANICI_ADI', pass: 'SIFRE' },
+      { id: 'GDZ',    title: 'GDZ Elektrik ARİL',  tag: 'OSOS',        color: 'cyan',
+        url: 'https://aril.gdzelektrik.com.tr',
+        user: 'KULLANICI_ADI', pass: 'SIFRE' },
+    ];
+
+    const STATUSES = {
+      'Çalışıyor':       { dot: 'bg-emerald-500 status-pulse-active', text: 'text-emerald-400', emoji: '✅', issue: false },
+      'Arızalı':         { dot: 'bg-red-500 status-pulse-fault',     text: 'text-red-400',     emoji: '⛔', issue: true },
+      'Haberleşme Yok':  { dot: 'bg-amber-500',                       text: 'text-amber-400',   emoji: '📡', issue: true },
+      'Bakımda':         { dot: 'bg-violet-500',                      text: 'text-violet-400',  emoji: '🔧', issue: true },
+      'Kontrol Edilmedi':{ dot: 'bg-slate-500',                       text: 'text-slate-400',   emoji: '❔', issue: false },
+    };
+
+    const DEFAULT_PLANTS = [
+      'Konak Tüneller GES', 'Bornova Havuz GES', 'Çeşme İtfaiye GES', 'Çaybaşı İtfaiye GES',
+      'Bergama Mezbahası GES', 'Aliağa İtfaiye Merkezi GES', 'Uzundere Can Çağnay Spor Salonu GES',
+      'Bergama İtfaiye GES', 'Seyrek İtfaiye GES'
+    ].map(n => ({ id: uid(), name: n, portal: 'GoodWe', cap: '', status: 'Kontrol Edilmedi', osos: '', note: '', updated: '' }));
+
+    const STORAGE_KEY = 'ges_osos_kontrol_v1';
+    const COLOR = {
+      blue: ['border-l-blue-500','text-blue-400','bg-blue-500/10 text-blue-300','bg-blue-600 hover:bg-blue-500','hover:text-blue-400'],
+      red:  ['border-l-red-500','text-red-400','bg-red-500/10 text-red-300','bg-red-600 hover:bg-red-500','hover:text-red-400'],
+      rose: ['border-l-rose-500','text-rose-400','bg-rose-500/10 text-rose-300','bg-rose-600 hover:bg-rose-500','hover:text-rose-400'],
+      cyan: ['border-l-cyan-500','text-cyan-400','bg-cyan-500/10 text-cyan-300','bg-cyan-600 hover:bg-cyan-500','hover:text-cyan-400'],
+    };
+
+    // ================== VERİ ==================
+    let plants = load();
+
+    function uid() { return Math.random().toString(36).slice(2, 10); }
+    function load() {
+      try { const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); if (Array.isArray(d)) return d; } catch (e) {}
+      return DEFAULT_PLANTS;
+    }
+    function save() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(plants)); } catch (e) {} }
+    function now() { return new Date().toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }); }
+    function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+    // ================== PORTALLAR ==================
+    function renderPortals() {
+      document.getElementById('portalGrid').innerHTML = PORTALS.map((p, i) => {
+        const c = COLOR[p.color];
+        return `
+        <div class="glass-card rounded-xl p-4 flex flex-col justify-between border-l-4 ${c[0]}">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider ${c[1]}">${esc(p.title)}</span>
+              <span class="text-[11px] font-mono px-2 py-0.5 rounded ${c[2]}">${esc(p.tag)}</span>
+            </div>
+            <div class="space-y-1 text-xs font-mono bg-slate-900/90 p-2.5 rounded-lg border border-slate-800/80 mb-3">
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-slate-500">Kullanıcı:</span>
+                <button onclick="copyText(PORTALS[${i}].user, '${esc(p.id)} Kullanıcı')" class="text-slate-200 ${c[4]} truncate max-w-[155px]">${esc(p.user)}</button>
+              </div>
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-slate-500">Şifre:</span>
+                <button onclick="copyText(PORTALS[${i}].pass, '${esc(p.id)} Şifre')" class="text-amber-400 hover:underline">${esc(p.pass)}</button>
+              </div>
+            </div>
+          </div>
+          <button onclick="launchPortal(${i})" class="w-full py-2 px-3 rounded-lg text-xs font-semibold ${c[3]} text-white flex items-center justify-center gap-1.5 transition">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Şifreyi Kopyala & Aç
+          </button>
+        </div>`;
+      }).join('');
+    }
+
+    function launchPortal(i) {
+      const p = PORTALS[i];
+      copyText(p.pass, p.title + ' şifresi');
+      window.open(p.url, '_blank', 'noopener');
+    }
+
+    // ================== ÖZET ==================
+    function renderSummary() {
+      const total = plants.length;
+      const count = s => plants.filter(p => p.status === s).length;
+      const cap = plants.reduce((a, p) => a + (parseFloat(p.cap) || 0), 0);
+      const cards = [
+        ['Toplam Santral', total, 'text-white', 'factory'],
+        ['Çalışıyor', count('Çalışıyor'), 'text-emerald-400', 'check-circle-2'],
+        ['Arızalı', count('Arızalı'), 'text-red-400', 'alert-triangle'],
+        ['Haberleşme Yok', count('Haberleşme Yok'), 'text-amber-400', 'wifi-off'],
+        ['Toplam Kurulu Güç', cap.toLocaleString('tr-TR', { maximumFractionDigits: 1 }) + ' kWp', 'text-cyan-400', 'gauge'],
+      ];
+      document.getElementById('summaryGrid').innerHTML = cards.map(([t, v, cls, ic]) => `
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center justify-between text-slate-400 text-[11px] uppercase tracking-wider mb-1">${t}<i data-lucide="${ic}" class="w-4 h-4"></i></div>
+          <div class="text-2xl font-bold font-mono ${cls}">${v}</div>
+        </div>`).join('');
+    }
+
+    // ================== TABLO ==================
+    function fillSelects() {
+      const portalOpts = PORTALS.map(p => `<option value="${p.id}">${p.id}</option>`).join('');
+      const statusOpts = Object.keys(STATUSES).map(s => `<option value="${s}">${s}</option>`).join('');
+      document.getElementById('filterPortal').innerHTML += portalOpts;
+      document.getElementById('filterStatus').innerHTML += statusOpts;
+      document.getElementById('newPortal').innerHTML = portalOpts;
+      document.getElementById('newStatus').innerHTML = statusOpts;
+    }
+
+    function renderTable() {
+      const q = document.getElementById('searchBox').value.toLocaleLowerCase('tr');
+      const fp = document.getElementById('filterPortal').value;
+      const fs = document.getElementById('filterStatus').value;
+      const rows = plants.filter(p =>
+        (!q || (p.name + ' ' + p.note + ' ' + p.osos).toLocaleLowerCase('tr').includes(q)) &&
+        (!fp || p.portal === fp) && (!fs || p.status === fs));
+
+      document.getElementById('emptyMsg').classList.toggle('hidden', rows.length > 0);
+      document.getElementById('plantTable').innerHTML = rows.map(p => {
+        const st = STATUSES[p.status] || STATUSES['Kontrol Edilmedi'];
+        return `
+        <tr class="hover:bg-slate-800/30">
+          <td class="px-4 py-2.5">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full ${st.dot}"></span>
+              <select onchange="updateField('${p.id}','status',this.value)" class="bg-transparent ${st.text} font-semibold text-xs focus:outline-none cursor-pointer">
+                ${Object.keys(STATUSES).map(s => `<option class="bg-slate-900 text-slate-200" ${s === p.status ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+          </td>
+          <td class="px-4 py-2.5 font-semibold text-slate-100"><div contenteditable="true" onblur="updateField('${p.id}','name',this.innerText.trim())" class="px-1">${esc(p.name)}</div></td>
+          <td class="px-4 py-2.5">
+            <select onchange="updateField('${p.id}','portal',this.value)" class="bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-xs">
+              ${PORTALS.map(x => `<option ${x.id === p.portal ? 'selected' : ''}>${x.id}</option>`).join('')}
+            </select>
+          </td>
+          <td class="px-4 py-2.5 text-right font-mono"><div contenteditable="true" onblur="updateField('${p.id}','cap',this.innerText.trim().replace(',', '.'))" class="px-1">${esc(p.cap) || '—'}</div></td>
+          <td class="px-4 py-2.5 font-mono text-slate-400"><div contenteditable="true" onblur="updateField('${p.id}','osos',this.innerText.trim())" class="px-1">${esc(p.osos) || '—'}</div></td>
+          <td class="px-4 py-2.5 text-slate-300"><div contenteditable="true" onblur="updateField('${p.id}','note',this.innerText.trim())" class="px-1 min-w-[140px]">${esc(p.note) || '<span class=&quot;text-slate-600&quot;>Not ekle...</span>'}</div></td>
+          <td class="px-4 py-2.5 font-mono text-slate-500 whitespace-nowrap">${esc(p.updated) || '—'}</td>
+          <td class="px-4 py-2.5 text-right">
+            <button onclick="deletePlant('${p.id}')" class="text-slate-500 hover:text-red-400" title="Sil"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </td>
+        </tr>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    function updateField(id, field, value) {
+      const p = plants.find(x => x.id === id);
+      if (!p) return;
+      if (value === '—' || value === 'Not ekle...') value = '';
+      if (field === 'name' && !value) { renderTable(); return; }
+      if (p[field] === value) return;
+      p[field] = value;
+      p.updated = now();
+      save(); renderAll();
+      toast('Kaydedildi');
+    }
+
+    function deletePlant(id) {
+      const p = plants.find(x => x.id === id);
+      if (!p || !confirm(`"${p.name}" silinsin mi?`)) return;
+      plants = plants.filter(x => x.id !== id);
+      save(); renderAll();
+    }
+
+    function addPlant() {
+      const name = document.getElementById('newName').value.trim();
+      if (!name) { toast('Santral adı girin'); return; }
+      plants.push({
+        id: uid(), name,
+        portal: document.getElementById('newPortal').value,
+        cap: document.getElementById('newCap').value,
+        status: document.getElementById('newStatus').value,
+        osos: document.getElementById('newOsos').value.trim(),
+        note: document.getElementById('newNote').value.trim(),
+        updated: now()
+      });
+      ['newName','newCap','newOsos','newNote'].forEach(i => document.getElementById(i).value = '');
+      save(); renderAll(); closeModal('addModal'); toast('Santral eklendi');
+    }
+
+    // ================== GDZ ARİL AKTARIM ==================
+    function importGdz() {
+      const lines = document.getElementById('gdzInput').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      let added = 0, updated = 0;
+      lines.forEach(line => {
+        const cols = line.split(/\t|;/).map(c => c.trim());
+        const no = cols.find(c => /^\d{6,}$/.test(c));
+        if (!no) return;
+        const title = cols.find(c => c !== no && /[A-Za-zÇĞİÖŞÜçğıöşü]/.test(c)) || ('Tesisat ' + no);
+        const rawStatus = cols.slice(cols.indexOf(title) + 1).join(' ').toLocaleLowerCase('tr');
+        let status = null;
+        if (/haberleşme|okunamad|iletişim yok/.test(rawStatus)) status = 'Haberleşme Yok';
+        else if (/arıza|hata/.test(rawStatus)) status = 'Arızalı';
+        else if (/aktif|okundu|başarılı/.test(rawStatus)) status = 'Çalışıyor';
+
+        const existing = plants.find(p => p.osos === no);
+        if (existing) {
+          if (status) existing.status = status;
+          existing.updated = now();
+          updated++;
+        } else {
+          plants.push({ id: uid(), name: title, portal: 'GDZ', cap: '', status: status || 'Kontrol Edilmedi', osos: no, note: 'ARİL unvanı: ' + title, updated: now() });
+          added++;
+        }
+      });
+      save(); renderAll(); closeModal('gdzModal');
+      toast(`${updated} güncellendi, ${added} yeni kayıt eklendi`);
+    }
+
+    // ================== WHATSAPP RAPORU ==================
+    function openReportModal() { buildReport(); openModal('reportModal'); }
+
+    function buildReport() {
+      const onlyIssues = document.getElementById('onlyIssues').checked;
+      const date = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
+      let txt = `☀️ *GES & OSOS DURUM RAPORU*\n📅 ${date}\n\n`;
+      Object.keys(STATUSES).forEach(s => {
+        const n = plants.filter(p => p.status === s).length;
+        if (n) txt += `${STATUSES[s].emoji} ${s}: *${n}*\n`;
+      });
+      txt += `\n`;
+      PORTALS.forEach(port => {
+        const list = plants.filter(p => p.portal === port.id && (!onlyIssues || STATUSES[p.status]?.issue));
+        if (!list.length) return;
+        txt += `*${port.title}*\n`;
+        list.forEach(p => {
+          txt += `${STATUSES[p.status]?.emoji || '•'} ${p.name}${p.cap ? ` (${p.cap} kWp)` : ''}${p.note ? ` – _${p.note}_` : ''}\n`;
+        });
+        txt += `\n`;
+      });
+      txt += `_İZBB İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü – Enerji Ekibi_`;
+      document.getElementById('reportText').value = txt;
+    }
+
+    function sendWhatsApp() {
+      const t = document.getElementById('reportText').value;
+      window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank', 'noopener');
+    }
+
+    // ================== YEDEK ==================
+    function exportData() {
+      const blob = new Blob([JSON.stringify(plants, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `ges-kontrol-yedek-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function importData(e) {
+      const f = e.target.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = () => {
+        try {
+          const d = JSON.parse(r.result);
+          if (!Array.isArray(d)) throw 0;
+          plants = d; save(); renderAll(); toast('Yedek yüklendi');
+        } catch (err) { toast('Geçersiz yedek dosyası'); }
+      };
+      r.readAsText(f);
+      e.target.value = '';
+    }
+
+    // ================== YARDIMCILAR ==================
+    function copyText(text, label) {
+      const done = () => toast(`${label} kopyalandı`);
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+      } else fallbackCopy(text, done);
+    }
+    function fallbackCopy(text, done) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) { toast('Kopyalanamadı'); }
+      ta.remove();
+    }
+
+    let toastTimer;
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.add('hidden'), 2200);
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); lucide.createIcons(); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') ['addModal','gdzModal','reportModal'].forEach(closeModal); });
+    document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); }));
+
+    function renderAll() { renderSummary(); renderTable(); lucide.createIcons(); }
+
+    // ================== BAŞLAT ==================
+    renderPortals();
+    fillSelects();
+    renderAll();
+  </script>
+</body>
+</html>
