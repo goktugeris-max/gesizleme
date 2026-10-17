@@ -176,6 +176,45 @@ def _listeden(self, sid, satir):
 Sems.listeden = _listeden
 
 
+def _sekil(j):
+    d = j.get("data") if isinstance(j, dict) else None
+    ozet = {"code": j.get("code"), "msg": j.get("msg"), "data_tipi": type(d).__name__}
+    if isinstance(d, dict):
+        ozet["data_anahtarlari"] = sorted(d)
+        for k, v in d.items():
+            if isinstance(v, list):
+                ozet[f"{k}[{len(v)}]"] = sorted(v[0]) if v and isinstance(v[0], dict) else type(v[0]).__name__ if v else None
+            elif isinstance(v, dict):
+                ozet[f"{k}{{}}"] = sorted(v)
+    elif isinstance(d, list):
+        ozet["uzunluk"] = len(d)
+        if d:
+            ozet["ilk"] = sorted(d[0]) if isinstance(d[0], dict) else type(d[0]).__name__
+    return ozet
+
+
+def kesif(s, sid):
+    """GEÇİCİ tanılama: hangi uç nokta veri veriyor? Yalnızca alan adları yazılır."""
+    print("KESİF api tabanı:", s.api)
+    adaylar = [
+        ("v2/PowerStationMonitor/QueryPowerStationMonitorForApp",
+         {"page_index": 1, "page_size": 200, "key": "", "orderby": "", "powerstation_id": "",
+          "powerstation_status": "", "powerstation_type": ""}),
+        ("v2/PowerStationMonitor/QueryPowerStationMonitor", {"page_index": 1, "page_size": 50}),
+        ("v2/HistoryData/QueryPowerStationByHistory", {}),
+        ("v2/PowerStation/GetMonitorDetailByPowerstationId", {"powerStationId": sid}),
+        ("v3/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid}),
+        ("v2/PowerStation/GetPowerStationPowerAndIncomeByDay", {"powerstation_id": sid}),
+        ("v2/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid}),
+        ("v1/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid}),
+    ]
+    for yol, govde in adaylar:
+        try:
+            print("KESİF", yol, _sekil(s.post(yol, govde)))
+        except Exception as e:
+            print("KESİF", yol, "HATA", str(e)[:150])
+
+
 def goodwe():
     user, pwd = os.getenv("GOODWE_USER"), os.getenv("GOODWE_PASS")
     if not user or not pwd:
@@ -184,6 +223,8 @@ def goodwe():
     s.login()
     ids = s.istasyon_listesi()
     print(f"GoodWe: {len(ids)} santral bulundu")
+    if ids:
+        kesif(s, ids[0])
     sonuc = []
     for sid in ids:
         try:
