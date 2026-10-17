@@ -169,10 +169,12 @@ def main():
     simdi = datetime.now(timezone.utc).isoformat(timespec="seconds")
     yeni = {"guncelleme": simdi, "kaynaklar": {}, "santraller": []}
 
+    atlanan = []
     for ad, fn in TOPLAYICILAR.items():
         try:
             veri = fn()
             if veri is None:
+                atlanan.append(ad)
                 continue
             for v in veri:
                 v["zaman"] = simdi
@@ -184,6 +186,13 @@ def main():
             yeni["santraller"] += [s for s in eski.get("santraller", []) if s.get("kaynak") == ad]
             onceki = (eski.get("kaynaklar") or {}).get(ad, {})
             yeni["kaynaklar"][ad] = {"ok": False, "hata": str(e)[:200], "zaman": onceki.get("zaman")}
+
+    if len(atlanan) == len(TOPLAYICILAR):
+        print("HATA: Hiçbir portal için giriş bilgisi tanımlı değil (atlananlar: "
+              + ", ".join(atlanan) + ").\n"
+              "GitHub → Settings → Secrets and variables → Actions bölümüne "
+              "GOODWE_USER ve GOODWE_PASS ekleyin.", file=sys.stderr)
+        return 1
 
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
     with open(OUT_PATH, "w", encoding="utf-8") as f:
