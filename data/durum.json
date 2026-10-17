@@ -1,9 +1,9 @@
 {
-  "guncelleme": "2026-10-17T16:55:05+00:00",
+  "guncelleme": "2026-10-17T16:58:53+00:00",
   "kaynaklar": {
     "GoodWe": {
       "ok": true,
-      "zaman": "2026-10-17T16:55:05+00:00",
+      "zaman": "2026-10-17T16:58:53+00:00",
       "adet": 9
     },
     "Huawei": {
@@ -22,7 +22,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 98.9,
       "invertorler": [],
-      "zaman": "2026-10-17T16:55:05+00:00"
+      "zaman": "2026-10-17T16:58:53+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -33,7 +33,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 88.5,
       "invertorler": [],
-      "zaman": "2026-10-17T16:55:05+00:00"
+      "zaman": "2026-10-17T16:58:53+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -44,7 +44,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 92.7,
       "invertorler": [],
-      "zaman": "2026-10-17T16:55:05+00:00"
+      "zaman": "2026-10-17T16:58:53+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -55,7 +55,7 @@
       "anlik_kw": 0.47,
       "bugun_kwh": 133.0,
       "invertorler": [],
-      "zaman": "2026-10-17T16:55:05+00:00"
+      "zaman": "2026-10-17T16:58:53+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -66,7 +66,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 24.6,
       "invertorler": [],
-      "zaman": "2026-10-17T16:55:05+00:00"
+      "zaman": "2026-10-17T16:58:53+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -74,10 +74,10 @@
       "ad": "Konak tuneller ges",
       "kapasite_kwp": 76.96,
       "durum": "Çalışıyor",
-      "anlik_kw": 0.01,
+      "anlik_kw": 0.0,
       "bugun_kwh": 95.2,
       "invertorler": [],
-      "zaman": "2026-10-17T16:55:05+00:00"
+      "zaman": "2026-10-17T16:58:53+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -88,7 +88,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 49.9,
       "invertorler": [],
-      "zaman": "2026-10-17T16:55:05+00:00"
+      "zaman": "2026-10-17T16:58:53+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -99,7 +99,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 28.4,
       "invertorler": [],
-      "zaman": "2026-10-17T16:55:05+00:00"
+      "zaman": "2026-10-17T16:58:53+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -110,7 +110,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 55.0,
       "invertorler": [],
-      "zaman": "2026-10-17T16:55:05+00:00"
+      "zaman": "2026-10-17T16:58:53+00:00"
     }
   ]
 }
