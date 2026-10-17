@@ -26,6 +26,12 @@ jobs:
       - name: Kütüphaneleri kur
         run: pip install requests
 
+      - name: Huawei logger bağlantı testi (geçici, yalnızca bu dalda)
+        continue-on-error: true
+        run: python collector/logger_baglanti_testi.py
+        env:
+          HUAWEI_LOGGER_IPS: ${{ secrets.HUAWEI_LOGGER_IPS }}
+
       - name: SMA keşfi (geçici, yalnızca bu dalda)
         continue-on-error: true
         run: |
