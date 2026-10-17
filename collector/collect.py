@@ -4,7 +4,9 @@ Portallardan durum verisini çeker ve data/durum.json dosyasına yazar.
 Şifreler kodda DEĞİL, GitHub Secrets'ta durur (ortam değişkeni olarak gelir).
 """
 import json
+import math
 import os
+import re
 import sys
 import traceback
 from datetime import datetime, timezone
@@ -23,6 +25,23 @@ def en_kotu(durumlar):
         if d in durumlar:
             return d
     return "Kontrol Edilmedi"
+
+
+def gunduz_mu(simdi, enlem=38.42, boylam=27.14, pay_saat=1.0):
+    """Güneş İzmir'de doğduktan pay_saat sonra ile battıktan pay_saat önce arasında mı? (UTC datetime)
+
+    SEMS geceleri santral ve invertörlere -1 (çevrimdışı) verir; bu arıza değildir.
+    Haberleşme kopukluğu ancak gün ışığında anlamlıdır.
+    """
+    n = simdi.timetuple().tm_yday
+    b = math.radians(360 / 365 * (n - 81))
+    denklem_dk = 9.87 * math.sin(2 * b) - 7.53 * math.cos(b) - 1.5 * math.sin(b)
+    dek = math.radians(23.44 * math.sin(math.radians(360 / 365 * (n - 81))))
+    cos_h = max(-1.0, min(1.0, -math.tan(math.radians(enlem)) * math.tan(dek)))
+    yarim_gun = math.degrees(math.acos(cos_h)) / 15  # saat
+    ogle = 12 - boylam / 15 - denklem_dk / 60  # UTC saat
+    t = simdi.hour + simdi.minute / 60
+    return ogle - yarim_gun + pay_saat <= t <= ogle + yarim_gun - pay_saat
 
 
 def sayi(x):
@@ -101,6 +120,19 @@ class Sems:
                     ids.append(sid)
         return list(dict.fromkeys(ids))
 
+    def invertor_haritasi(self):
+        """sid -> invertör listesi (HistoryData uç noktası bu hesapta invertörleri verir)."""
+        if getattr(self, "_inv", None) is None:
+            self._inv = {}
+            try:
+                d = self.post("v2/HistoryData/QueryPowerStationByHistory").get("data") or {}
+                for st in d.get("list") or []:
+                    if isinstance(st, dict) and st.get("id"):
+                        self._inv[st["id"]] = st.get("inverters") or []
+            except Exception as e:
+                print("GoodWe invertör listesi alınamadı:", str(e)[:120])
+        return self._inv
+
     def detay(self, sid):
         j = self.post("v3/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid})
         d = j.get("data") or {}
@@ -113,22 +145,39 @@ class Sems:
                 return self.listeden(sid, satir)
             raise RuntimeError(f"GoodWe detay boş döndü: {j.get('msg')}")
 
+        # SEMS geceleri santrale ve invertörlere -1 (çevrimdışı) verir; bu arıza değildir.
+        # -1 yalnızca gün ışığında "Haberleşme Yok" sayılır.
+        gunduz = gunduz_mu(datetime.now(timezone.utc))
+        santral_kod = info.get("status")
         invertorler = []
-        for inv in d.get("inverter") or []:
+        for inv in (d.get("inverter") or self.invertor_haritasi().get(sid) or []):
             kod = inv.get("status")
             try:
                 kod = int(kod)
             except (TypeError, ValueError):
                 pass
+            durum_inv = SEMS_INV_DURUM.get(kod, "Kontrol Edilmedi")
+            if kod == -1 and not gunduz:
+                durum_inv = "Beklemede"
             invertorler.append({
                 "sn": inv.get("sn"),
                 "ad": inv.get("name") or inv.get("sn"),
                 "model": inv.get("type") or (inv.get("invert_full") or {}).get("model_type"),
-                "durum": SEMS_INV_DURUM.get(kod, "Kontrol Edilmedi"),
+                "durum": durum_inv,
+                "kod": kod,
             })
 
-        durum = en_kotu([i["durum"] for i in invertorler]) if invertorler else \
-            SEMS_INV_DURUM.get(info.get("status"), "Kontrol Edilmedi")
+        durum = SEMS_INV_DURUM.get(santral_kod, "Kontrol Edilmedi")
+        if santral_kod == -1 and not gunduz:
+            durum = "Beklemede"
+        # Bir invertör arızalıysa santral "Arızalı"; gündüz bir invertör kopuksa "Haberleşme Yok"
+        if any(i["durum"] == "Arızalı" for i in invertorler):
+            durum = "Arızalı"
+        elif durum in ("Çalışıyor", "Beklemede") and any(i["durum"] == "Haberleşme Yok" for i in invertorler):
+            durum = "Haberleşme Yok"
+        # Tanılama: yalnızca durum kodları ve sayıları
+        print(f"GoodWe {sid[:8]}: santral status={info.get('status')!r} "
+              f"invertör kodları={sorted(str(i['kod']) for i in invertorler)} gündüz={gunduz} -> {durum}")
 
         return {
             "kaynak": "GoodWe",
@@ -187,17 +236,6 @@ def _sekil(j):
     return ozet
 
 
-def kesif_invertor(s):
-    """GEÇİCİ tanılama: invertör verisi hangi alanlarla geliyor? Yalnızca alan adları yazılır."""
-    try:
-        d = (s.post("v2/HistoryData/QueryPowerStationByHistory").get("data") or {}).get("list") or []
-        inv = (d[0].get("inverters") if d else None) or []
-        print("KESİF invertör şekli:", type(inv).__name__, len(inv),
-              sorted(inv[0]) if inv and isinstance(inv[0], dict) else (inv[:1] if inv else None))
-    except Exception as e:
-        print("KESİF invertör HATA", str(e)[:150])
-
-
 def goodwe():
     user, pwd = os.getenv("GOODWE_USER"), os.getenv("GOODWE_PASS")
     if not user or not pwd:
@@ -206,8 +244,6 @@ def goodwe():
     s.login()
     ids = s.istasyon_listesi()
     print(f"GoodWe: {len(ids)} santral bulundu")
-    if ids:
-        kesif_invertor(s)
     sonuc = []
     for sid in ids:
         try:
@@ -218,10 +254,176 @@ def goodwe():
 
 
 # ======================================================================
-# HUAWEI ve SMA — sonraki aşamada eklenecek
+# HUAWEI FUSIONSOLAR (normal web girişi, jgriss/FusionSolarPy kütüphanesi, MIT)
+# ======================================================================
+def _birimli_sayi(x):
+    """'12.5 kW' / '1,234.5' / 12.5 -> 12.5"""
+    if isinstance(x, (int, float)):
+        return round(float(x), 2)
+    m = re.search(r"-?\d[\d,]*\.?\d*", str(x or ""))
+    return sayi(m.group(0).replace(",", "")) if m else None
+
+
+def _huawei_durum(deger):
+    d = str(deger or "").lower()
+    if any(k in d for k in ("disconnect", "offline", "no_comm", "communication")):
+        return "Haberleşme Yok"
+    if any(k in d for k in ("fault", "unhealth", "error", "alarm")):
+        return "Arızalı"
+    if "health" in d or "normal" in d or "running" in d:
+        return "Çalışıyor"
+    return "Kontrol Edilmedi"
+
+
+def huawei_giris():
+    user, pwd = os.getenv("HUAWEI_USER"), os.getenv("HUAWEI_PASS")
+    if not user or not pwd:
+        return None  # tanımlı değil, atla
+    from fusion_solar_py.client import FusionSolarClient
+
+    model = os.getenv("HUAWEI_CAPTCHA_MODEL") or "models/captcha_huawei.onnx"
+    # "intl", "intl.", " intl " veya yapıştırılmış tam adres -> "intl"
+    sub = re.sub(r"^https?://", "", (os.getenv("HUAWEI_SUBDOMAIN") or "").strip())
+    sub = sub.split(".")[0].strip()
+    # Ayarlanan adres bu ağdan çözülemezse kütüphanenin AB varsayılanını da dene
+    adaylar = list(dict.fromkeys([a for a in (sub, "region01eu5") if a]))
+    model = model if os.path.exists(model) else None
+    c, son_hata = None, None
+    for aday in adaylar:
+        try:
+            c = FusionSolarClient(user, pwd, huawei_subdomain=aday, captcha_model_path=model)
+            sub = aday
+            print(f"Huawei: '{aday}' ile giriş yapıldı")
+            break
+        except requests.exceptions.ConnectionError as e:
+            print(f"Huawei: '{aday}' adresine bağlanılamadı: {str(e)[:120]}")
+            son_hata = e
+    if c is None:
+        raise son_hata
+    try:
+        # Kütüphanenin get_station_list()'i yalnızca 10 kayıt getirir; sayfalayarak hepsini al.
+        liste, sayfa = [], 1
+        while True:
+            r = c._session.post(
+                f"https://{sub}.fusionsolar.huawei.com/rest/pvms/web/station/v1/station/station-list",
+                json={"curPage": sayfa, "pageSize": 100, "gridConnectedTime": "",
+                      "queryTime": c._get_day_start_sec(), "timeZone": 2,
+                      "sortId": "createTime", "sortDir": "DESC", "locale": "en_US"})
+            r.raise_for_status()
+            j = r.json()
+            if not j.get("success"):
+                raise RuntimeError(f"Huawei santral listesi alınamadı: {str(j)[:150]}")
+            veri = (j.get("data") or {}).get("list") or []
+            liste += veri
+            if len(veri) < 100:
+                break
+            sayfa += 1
+    finally:
+        try:
+            c.log_out()
+        except Exception:
+            pass
+
+    print(f"Huawei: {len(liste)} santral bulundu")
+    if liste:
+        # Tanılama: alan adları ve durum değerleri (santral adı/üretim değeri yazılmaz)
+        print("Huawei alanlar:", sorted(liste[0]))
+        for k in ("plantStatus", "status", "runState", "healthState"):
+            if k in liste[0]:
+                print(f"Huawei {k} değerleri:", sorted({str(x.get(k)) for x in liste}))
+
+    sonuc = []
+    for st in liste:
+        sid = _ilk(st, "dn", "stationDn", "id", "plantId")
+        sonuc.append({
+            "kaynak": "Huawei",
+            "kaynakId": sid,
+            "ad": _ilk(st, "name", "stationName", "plantName") or sid,
+            "kapasite_kwp": _birimli_sayi(_ilk(st, "capacity", "installedCapacity", "totalCapacity")),
+            "durum": _huawei_durum(_ilk(st, "plantStatus", "status", "runState", "healthState")),
+            "anlik_kw": _birimli_sayi(_ilk(st, "currentPower", "currentPowerKw", "realTimePower")),
+            "bugun_kwh": _birimli_sayi(_ilk(st, "dailyEnergy", "eDay", "dailyYield", "todayEnergy")),
+            "invertorler": [],
+        })
+    return sonuc
+
+
+def huawei_kiosk(satirlar):
+    """Kiosk (herkese açık izleme bağlantısı): giriş/CAPTCHA yok, tek bir GET.
+
+    HUAWEI_KIOSK_URLS Secret'ı: her satır "Santral Adı | https://.../kiosk?kk=ANAHTAR".
+    Veri Huawei tarafında ~30 dk önbelleklenir; arıza/invertör bilgisi yoktur.
+    """
+    import hashlib
+    import html as _html
+    from urllib.parse import urlparse
+
+    sonuc = []
+    for satir in satirlar:
+        ad, _, url = satir.rpartition("|")
+        ad, url = ad.strip(), url.strip()
+        m = re.search(r"[?&]kk=([^&#\s]+)", url)
+        if not m:
+            print("Huawei kiosk: satırda kk= bulunamadı, atlandı")
+            continue
+        kk = m.group(1)
+        kimlik = hashlib.sha1(kk.encode()).hexdigest()[:10]  # anahtarın kendisi açığa çıkmasın
+        host = urlparse(url).netloc
+        # Adres bu ağdan çözülemezse (ör. intl) aynı anahtarla AB sunucularını da dene
+        aday_hostlar = list(dict.fromkeys([host, "eu5.fusionsolar.huawei.com",
+                                           "region01eu5.fusionsolar.huawei.com"]))
+        veri, son_hata = None, None
+        for h in aday_hostlar:
+            try:
+                r = requests.get(f"https://{h}/rest/pvms/web/kiosk/v1/station-kiosk-file",
+                                 params={"kk": kk}, headers={"accept": "application/json"},
+                                 timeout=TIMEOUT)
+                j = r.json()
+                if not j.get("success"):
+                    son_hata = f"{h}: success=false failCode={j.get('failCode')}"
+                    print(f"Huawei kiosk {kimlik}: {son_hata}")
+                    continue
+                veri = json.loads(_html.unescape(j["data"]))
+                print(f"Huawei kiosk {kimlik}: '{h}' üzerinden okundu; alanlar={sorted(veri)}")
+                break
+            except requests.exceptions.ConnectionError as e:
+                son_hata = f"{h}: bağlanılamadı ({str(e)[:60]})"
+                print(f"Huawei kiosk {kimlik}: {son_hata}")
+            except Exception as e:
+                son_hata = f"{h}: {str(e)[:80]}"
+                print(f"Huawei kiosk {kimlik}: {son_hata}")
+        if veri is None:
+            raise RuntimeError(f"Huawei kiosk okunamadı ({son_hata})")
+
+        kpi = veri.get("realKpi") or {}
+        print(f"Huawei kiosk {kimlik}: realKpi alanları={sorted(kpi)}")
+        guc = _birimli_sayi(kpi.get("realTimePower"))
+        sonuc.append({
+            "kaynak": "Huawei",
+            "kaynakId": kimlik,
+            "ad": ad or f"Huawei kiosk {kimlik}",
+            "kapasite_kwp": None,
+            "durum": "Çalışıyor" if (guc or 0) > 0 else "Beklemede",
+            "anlik_kw": guc,
+            "bugun_kwh": _birimli_sayi(kpi.get("dailyEnergy")),
+            "invertorler": [],
+        })
+    return sonuc
+
+
+def huawei():
+    satirlar = [l.strip() for l in (os.getenv("HUAWEI_KIOSK_URLS") or "").splitlines() if l.strip()]
+    if satirlar:
+        return huawei_kiosk(satirlar)
+    return huawei_giris()  # kiosk tanımlı değilse (ve giriş bilgisi varsa) web girişi
+
+
+# ======================================================================
+# SMA — sonraki aşamada eklenecek
 # ======================================================================
 TOPLAYICILAR = {
     "GoodWe": goodwe,
+    "Huawei": huawei,
 }
 
 
