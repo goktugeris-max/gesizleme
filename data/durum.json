@@ -1,9 +1,9 @@
 {
-  "guncelleme": "2026-10-17T17:46:55+00:00",
+  "guncelleme": "2026-10-17T18:40:50+00:00",
   "kaynaklar": {
     "GoodWe": {
       "ok": true,
-      "zaman": "2026-10-17T17:46:55+00:00",
+      "zaman": "2026-10-17T18:40:50+00:00",
       "adet": 9
     }
   },
@@ -16,8 +16,23 @@
       "durum": "Haberleşme Yok",
       "anlik_kw": 0.0,
       "bugun_kwh": 98.9,
-      "invertorler": [],
-      "zaman": "2026-10-17T17:46:55+00:00"
+      "invertorler": [
+        {
+          "sn": "9020KDTU192R0002",
+          "ad": "ınverter2",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        },
+        {
+          "sn": "9050KMTU193R0013",
+          "ad": "inverter",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        }
+      ],
+      "zaman": "2026-10-17T18:40:50+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -27,8 +42,16 @@
       "durum": "Haberleşme Yok",
       "anlik_kw": 0.0,
       "bugun_kwh": 88.5,
-      "invertorler": [],
-      "zaman": "2026-10-17T17:46:55+00:00"
+      "invertorler": [
+        {
+          "sn": "5060KMTO22BW0485",
+          "ad": "INV1",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        }
+      ],
+      "zaman": "2026-10-17T18:40:50+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -38,8 +61,23 @@
       "durum": "Haberleşme Yok",
       "anlik_kw": 0.0,
       "bugun_kwh": 92.7,
-      "invertorler": [],
-      "zaman": "2026-10-17T17:46:55+00:00"
+      "invertorler": [
+        {
+          "sn": "9020KDTU192R0013",
+          "ad": "ınverter1",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        },
+        {
+          "sn": "9050KMTU193R0009",
+          "ad": "ınverter2",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        }
+      ],
+      "zaman": "2026-10-17T18:40:50+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -49,8 +87,23 @@
       "durum": "Haberleşme Yok",
       "anlik_kw": 0.0,
       "bugun_kwh": 133.0,
-      "invertorler": [],
-      "zaman": "2026-10-17T17:46:55+00:00"
+      "invertorler": [
+        {
+          "sn": "9060KMTN215W0012",
+          "ad": "İnvertör 1",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        },
+        {
+          "sn": "9060KMTN215W0015",
+          "ad": "İnvertör 2 ",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        }
+      ],
+      "zaman": "2026-10-17T18:40:50+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -60,8 +113,16 @@
       "durum": "Haberleşme Yok",
       "anlik_kw": 0.0,
       "bugun_kwh": 49.9,
-      "invertorler": [],
-      "zaman": "2026-10-17T17:46:55+00:00"
+      "invertorler": [
+        {
+          "sn": "5025KDTT227W0052",
+          "ad": "INV",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        }
+      ],
+      "zaman": "2026-10-17T18:40:50+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -71,8 +132,23 @@
       "durum": "Haberleşme Yok",
       "anlik_kw": 0.0,
       "bugun_kwh": 24.6,
-      "invertorler": [],
-      "zaman": "2026-10-17T17:46:55+00:00"
+      "invertorler": [
+        {
+          "sn": "9020KDTU192R0001",
+          "ad": "ınverter1",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        },
+        {
+          "sn": "9020KDTU192R0004",
+          "ad": "ınverter2",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        }
+      ],
+      "zaman": "2026-10-17T18:40:50+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -82,8 +158,16 @@
       "durum": "Haberleşme Yok",
       "anlik_kw": 0.0,
       "bugun_kwh": 28.4,
-      "invertorler": [],
-      "zaman": "2026-10-17T17:46:55+00:00"
+      "invertorler": [
+        {
+          "sn": "5020KDTT215W0017",
+          "ad": "Goodwe",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        }
+      ],
+      "zaman": "2026-10-17T18:40:50+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -93,8 +177,16 @@
       "durum": "Haberleşme Yok",
       "anlik_kw": 0.0,
       "bugun_kwh": 55.0,
-      "invertorler": [],
-      "zaman": "2026-10-17T17:46:55+00:00"
+      "invertorler": [
+        {
+          "sn": "5020KDTT215W0019",
+          "ad": "5020KDTT215W0019",
+          "model": null,
+          "durum": "Haberleşme Yok",
+          "kod": -1
+        }
+      ],
+      "zaman": "2026-10-17T18:40:50+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -104,8 +196,23 @@
       "durum": "Çalışıyor",
       "anlik_kw": 0.01,
       "bugun_kwh": 95.2,
-      "invertorler": [],
-      "zaman": "2026-10-17T17:46:55+00:00"
+      "invertorler": [
+        {
+          "sn": "5036KMTS217W0005",
+          "ad": "Inverter 2 ",
+          "model": null,
+          "durum": "Çalışıyor",
+          "kod": 1
+        },
+        {
+          "sn": "9030KMTU213W0092",
+          "ad": "Inverter 1 ",
+          "model": null,
+          "durum": "Çalışıyor",
+          "kod": 1
+        }
+      ],
+      "zaman": "2026-10-17T18:40:50+00:00"
     }
   ]
 }
