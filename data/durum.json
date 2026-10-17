@@ -1,9 +1,9 @@
 {
-  "guncelleme": "2026-10-17T14:27:55+00:00",
+  "guncelleme": "2026-10-17T15:28:19+00:00",
   "kaynaklar": {
     "GoodWe": {
       "ok": true,
-      "zaman": "2026-10-17T14:27:55+00:00",
+      "zaman": "2026-10-17T15:28:19+00:00",
       "adet": 9
     }
   },
@@ -17,7 +17,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-17T14:27:55+00:00"
+      "zaman": "2026-10-17T15:28:19+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -28,7 +28,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-17T14:27:55+00:00"
+      "zaman": "2026-10-17T15:28:19+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -39,7 +39,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-17T14:27:55+00:00"
+      "zaman": "2026-10-17T15:28:19+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -50,7 +50,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-17T14:27:55+00:00"
+      "zaman": "2026-10-17T15:28:19+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -61,7 +61,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-17T14:27:55+00:00"
+      "zaman": "2026-10-17T15:28:19+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -72,7 +72,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-17T14:27:55+00:00"
+      "zaman": "2026-10-17T15:28:19+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -83,7 +83,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-17T14:27:55+00:00"
+      "zaman": "2026-10-17T15:28:19+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -94,7 +94,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-17T14:27:55+00:00"
+      "zaman": "2026-10-17T15:28:19+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -105,7 +105,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-17T14:27:55+00:00"
+      "zaman": "2026-10-17T15:28:19+00:00"
     }
   ]
 }
