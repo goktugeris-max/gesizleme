@@ -127,6 +127,9 @@ class Sems:
                 return self.listeden(sid, satir)
             raise RuntimeError(f"GoodWe detay boş döndü: {j.get('msg')}")
 
+        # İnvertörler gece kapanınca SEMS onlara -1 (çevrimdışı) verir; bu arıza değildir.
+        # -1 yalnızca santralin kendisi de çevrimdışıysa "Haberleşme Yok" sayılır.
+        santral_kod = info.get("status")
         invertorler = []
         for inv in (d.get("inverter") or self.invertor_haritasi().get(sid) or []):
             kod = inv.get("status")
@@ -134,17 +137,21 @@ class Sems:
                 kod = int(kod)
             except (TypeError, ValueError):
                 pass
+            durum_inv = SEMS_INV_DURUM.get(kod, "Kontrol Edilmedi")
+            if kod == -1 and santral_kod != -1:
+                durum_inv = "Beklemede"
             invertorler.append({
                 "sn": inv.get("sn"),
                 "ad": inv.get("name") or inv.get("sn"),
                 "model": inv.get("type") or (inv.get("invert_full") or {}).get("model_type"),
-                "durum": SEMS_INV_DURUM.get(kod, "Kontrol Edilmedi"),
+                "durum": durum_inv,
                 "kod": kod,
             })
 
-        # Santral durumu: bilinen invertör durumlarının en kötüsü; hiç yoksa santralin kendi durumu
-        bilinen = [i["durum"] for i in invertorler if i["durum"] != "Kontrol Edilmedi"]
-        durum = en_kotu(bilinen) if bilinen else SEMS_INV_DURUM.get(info.get("status"), "Kontrol Edilmedi")
+        # Santral durumu: santralin kendi durumu; bir invertör arızalıysa "Arızalı"na yükselt
+        durum = SEMS_INV_DURUM.get(santral_kod, "Kontrol Edilmedi")
+        if any(i["durum"] == "Arızalı" for i in invertorler):
+            durum = "Arızalı"
         # Tanılama: yalnızca durum kodları ve sayıları
         print(f"GoodWe {sid[:8]}: santral status={info.get('status')!r} "
               f"invertör kodları={sorted(str(i['kod']) for i in invertorler)} -> {durum}")
