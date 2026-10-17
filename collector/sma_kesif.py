@@ -56,6 +56,23 @@ def yanit(r):
         print("yanıt işlenemedi:", str(e)[:80])
 
 
+def incele(sayfa, etiket):
+    """Sayfadaki düğme/bağlantı etiketleri ve input alanları (değer yazılmaz)."""
+    print("İNCELE", etiket)
+    for sel, ad in (("button", "düğmeler"), ("a", "bağlantılar")):
+        try:
+            metin = [t.strip()[:40] for t in sayfa.locator(sel).all_inner_texts() if t.strip()]
+            print(f"  {ad}:", metin[:15])
+        except Exception as e:
+            print(f"  {ad} okunamadı:", str(e)[:60])
+    try:
+        print("  input:", sayfa.locator("input").evaluate_all(
+            "els => els.map(e => [e.type, e.name, e.id, e.placeholder || '', e.getAttribute('formcontrolname') || '', e.getAttribute('autocomplete') || ''])"))
+    except Exception as e:
+        print("  input okunamadı:", str(e)[:60])
+    print("  çerçeveler:", [urlparse(f.url).netloc for f in sayfa.frames][:6])
+
+
 def adim(sayfa, ad):
     u = urlparse(sayfa.url)
     print(f"ADIM {ad}: {u.netloc}{maske(u.path)}  başlık={sayfa.title()[:60]!r}")
@@ -68,8 +85,7 @@ with sync_playwright() as p:
     sayfa.on("response", yanit)
 
     sayfa.goto(BASE + "/", wait_until="domcontentloaded", timeout=60000)
-    sayfa.wait_for_timeout(4000)
-    adim(sayfa, "1 açılış")
+    sayfa.wait_for_timeout(5000)
 
     # Çerez bildirimi varsa kapat
     for metin in ("Accept all", "Accept All", "Accept", "Kabul"):
@@ -79,18 +95,39 @@ with sync_playwright() as p:
             break
         except Exception:
             pass
+    sayfa.wait_for_timeout(2000)
+    adim(sayfa, "1 açılış")
+    incele(sayfa, "açılış")
 
-    # Keycloak giriş formu
+    KULLANICI = "input[type=email], input[name=username], #username, input[autocomplete=username], input[type=text]"
+    SIFRE = "input[type=password]"
+
+    if sayfa.locator(SIFRE).count() == 0:
+        # Form yok: giriş düğmesine/bağlantısına tıkla (SMA ID ile giriş olabilir)
+        tikla = sayfa.get_by_role("button", name=re.compile(r"sma id|log ?in|sign ?in|anmelden|giriş", re.I)).first
+        try:
+            tikla.click(timeout=8000)
+            print("giriş düğmesine tıklandı")
+        except Exception:
+            try:
+                sayfa.get_by_role("link", name=re.compile(r"sma id|log ?in|sign ?in|anmelden|giriş", re.I)).first.click(timeout=8000)
+                print("giriş bağlantısına tıklandı")
+            except Exception as e:
+                print("giriş düğmesi bulunamadı:", str(e)[:100])
+        sayfa.wait_for_timeout(6000)
+        adim(sayfa, "2 tıklama sonrası")
+        incele(sayfa, "tıklama sonrası")
+
     try:
-        sayfa.wait_for_selector("input[name=username], #username", timeout=30000)
-        sayfa.fill("input[name=username], #username", USER)
-        sayfa.fill("input[name=password], #password", PWD)
-        adim(sayfa, "2 form dolduruldu")
-        sayfa.click("input[type=submit], button[type=submit], #kc-login")
+        sayfa.wait_for_selector(SIFRE, timeout=30000)
+        sayfa.locator(KULLANICI).first.fill(USER)
+        sayfa.locator(SIFRE).first.fill(PWD)
+        adim(sayfa, "3 form dolduruldu")
+        sayfa.locator(SIFRE).first.press("Enter")
     except Exception as e:
         print("GİRİŞ FORMU bulunamadı:", str(e)[:150])
-        print("sayfadaki input alanları:", sayfa.eval_on_selector_all("input", "els => els.map(e => [e.type, e.name, e.id])"))
         adim(sayfa, "form-hatası")
+        incele(sayfa, "form-hatası")
         tarayici.close()
         sys.exit(1)
 
@@ -99,7 +136,7 @@ with sync_playwright() as p:
     except Exception:
         pass
     sayfa.wait_for_timeout(6000)
-    adim(sayfa, "3 giriş sonrası")
+    adim(sayfa, "4 giriş sonrası")
     # Hata mesajı (şifre reddi vb.) görünüyor mu?
     for sel in (".alert-error", "#input-error", ".kc-feedback-text", "[class*=error]"):
         try:
@@ -116,7 +153,7 @@ with sync_playwright() as p:
     except Exception:
         pass
     sayfa.wait_for_timeout(8000)
-    adim(sayfa, "4 durum listesi")
+    adim(sayfa, "5 durum listesi")
 
     # Sayfada görünen tablo/satır sayısı (içerik yazılmaz)
     for sel in ("table tbody tr", "[role=row]", "mat-row", "tr"):
