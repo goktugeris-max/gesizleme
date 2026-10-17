@@ -77,9 +77,8 @@ class Sems:
         """Hesaptaki tüm santrallerin ID'lerini döndürür (iki farklı uç nokta dener)."""
         ids = []
         try:
-            j = self.post("v2/PowerStationMonitor/QueryPowerStationMonitorForApp", {
-                "page_index": 1, "page_size": 200, "key": "", "orderby": "",
-                "powerstation_id": "", "powerstation_status": "", "powerstation_type": ""})
+            j = self.post("v2/PowerStationMonitor/QueryPowerStationMonitor",
+                          {"page_index": 1, "page_size": 200})
             d = j.get("data")
             lst = d.get("list") if isinstance(d, dict) else d
             for s in lst or []:
@@ -103,13 +102,8 @@ class Sems:
         return list(dict.fromkeys(ids))
 
     def detay(self, sid):
-        d = {}
-        for govde in ({"powerStationId": sid}, {"powerstation_id": sid},
-                      {"powerStationID": sid}, {"id": sid}):
-            j = self.post("v2/PowerStation/GetMonitorDetailByPowerstationId", govde)
-            d = j.get("data") or {}
-            if d.get("info"):
-                break
+        j = self.post("v3/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid})
+        d = j.get("data") or {}
         info, kpi = d.get("info") or {}, d.get("kpi") or {}
         if not info:
             satir = self.liste.get(sid)
@@ -193,26 +187,15 @@ def _sekil(j):
     return ozet
 
 
-def kesif(s, sid):
-    """GEÇİCİ tanılama: hangi uç nokta veri veriyor? Yalnızca alan adları yazılır."""
-    print("KESİF api tabanı:", s.api)
-    adaylar = [
-        ("v2/PowerStationMonitor/QueryPowerStationMonitorForApp",
-         {"page_index": 1, "page_size": 200, "key": "", "orderby": "", "powerstation_id": "",
-          "powerstation_status": "", "powerstation_type": ""}),
-        ("v2/PowerStationMonitor/QueryPowerStationMonitor", {"page_index": 1, "page_size": 50}),
-        ("v2/HistoryData/QueryPowerStationByHistory", {}),
-        ("v2/PowerStation/GetMonitorDetailByPowerstationId", {"powerStationId": sid}),
-        ("v3/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid}),
-        ("v2/PowerStation/GetPowerStationPowerAndIncomeByDay", {"powerstation_id": sid}),
-        ("v2/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid}),
-        ("v1/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid}),
-    ]
-    for yol, govde in adaylar:
-        try:
-            print("KESİF", yol, _sekil(s.post(yol, govde)))
-        except Exception as e:
-            print("KESİF", yol, "HATA", str(e)[:150])
+def kesif_invertor(s):
+    """GEÇİCİ tanılama: invertör verisi hangi alanlarla geliyor? Yalnızca alan adları yazılır."""
+    try:
+        d = (s.post("v2/HistoryData/QueryPowerStationByHistory").get("data") or {}).get("list") or []
+        inv = (d[0].get("inverters") if d else None) or []
+        print("KESİF invertör şekli:", type(inv).__name__, len(inv),
+              sorted(inv[0]) if inv and isinstance(inv[0], dict) else (inv[:1] if inv else None))
+    except Exception as e:
+        print("KESİF invertör HATA", str(e)[:150])
 
 
 def goodwe():
@@ -224,7 +207,7 @@ def goodwe():
     ids = s.istasyon_listesi()
     print(f"GoodWe: {len(ids)} santral bulundu")
     if ids:
-        kesif(s, ids[0])
+        kesif_invertor(s)
     sonuc = []
     for sid in ids:
         try:
