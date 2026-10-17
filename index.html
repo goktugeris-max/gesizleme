@@ -66,7 +66,7 @@
           <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i>
           Bağlı İzleme Portalları & GDZ OSOS Hızlı Erişim
         </h2>
-        <span class="text-xs text-slate-500">Bilgiye tıklayarak kopyalayabilir, butonla portalı açabilirsiniz</span>
+        <span class="text-xs text-slate-500">Portala giriş için tarayıcınızın şifre yöneticisini kullanın</span>
       </div>
       <div id="portalGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
     </section>
@@ -186,20 +186,17 @@
 
   <script>
     // ================== AYARLAR ==================
-    // Portal giriş bilgileri. Boş olanları kendi bilgilerinizle doldurun.
+    // Portal bağlantıları. Kullanıcı adı/şifre BURAYA YAZILMAZ (depo herkese açık):
+    // otomatik veri çekme için GitHub Secrets, elle giriş için tarayıcının şifre yöneticisi kullanılır.
     const PORTALS = [
       { id: 'SMA',    title: 'SMA Sunny Portal',   tag: 'ennexOS',     color: 'blue',
-        url: 'https://ennexos.sunnyportal.com/monitoring/view-status-list',
-        user: 'beydagyigit@gmail.com', pass: 'Energy.2020' },
+        url: 'https://ennexos.sunnyportal.com/monitoring/view-status-list' },
       { id: 'GoodWe', title: 'GoodWe SEMS+',       tag: 'SEMS',        color: 'red',
-        url: 'https://www.semsportal.com',
-        user: 'KULLANICI_ADI', pass: 'SIFRE' },
+        url: 'https://www.semsportal.com' },
       { id: 'Huawei', title: 'Huawei FusionSolar', tag: 'FusionSolar', color: 'rose',
-        url: 'https://eu5.fusionsolar.huawei.com',
-        user: 'KULLANICI_ADI', pass: 'SIFRE' },
+        url: 'https://eu5.fusionsolar.huawei.com' },
       { id: 'GDZ',    title: 'GDZ Elektrik ARİL',  tag: 'OSOS',        color: 'cyan',
-        url: 'https://aril.gdzelektrik.com.tr',
-        user: 'KULLANICI_ADI', pass: 'SIFRE' },
+        url: 'https://aril.gdzelektrik.com.tr' },
     ];
 
     const STATUSES = {
@@ -269,23 +266,13 @@
         return `
         <div class="glass-card rounded-xl p-4 flex flex-col justify-between border-l-4 ${c[0]}">
           <div>
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between mb-3">
               <span class="text-xs font-bold uppercase tracking-wider ${c[1]}">${esc(p.title)}</span>
               <span class="text-[11px] font-mono px-2 py-0.5 rounded ${c[2]}">${esc(p.tag)}</span>
             </div>
-            <div class="space-y-1 text-xs font-mono bg-slate-900/90 p-2.5 rounded-lg border border-slate-800/80 mb-3">
-              <div class="flex justify-between items-center gap-2">
-                <span class="text-slate-500">Kullanıcı:</span>
-                <button onclick="copyText(PORTALS[${i}].user, '${esc(p.id)} Kullanıcı')" class="text-slate-200 ${c[4]} truncate max-w-[155px]">${esc(p.user)}</button>
-              </div>
-              <div class="flex justify-between items-center gap-2">
-                <span class="text-slate-500">Şifre:</span>
-                <button onclick="copyText(PORTALS[${i}].pass, '${esc(p.id)} Şifre')" class="text-amber-400 hover:underline">${esc(p.pass)}</button>
-              </div>
-            </div>
           </div>
           <button onclick="launchPortal(${i})" class="w-full py-2 px-3 rounded-lg text-xs font-semibold ${c[3]} text-white flex items-center justify-center gap-1.5 transition">
-            <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Şifreyi Kopyala & Aç
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Portalı Aç
           </button>
         </div>`;
       }).join('');
@@ -293,7 +280,6 @@
 
     function launchPortal(i) {
       const p = PORTALS[i];
-      copyText(p.pass, p.title + ' şifresi');
       window.open(p.url, '_blank', 'noopener');
     }
 
