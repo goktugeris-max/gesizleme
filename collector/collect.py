@@ -240,7 +240,7 @@ def _huawei_durum(deger):
     return "Kontrol Edilmedi"
 
 
-def huawei():
+def huawei_giris():
     user, pwd = os.getenv("HUAWEI_USER"), os.getenv("HUAWEI_PASS")
     if not user or not pwd:
         return None  # tanımlı değil, atla
@@ -311,6 +311,76 @@ def huawei():
             "invertorler": [],
         })
     return sonuc
+
+
+def huawei_kiosk(satirlar):
+    """Kiosk (herkese açık izleme bağlantısı): giriş/CAPTCHA yok, tek bir GET.
+
+    HUAWEI_KIOSK_URLS Secret'ı: her satır "Santral Adı | https://.../kiosk?kk=ANAHTAR".
+    Veri Huawei tarafında ~30 dk önbelleklenir; arıza/invertör bilgisi yoktur.
+    """
+    import hashlib
+    import html as _html
+    from urllib.parse import urlparse
+
+    sonuc = []
+    for satir in satirlar:
+        ad, _, url = satir.rpartition("|")
+        ad, url = ad.strip(), url.strip()
+        m = re.search(r"[?&]kk=([^&#\s]+)", url)
+        if not m:
+            print("Huawei kiosk: satırda kk= bulunamadı, atlandı")
+            continue
+        kk = m.group(1)
+        kimlik = hashlib.sha1(kk.encode()).hexdigest()[:10]  # anahtarın kendisi açığa çıkmasın
+        host = urlparse(url).netloc
+        # Adres bu ağdan çözülemezse (ör. intl) aynı anahtarla AB sunucularını da dene
+        aday_hostlar = list(dict.fromkeys([host, "eu5.fusionsolar.huawei.com",
+                                           "region01eu5.fusionsolar.huawei.com"]))
+        veri, son_hata = None, None
+        for h in aday_hostlar:
+            try:
+                r = requests.get(f"https://{h}/rest/pvms/web/kiosk/v1/station-kiosk-file",
+                                 params={"kk": kk}, headers={"accept": "application/json"},
+                                 timeout=TIMEOUT)
+                j = r.json()
+                if not j.get("success"):
+                    son_hata = f"{h}: success=false failCode={j.get('failCode')}"
+                    print(f"Huawei kiosk {kimlik}: {son_hata}")
+                    continue
+                veri = json.loads(_html.unescape(j["data"]))
+                print(f"Huawei kiosk {kimlik}: '{h}' üzerinden okundu; alanlar={sorted(veri)}")
+                break
+            except requests.exceptions.ConnectionError as e:
+                son_hata = f"{h}: bağlanılamadı ({str(e)[:60]})"
+                print(f"Huawei kiosk {kimlik}: {son_hata}")
+            except Exception as e:
+                son_hata = f"{h}: {str(e)[:80]}"
+                print(f"Huawei kiosk {kimlik}: {son_hata}")
+        if veri is None:
+            raise RuntimeError(f"Huawei kiosk okunamadı ({son_hata})")
+
+        kpi = veri.get("realKpi") or {}
+        print(f"Huawei kiosk {kimlik}: realKpi alanları={sorted(kpi)}")
+        guc = _birimli_sayi(kpi.get("realTimePower"))
+        sonuc.append({
+            "kaynak": "Huawei",
+            "kaynakId": kimlik,
+            "ad": ad or f"Huawei kiosk {kimlik}",
+            "kapasite_kwp": None,
+            "durum": "Çalışıyor" if (guc or 0) > 0 else "Beklemede",
+            "anlik_kw": guc,
+            "bugun_kwh": _birimli_sayi(kpi.get("dailyEnergy")),
+            "invertorler": [],
+        })
+    return sonuc
+
+
+def huawei():
+    satirlar = [l.strip() for l in (os.getenv("HUAWEI_KIOSK_URLS") or "").splitlines() if l.strip()]
+    if satirlar:
+        return huawei_kiosk(satirlar)
+    return huawei_giris()  # kiosk tanımlı değilse (ve giriş bilgisi varsa) web girişi
 
 
 # ======================================================================
