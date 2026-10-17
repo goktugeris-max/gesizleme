@@ -46,9 +46,10 @@ jobs:
         env:
           GOODWE_USER: ${{ secrets.GOODWE_USER }}
           GOODWE_PASS: ${{ secrets.GOODWE_PASS }}
-          HUAWEI_USER: ${{ secrets.HUAWEI_USER }}
-          HUAWEI_PASS: ${{ secrets.HUAWEI_PASS }}
-          HUAWEI_SUBDOMAIN: ${{ vars.HUAWEI_SUBDOMAIN }}
+          # GEÇİCİ: ağ tanılaması bitene kadar Huawei girişi kapalı (başarısız giriş denemesi biriktirmemek için)
+          # HUAWEI_USER: ${{ secrets.HUAWEI_USER }}
+          # HUAWEI_PASS: ${{ secrets.HUAWEI_PASS }}
+          # HUAWEI_SUBDOMAIN: ${{ vars.HUAWEI_SUBDOMAIN }}
 
       - name: Sonucu kaydet
         run: |
