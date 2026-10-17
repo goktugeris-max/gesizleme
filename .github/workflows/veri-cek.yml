@@ -37,6 +37,10 @@ jobs:
               https://raw.githubusercontent.com/jgriss/FusionSolarPy/3e02b9f5d831673070e0f7ddac7d9db53ca2368b/models/captcha_huawei.onnx
           fi
 
+      - name: Huawei ağ tanılaması (geçici)
+        continue-on-error: true
+        run: python collector/huawei_ag_tani.py
+
       - name: Portallardan veri çek
         run: python collector/collect.py
         env:
