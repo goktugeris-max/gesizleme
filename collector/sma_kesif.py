@@ -49,6 +49,11 @@ def yanit(r):
         except Exception:
             govde = None
         GORULEN[anahtar] = r.status
+        if maske(u.path).endswith("/statuslist/plants") and isinstance(govde, dict):
+            for it in govde.get("items") or []:
+                print("  SANTRAL:", {k: it.get(k) for k in ("name", "state", "pvPower", "yieldToday", "dcPowerInputMax", "electricCapacity")})
+        if maske(u.path).endswith("/api/v1/navigation") and isinstance(govde, list):
+            print("  NAVIGASYON:", [{"tip": x.get("componentType"), "ad": x.get("name")} for x in govde])
         print(f"API {r.request.method} {u.netloc}{maske(u.path)} -> {r.status} "
               f"sorgu_anahtarları={sorted(k.split('=')[0] for k in u.query.split('&') if k)} "
               f"şekil={json.dumps(sekil(govde), ensure_ascii=False)[:700]}")
@@ -73,6 +78,34 @@ def incele(sayfa, etiket):
     print("  çerçeveler:", [urlparse(f.url).netloc for f in sayfa.frames][:6])
 
 
+HERKESE_ACIK = {"client_id", "redirect_uri", "scope", "response_type", "code_challenge_method",
+                "response_mode", "grant_type", "ui_locales", "todayDate", "cultureName"}
+
+
+def istek(r):
+    """Yetkilendirme/token/veri isteklerinin yapısı. Yalnızca herkese açık parametrelerin değeri yazılır."""
+    try:
+        from urllib.parse import parse_qsl
+        u = urlparse(r.url)
+        yol = maske(u.path)
+        if u.netloc == "login.sma.energy" and yol.endswith("/openid-connect/auth"):
+            q = dict(parse_qsl(u.query))
+            print("OAUTH yetkilendirme:", {k: (v if k in HERKESE_ACIK else "<gizli/rastgele>") for k, v in q.items()})
+        elif u.netloc == "login.sma.energy" and yol.endswith("/openid-connect/token") and r.method == "POST":
+            q = dict(parse_qsl(r.post_data or ""))
+            print("OAUTH token isteği:", {k: (v if k in HERKESE_ACIK else "<gizli>") for k, v in q.items()})
+        elif u.netloc == "uiapi.sunnyportal.com" and r.method == "GET":
+            h = {k.lower(): v for k, v in r.headers.items()}
+            yetki = h.get("authorization", "")[:6]
+            if ("statuslist" in yol or "navigation" in yol) and (yol, "istek") not in GORULEN:
+                GORULEN[(yol, "istek")] = 1
+                q = dict(parse_qsl(u.query))
+                print(f"VERİ isteği {yol}: yetki_başlığı={yetki!r} sorgu="
+                      f"{ {k: (v if k in HERKESE_ACIK else re.sub(r'[0-9a-fA-F-]{8,}', '<id>', v)[:30]) for k, v in q.items()} }")
+    except Exception as e:
+        print("istek işlenemedi:", str(e)[:80])
+
+
 def adim(sayfa, ad):
     u = urlparse(sayfa.url)
     print(f"ADIM {ad}: {u.netloc}{maske(u.path)}  başlık={sayfa.title()[:60]!r}")
@@ -83,6 +116,7 @@ with sync_playwright() as p:
     ctx = tarayici.new_context(locale="en-US", viewport={"width": 1366, "height": 900})
     sayfa = ctx.new_page()
     sayfa.on("response", yanit)
+    sayfa.on("request", istek)
 
     sayfa.goto(BASE + "/", wait_until="domcontentloaded", timeout=60000)
     sayfa.wait_for_timeout(5000)
