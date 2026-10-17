@@ -6,6 +6,7 @@
   <title>GES & OSOS Durum Kontrol Merkezi</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
@@ -43,7 +44,7 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5">
+      <div id="liveButtons" class="hidden flex flex-wrap items-center gap-2.5">
         <button onclick="openModal('gdzModal')" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center gap-2 transition">
           <i data-lucide="zap" class="w-4 h-4"></i> GDZ ARİL Veri Aktar
         </button>
@@ -55,9 +56,61 @@
         </button>
       </div>
     </div>
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 pb-3 flex flex-wrap items-center gap-1.5">
+      <button id="nav-genel" onclick="Dash.sekme('genel')">Genel Bakış</button>
+      <button id="nav-santraller" onclick="Dash.sekme('santraller')">Santraller</button>
+      <button id="nav-canli" onclick="Dash.sekme('canli')">Canlı Durum</button>
+      <button id="nav-ariza" onclick="Dash.sekme('ariza')">Arıza Takip</button>
+    </nav>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+
+    <!-- SEKME: GENEL BAKIŞ -->
+    <div id="tab-genel" data-tab class="hidden space-y-6">
+      <section id="genelKartlar" class="grid grid-cols-2 lg:grid-cols-5 gap-4"></section>
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-4 lg:col-span-2">
+          <h2 class="text-sm font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="line-chart" class="w-4 h-4 text-amber-400"></i> Aylık toplam üretim</h2>
+          <div class="h-72"><canvas id="chAylik"></canvas></div>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <h2 class="text-sm font-semibold text-white mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i> Dikkat gerektirenler</h2>
+          <div id="dikkatListe" class="-mx-1 max-h-72 overflow-y-auto"></div>
+        </div>
+      </section>
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-4 flex flex-col">
+          <h2 class="text-sm font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="bar-chart-3" class="w-4 h-4 text-cyan-400"></i> Yıllık toplam üretim</h2>
+          <div class="relative flex-1 min-h-[18rem]"><canvas id="chYillik"></canvas></div>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <h2 class="text-sm font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="gauge" class="w-4 h-4 text-emerald-400"></i> Beklenene göre verim (yılbaşından bugüne)</h2>
+          <div id="chVerimKap" class="relative"><canvas id="chVerim"></canvas></div>
+        </div>
+      </section>
+      <p id="veriKaynak" class="text-[11px] text-slate-500 text-center"></p>
+    </div>
+
+    <!-- SEKME: SANTRALLER -->
+    <div id="tab-santraller" data-tab class="hidden space-y-4">
+      <section class="glass-card rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2"><i data-lucide="gauge" class="w-4 h-4 text-emerald-400"></i> Santral performansı</h2>
+          <span class="text-[11px] text-slate-500">Başlığa tıklayarak sıralayın • satıra tıklayarak ayrıntıyı açın</span>
+        </div>
+        <div class="overflow-x-auto"><table id="perfTablo" class="w-full text-xs"></table></div>
+      </section>
+      <div id="veriNotlari"></div>
+    </div>
+
+    <!-- SEKME: ARIZA TAKİP -->
+    <div id="tab-ariza" data-tab class="hidden">
+      <div id="arizaIcerik"></div>
+    </div>
+
+    <!-- SEKME: CANLI DURUM (mevcut panel) -->
+    <div id="tab-canli" data-tab class="hidden space-y-6">
 
     <!-- 1. PORTALLAR -->
     <section>
@@ -122,7 +175,26 @@
     </section>
 
     <p class="text-[11px] text-slate-500 text-center">Değişiklikler bu tarayıcıya kaydedilir. Başka bilgisayarda aynı verileri görmek için "Yedek Al" / "Yedek Yükle" kullanın.</p>
+    </div>
   </main>
+
+  <!-- MODAL: SANTRAL DETAYI -->
+  <div id="detayModal" class="hidden fixed inset-0 z-50 modal-bg flex items-start justify-center p-4 overflow-y-auto">
+    <div class="glass-card rounded-2xl w-full max-w-3xl p-5 space-y-4 my-8">
+      <div class="flex items-center justify-between">
+        <h3 id="detayBaslik" class="font-semibold text-white text-lg"></h3>
+        <button onclick="closeModal('detayModal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="detayOzet" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+      <div id="detayCanli"></div>
+      <div id="detayAriza"></div>
+      <div class="h-64"><canvas id="chDetay"></canvas></div>
+      <div>
+        <div class="text-[11px] uppercase tracking-wider text-slate-500 mb-1.5">Yıllık üretim (kWh)</div>
+        <div id="detayYillik"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL: YENİ SANTRAL -->
   <div id="addModal" class="hidden fixed inset-0 z-50 modal-bg flex items-center justify-center p-4">
@@ -510,6 +582,7 @@
         const r = await fetch('data/durum.json?t=' + Date.now(), { cache: 'no-store' });
         if (!r.ok) throw new Error(r.status);
         d = await r.json();
+        window.CANLI = d;
       } catch (e) {
         bar.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="cloud-off" class="w-3.5 h-3.5"></i> Otomatik veri henüz yok — tablo elle girilen bilgilerle gösteriliyor.</span>`;
         lucide.createIcons();
@@ -535,6 +608,7 @@
         if (s.zaman) p.updated = new Date(s.zaman).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
       });
       save(); renderAll();
+      if (window.Dash) Dash.canliGuncelle();
 
       const t = d.guncelleme ? new Date(d.guncelleme).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
       const src = Object.entries(d.kaynaklar || {}).map(([k, v]) => v.ok
@@ -551,5 +625,6 @@
     renderAll();
     loadLive();
   </script>
+  <script src="dashboard.js"></script>
 </body>
 </html>
