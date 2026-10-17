@@ -16,6 +16,8 @@ concurrency:
 jobs:
   cek:
     runs-on: ubuntu-latest
+    env:
+      HUAWEI_USER: ${{ secrets.HUAWEI_USER }}
     steps:
       - uses: actions/checkout@v4
 
@@ -24,13 +26,25 @@ jobs:
           python-version: '3.12'
 
       - name: Kütüphaneleri kur
-        run: pip install requests
+        run: pip install requests playwright
+
+      - name: Tarayıcıyı kur (yalnızca Huawei tarayıcı yöntemi için)
+        if: env.HUAWEI_USER != ''
+        run: playwright install --with-deps chromium
 
       - name: Portallardan veri çek
         run: python collector/collect.py
         env:
           GOODWE_USER: ${{ secrets.GOODWE_USER }}
           GOODWE_PASS: ${{ secrets.GOODWE_PASS }}
+          # Huawei: tarayıcı yöntemi (şimdilik)
+          HUAWEI_USER: ${{ secrets.HUAWEI_USER }}
+          HUAWEI_PASS: ${{ secrets.HUAWEI_PASS }}
+          HUAWEI_URL: ${{ secrets.HUAWEI_URL }}
+          # Huawei: Northbound API (erişim gelince; tanımlıysa tarayıcı yerine bu kullanılır)
+          HUAWEI_NB_BASE: ${{ secrets.HUAWEI_NB_BASE }}
+          HUAWEI_NB_USER: ${{ secrets.HUAWEI_NB_USER }}
+          HUAWEI_NB_CODE: ${{ secrets.HUAWEI_NB_CODE }}
 
       - name: Sonucu kaydet
         run: |

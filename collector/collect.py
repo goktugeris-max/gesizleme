@@ -154,8 +154,14 @@ def goodwe():
 # ======================================================================
 # HUAWEI ve SMA — sonraki aşamada eklenecek
 # ======================================================================
+def huawei():
+    from huawei import huawei as _huawei  # collector/ klasöründen (Playwright yalnızca gerekince yüklenir)
+    return _huawei()
+
+
 TOPLAYICILAR = {
     "GoodWe": goodwe,
+    "Huawei": huawei,
 }
 
 
