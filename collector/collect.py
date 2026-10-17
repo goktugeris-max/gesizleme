@@ -104,6 +104,12 @@ class Sems:
         j = self.post("v2/PowerStation/GetMonitorDetailByPowerstationId", {"powerStationId": sid})
         d = j.get("data") or {}
         info, kpi = d.get("info") or {}, d.get("kpi") or {}
+        if not info:
+            # Tanılama: yanıtın şekli (içerik değil, yalnızca alan adları)
+            print(f"GoodWe {sid}: detay boş. code={j.get('code')!r} msg={j.get('msg')!r} "
+                  f"hasError={j.get('hasError')!r} data_tipi={type(j.get('data')).__name__} "
+                  f"anahtarlar={sorted(j.keys())} data_anahtarlari={sorted(d) if isinstance(d, dict) else None}")
+            raise RuntimeError(f"GoodWe detay boş döndü: {j.get('msg')}")
 
         invertorler = []
         for inv in d.get("inverter") or []:
