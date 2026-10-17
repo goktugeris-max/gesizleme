@@ -24,13 +24,27 @@ jobs:
           python-version: '3.12'
 
       - name: Kütüphaneleri kur
-        run: pip install requests
+        run: pip install requests "fusion_solar_py[captcha]"
+
+      - name: Huawei CAPTCHA modelini indir
+        env:
+          HUAWEI_USER: ${{ secrets.HUAWEI_USER }}
+        run: |
+          # Yalnızca Huawei tanımlıysa; model jgriss/FusionSolarPy (MIT) deposunun sabit bir sürümünden alınır
+          if [ -n "$HUAWEI_USER" ]; then
+            mkdir -p models
+            curl -fsSL -o models/captcha_huawei.onnx \
+              https://raw.githubusercontent.com/jgriss/FusionSolarPy/3e02b9f5d831673070e0f7ddac7d9db53ca2368b/models/captcha_huawei.onnx
+          fi
 
       - name: Portallardan veri çek
         run: python collector/collect.py
         env:
           GOODWE_USER: ${{ secrets.GOODWE_USER }}
           GOODWE_PASS: ${{ secrets.GOODWE_PASS }}
+          HUAWEI_USER: ${{ secrets.HUAWEI_USER }}
+          HUAWEI_PASS: ${{ secrets.HUAWEI_PASS }}
+          HUAWEI_SUBDOMAIN: ${{ vars.HUAWEI_SUBDOMAIN }}
 
       - name: Sonucu kaydet
         run: |

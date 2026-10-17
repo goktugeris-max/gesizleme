@@ -5,6 +5,7 @@ Portallardan durum verisini çeker ve data/durum.json dosyasına yazar.
 """
 import json
 import os
+import re
 import sys
 import traceback
 from datetime import datetime, timezone
@@ -218,10 +219,91 @@ def goodwe():
 
 
 # ======================================================================
-# HUAWEI ve SMA — sonraki aşamada eklenecek
+# HUAWEI FUSIONSOLAR (normal web girişi, jgriss/FusionSolarPy kütüphanesi, MIT)
+# ======================================================================
+def _birimli_sayi(x):
+    """'12.5 kW' / '1,234.5' / 12.5 -> 12.5"""
+    if isinstance(x, (int, float)):
+        return round(float(x), 2)
+    m = re.search(r"-?\d[\d,]*\.?\d*", str(x or ""))
+    return sayi(m.group(0).replace(",", "")) if m else None
+
+
+def _huawei_durum(deger):
+    d = str(deger or "").lower()
+    if any(k in d for k in ("disconnect", "offline", "no_comm", "communication")):
+        return "Haberleşme Yok"
+    if any(k in d for k in ("fault", "unhealth", "error", "alarm")):
+        return "Arızalı"
+    if "health" in d or "normal" in d or "running" in d:
+        return "Çalışıyor"
+    return "Kontrol Edilmedi"
+
+
+def huawei():
+    user, pwd = os.getenv("HUAWEI_USER"), os.getenv("HUAWEI_PASS")
+    if not user or not pwd:
+        return None  # tanımlı değil, atla
+    from fusion_solar_py.client import FusionSolarClient
+
+    model = os.getenv("HUAWEI_CAPTCHA_MODEL") or "models/captcha_huawei.onnx"
+    sub = os.getenv("HUAWEI_SUBDOMAIN") or "region01eu5"
+    c = FusionSolarClient(user, pwd, huawei_subdomain=sub,
+                          captcha_model_path=model if os.path.exists(model) else None)
+    try:
+        # Kütüphanenin get_station_list()'i yalnızca 10 kayıt getirir; sayfalayarak hepsini al.
+        liste, sayfa = [], 1
+        while True:
+            r = c._session.post(
+                f"https://{sub}.fusionsolar.huawei.com/rest/pvms/web/station/v1/station/station-list",
+                json={"curPage": sayfa, "pageSize": 100, "gridConnectedTime": "",
+                      "queryTime": c._get_day_start_sec(), "timeZone": 2,
+                      "sortId": "createTime", "sortDir": "DESC", "locale": "en_US"})
+            r.raise_for_status()
+            j = r.json()
+            if not j.get("success"):
+                raise RuntimeError(f"Huawei santral listesi alınamadı: {str(j)[:150]}")
+            veri = (j.get("data") or {}).get("list") or []
+            liste += veri
+            if len(veri) < 100:
+                break
+            sayfa += 1
+    finally:
+        try:
+            c.log_out()
+        except Exception:
+            pass
+
+    print(f"Huawei: {len(liste)} santral bulundu")
+    if liste:
+        # Tanılama: alan adları ve durum değerleri (santral adı/üretim değeri yazılmaz)
+        print("Huawei alanlar:", sorted(liste[0]))
+        for k in ("plantStatus", "status", "runState", "healthState"):
+            if k in liste[0]:
+                print(f"Huawei {k} değerleri:", sorted({str(x.get(k)) for x in liste}))
+
+    sonuc = []
+    for st in liste:
+        sid = _ilk(st, "dn", "stationDn", "id", "plantId")
+        sonuc.append({
+            "kaynak": "Huawei",
+            "kaynakId": sid,
+            "ad": _ilk(st, "name", "stationName", "plantName") or sid,
+            "kapasite_kwp": _birimli_sayi(_ilk(st, "capacity", "installedCapacity", "totalCapacity")),
+            "durum": _huawei_durum(_ilk(st, "plantStatus", "status", "runState", "healthState")),
+            "anlik_kw": _birimli_sayi(_ilk(st, "currentPower", "currentPowerKw", "realTimePower")),
+            "bugun_kwh": _birimli_sayi(_ilk(st, "dailyEnergy", "eDay", "dailyYield", "todayEnergy")),
+            "invertorler": [],
+        })
+    return sonuc
+
+
+# ======================================================================
+# SMA — sonraki aşamada eklenecek
 # ======================================================================
 TOPLAYICILAR = {
     "GoodWe": goodwe,
+    "Huawei": huawei,
 }
 
 
