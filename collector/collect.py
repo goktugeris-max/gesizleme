@@ -4,6 +4,7 @@ Portallardan durum verisini çeker ve data/durum.json dosyasına yazar.
 Şifreler kodda DEĞİL, GitHub Secrets'ta durur (ortam değişkeni olarak gelir).
 """
 import json
+import math
 import os
 import re
 import sys
@@ -24,6 +25,23 @@ def en_kotu(durumlar):
         if d in durumlar:
             return d
     return "Kontrol Edilmedi"
+
+
+def gunduz_mu(simdi, enlem=38.42, boylam=27.14, pay_saat=1.0):
+    """Güneş İzmir'de doğduktan pay_saat sonra ile battıktan pay_saat önce arasında mı? (UTC datetime)
+
+    SEMS geceleri santral ve invertörlere -1 (çevrimdışı) verir; bu arıza değildir.
+    Haberleşme kopukluğu ancak gün ışığında anlamlıdır.
+    """
+    n = simdi.timetuple().tm_yday
+    b = math.radians(360 / 365 * (n - 81))
+    denklem_dk = 9.87 * math.sin(2 * b) - 7.53 * math.cos(b) - 1.5 * math.sin(b)
+    dek = math.radians(23.44 * math.sin(math.radians(360 / 365 * (n - 81))))
+    cos_h = max(-1.0, min(1.0, -math.tan(math.radians(enlem)) * math.tan(dek)))
+    yarim_gun = math.degrees(math.acos(cos_h)) / 15  # saat
+    ogle = 12 - boylam / 15 - denklem_dk / 60  # UTC saat
+    t = simdi.hour + simdi.minute / 60
+    return ogle - yarim_gun + pay_saat <= t <= ogle + yarim_gun - pay_saat
 
 
 def sayi(x):
@@ -127,8 +145,9 @@ class Sems:
                 return self.listeden(sid, satir)
             raise RuntimeError(f"GoodWe detay boş döndü: {j.get('msg')}")
 
-        # İnvertörler gece kapanınca SEMS onlara -1 (çevrimdışı) verir; bu arıza değildir.
-        # -1 yalnızca santralin kendisi de çevrimdışıysa "Haberleşme Yok" sayılır.
+        # SEMS geceleri santrale ve invertörlere -1 (çevrimdışı) verir; bu arıza değildir.
+        # -1 yalnızca gün ışığında "Haberleşme Yok" sayılır.
+        gunduz = gunduz_mu(datetime.now(timezone.utc))
         santral_kod = info.get("status")
         invertorler = []
         for inv in (d.get("inverter") or self.invertor_haritasi().get(sid) or []):
@@ -138,7 +157,7 @@ class Sems:
             except (TypeError, ValueError):
                 pass
             durum_inv = SEMS_INV_DURUM.get(kod, "Kontrol Edilmedi")
-            if kod == -1 and santral_kod != -1:
+            if kod == -1 and not gunduz:
                 durum_inv = "Beklemede"
             invertorler.append({
                 "sn": inv.get("sn"),
@@ -148,13 +167,17 @@ class Sems:
                 "kod": kod,
             })
 
-        # Santral durumu: santralin kendi durumu; bir invertör arızalıysa "Arızalı"na yükselt
         durum = SEMS_INV_DURUM.get(santral_kod, "Kontrol Edilmedi")
+        if santral_kod == -1 and not gunduz:
+            durum = "Beklemede"
+        # Bir invertör arızalıysa santral "Arızalı"; gündüz bir invertör kopuksa "Haberleşme Yok"
         if any(i["durum"] == "Arızalı" for i in invertorler):
             durum = "Arızalı"
+        elif durum in ("Çalışıyor", "Beklemede") and any(i["durum"] == "Haberleşme Yok" for i in invertorler):
+            durum = "Haberleşme Yok"
         # Tanılama: yalnızca durum kodları ve sayıları
         print(f"GoodWe {sid[:8]}: santral status={info.get('status')!r} "
-              f"invertör kodları={sorted(str(i['kod']) for i in invertorler)} -> {durum}")
+              f"invertör kodları={sorted(str(i['kod']) for i in invertorler)} gündüz={gunduz} -> {durum}")
 
         return {
             "kaynak": "GoodWe",
