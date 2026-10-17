@@ -1,14 +1,14 @@
 {
-  "guncelleme": "2026-10-17T16:52:42+00:00",
+  "guncelleme": "2026-10-17T16:54:02+00:00",
   "kaynaklar": {
     "GoodWe": {
       "ok": true,
-      "zaman": "2026-10-17T16:52:42+00:00",
+      "zaman": "2026-10-17T16:54:02+00:00",
       "adet": 9
     },
     "Huawei": {
       "ok": false,
-      "hata": "Failed to parse: 'intl..fusionsolar.huawei.com', label empty or too long",
+      "hata": "HTTPSConnectionPool(host='intl.fusionsolar.huawei.com', port=443): Max retries exceeded with url: /unisso/v3/validateUser.action?timeStamp=1792256057655&nonce=d50257bcbeda960ca8981b9af87eec23 (Caused ",
       "zaman": null
     }
   },
@@ -22,40 +22,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 98.9,
       "invertorler": [],
-      "zaman": "2026-10-17T16:52:42+00:00"
-    },
-    {
-      "kaynak": "GoodWe",
-      "kaynakId": "126f8c03-81df-4dbe-8318-10575322e6a1",
-      "ad": "Bergama Mezbahası",
-      "kapasite_kwp": 74.1,
-      "durum": "Haberleşme Yok",
-      "anlik_kw": 0.0,
-      "bugun_kwh": 92.7,
-      "invertorler": [],
-      "zaman": "2026-10-17T16:52:42+00:00"
-    },
-    {
-      "kaynak": "GoodWe",
-      "kaynakId": "b1ffbc3b-fb0f-498d-bdf1-9254d3035823",
-      "ad": "Bornova havuz Ges",
-      "kapasite_kwp": 121.73,
-      "durum": "Haberleşme Yok",
-      "anlik_kw": 0.47,
-      "bugun_kwh": 133.0,
-      "invertorler": [],
-      "zaman": "2026-10-17T16:52:42+00:00"
-    },
-    {
-      "kaynak": "GoodWe",
-      "kaynakId": "de7a0671-d98a-4f53-aaae-2c0cf7ac8083",
-      "ad": "Uzundere Can Çağnay Çok Amaçlı Spor Salonu",
-      "kapasite_kwp": 35.91,
-      "durum": "Haberleşme Yok",
-      "anlik_kw": 0.0,
-      "bugun_kwh": 24.6,
-      "invertorler": [],
-      "zaman": "2026-10-17T16:52:42+00:00"
+      "zaman": "2026-10-17T16:54:02+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -66,7 +33,40 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 88.5,
       "invertorler": [],
-      "zaman": "2026-10-17T16:52:42+00:00"
+      "zaman": "2026-10-17T16:54:02+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "126f8c03-81df-4dbe-8318-10575322e6a1",
+      "ad": "Bergama Mezbahası",
+      "kapasite_kwp": 74.1,
+      "durum": "Haberleşme Yok",
+      "anlik_kw": 0.0,
+      "bugun_kwh": 92.7,
+      "invertorler": [],
+      "zaman": "2026-10-17T16:54:02+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "b1ffbc3b-fb0f-498d-bdf1-9254d3035823",
+      "ad": "Bornova havuz Ges",
+      "kapasite_kwp": 121.73,
+      "durum": "Haberleşme Yok",
+      "anlik_kw": 0.47,
+      "bugun_kwh": 133.0,
+      "invertorler": [],
+      "zaman": "2026-10-17T16:54:02+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "de7a0671-d98a-4f53-aaae-2c0cf7ac8083",
+      "ad": "Uzundere Can Çağnay Çok Amaçlı Spor Salonu",
+      "kapasite_kwp": 35.91,
+      "durum": "Haberleşme Yok",
+      "anlik_kw": 0.0,
+      "bugun_kwh": 24.6,
+      "invertorler": [],
+      "zaman": "2026-10-17T16:54:02+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -77,7 +77,7 @@
       "anlik_kw": 0.01,
       "bugun_kwh": 95.2,
       "invertorler": [],
-      "zaman": "2026-10-17T16:52:42+00:00"
+      "zaman": "2026-10-17T16:54:02+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -88,7 +88,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 49.9,
       "invertorler": [],
-      "zaman": "2026-10-17T16:52:42+00:00"
+      "zaman": "2026-10-17T16:54:02+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -99,7 +99,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 28.4,
       "invertorler": [],
-      "zaman": "2026-10-17T16:52:42+00:00"
+      "zaman": "2026-10-17T16:54:02+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -110,7 +110,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 55.0,
       "invertorler": [],
-      "zaman": "2026-10-17T16:52:42+00:00"
+      "zaman": "2026-10-17T16:54:02+00:00"
     }
   ]
 }
