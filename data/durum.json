@@ -1,15 +1,10 @@
 {
-  "guncelleme": "2026-10-17T16:58:53+00:00",
+  "guncelleme": "2026-10-17T17:45:48+00:00",
   "kaynaklar": {
     "GoodWe": {
       "ok": true,
-      "zaman": "2026-10-17T16:58:53+00:00",
+      "zaman": "2026-10-17T17:45:48+00:00",
       "adet": 9
-    },
-    "Huawei": {
-      "ok": false,
-      "hata": "Failed to login into FusionSolarAPI: Login failed. Enter the correct username and password.",
-      "zaman": null
     }
   },
   "santraller": [
@@ -22,7 +17,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 98.9,
       "invertorler": [],
-      "zaman": "2026-10-17T16:58:53+00:00"
+      "zaman": "2026-10-17T17:45:48+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -33,7 +28,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 88.5,
       "invertorler": [],
-      "zaman": "2026-10-17T16:58:53+00:00"
+      "zaman": "2026-10-17T17:45:48+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -44,7 +39,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 92.7,
       "invertorler": [],
-      "zaman": "2026-10-17T16:58:53+00:00"
+      "zaman": "2026-10-17T17:45:48+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -52,10 +47,21 @@
       "ad": "Bornova havuz Ges",
       "kapasite_kwp": 121.73,
       "durum": "Haberleşme Yok",
-      "anlik_kw": 0.47,
+      "anlik_kw": 0.0,
       "bugun_kwh": 133.0,
       "invertorler": [],
-      "zaman": "2026-10-17T16:58:53+00:00"
+      "zaman": "2026-10-17T17:45:48+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "8a36369a-044a-4c67-bc85-d2b0a4856bec",
+      "ad": "SEYREK İTFAİYE",
+      "kapasite_kwp": 25.0,
+      "durum": "Haberleşme Yok",
+      "anlik_kw": 0.0,
+      "bugun_kwh": 49.9,
+      "invertorler": [],
+      "zaman": "2026-10-17T17:45:48+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -66,7 +72,29 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 24.6,
       "invertorler": [],
-      "zaman": "2026-10-17T16:58:53+00:00"
+      "zaman": "2026-10-17T17:45:48+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "e242dc8e-c965-46ce-bc89-c467299ca6e7",
+      "ad": "Çaybaşı İtfaiye",
+      "kapasite_kwp": 20.0,
+      "durum": "Haberleşme Yok",
+      "anlik_kw": 0.0,
+      "bugun_kwh": 28.4,
+      "invertorler": [],
+      "zaman": "2026-10-17T17:45:48+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "114b4df3-8909-4dd5-bc93-4cbf828b9711",
+      "ad": "Çeşme İtfaiye Ges",
+      "kapasite_kwp": 25.9,
+      "durum": "Haberleşme Yok",
+      "anlik_kw": 0.0,
+      "bugun_kwh": 55.0,
+      "invertorler": [],
+      "zaman": "2026-10-17T17:45:48+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -74,43 +102,10 @@
       "ad": "Konak tuneller ges",
       "kapasite_kwp": 76.96,
       "durum": "Çalışıyor",
-      "anlik_kw": 0.0,
+      "anlik_kw": 0.01,
       "bugun_kwh": 95.2,
       "invertorler": [],
-      "zaman": "2026-10-17T16:58:53+00:00"
-    },
-    {
-      "kaynak": "GoodWe",
-      "kaynakId": "8a36369a-044a-4c67-bc85-d2b0a4856bec",
-      "ad": "SEYREK İTFAİYE",
-      "kapasite_kwp": 25.0,
-      "durum": "Çalışıyor",
-      "anlik_kw": 0.0,
-      "bugun_kwh": 49.9,
-      "invertorler": [],
-      "zaman": "2026-10-17T16:58:53+00:00"
-    },
-    {
-      "kaynak": "GoodWe",
-      "kaynakId": "e242dc8e-c965-46ce-bc89-c467299ca6e7",
-      "ad": "Çaybaşı İtfaiye",
-      "kapasite_kwp": 20.0,
-      "durum": "Çalışıyor",
-      "anlik_kw": 0.0,
-      "bugun_kwh": 28.4,
-      "invertorler": [],
-      "zaman": "2026-10-17T16:58:53+00:00"
-    },
-    {
-      "kaynak": "GoodWe",
-      "kaynakId": "114b4df3-8909-4dd5-bc93-4cbf828b9711",
-      "ad": "Çeşme İtfaiye Ges",
-      "kapasite_kwp": 25.9,
-      "durum": "Çalışıyor",
-      "anlik_kw": 0.0,
-      "bugun_kwh": 55.0,
-      "invertorler": [],
-      "zaman": "2026-10-17T16:58:53+00:00"
+      "zaman": "2026-10-17T17:45:48+00:00"
     }
   ]
 }
