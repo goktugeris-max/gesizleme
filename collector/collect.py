@@ -45,6 +45,7 @@ class Sems:
         self.user, self.pwd = user, pwd
         self.api = None
         self.token = None
+        self.liste = {}  # sid -> santral listesi satırı (detay boşsa yedek)
 
     def login(self):
         r = requests.post(
@@ -76,15 +77,15 @@ class Sems:
         """Hesaptaki tüm santrallerin ID'lerini döndürür (iki farklı uç nokta dener)."""
         ids = []
         try:
-            j = self.post("v2/PowerStationMonitor/QueryPowerStationMonitorForApp", {
-                "page_index": 1, "page_size": 200, "key": "", "orderby": "",
-                "powerstation_id": "", "powerstation_status": "", "powerstation_type": ""})
+            j = self.post("v2/PowerStationMonitor/QueryPowerStationMonitor",
+                          {"page_index": 1, "page_size": 200})
             d = j.get("data")
             lst = d.get("list") if isinstance(d, dict) else d
             for s in lst or []:
                 sid = s.get("powerstation_id") or s.get("id")
                 if sid:
                     ids.append(sid)
+                    self.liste[sid] = s
         except Exception as e:
             print("Liste uç noktası 1 başarısız:", e)
 
@@ -101,9 +102,16 @@ class Sems:
         return list(dict.fromkeys(ids))
 
     def detay(self, sid):
-        j = self.post("v2/PowerStation/GetMonitorDetailByPowerstationId", {"powerStationId": sid})
+        j = self.post("v3/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid})
         d = j.get("data") or {}
         info, kpi = d.get("info") or {}, d.get("kpi") or {}
+        if not info:
+            satir = self.liste.get(sid)
+            if satir:
+                # Tanılama: yalnızca alan adları (içerik değil)
+                print(f"GoodWe {sid}: detay boş, liste satırı kullanılıyor. alanlar={sorted(satir)}")
+                return self.listeden(sid, satir)
+            raise RuntimeError(f"GoodWe detay boş döndü: {j.get('msg')}")
 
         invertorler = []
         for inv in d.get("inverter") or []:
@@ -134,6 +142,62 @@ class Sems:
         }
 
 
+def _ilk(d, *anahtarlar):
+    for k in anahtarlar:
+        if d.get(k) not in (None, ""):
+            return d[k]
+    return None
+
+
+def _listeden(self, sid, satir):
+    kod = _ilk(satir, "status", "powerstation_status")
+    try:
+        kod = int(kod)
+    except (TypeError, ValueError):
+        pass
+    return {
+        "kaynak": "GoodWe",
+        "kaynakId": sid,
+        "ad": _ilk(satir, "stationname", "stationName", "name") or sid,
+        "kapasite_kwp": sayi(_ilk(satir, "capacity", "capacity_kw")),
+        "durum": SEMS_INV_DURUM.get(kod, "Kontrol Edilmedi"),
+        "anlik_kw": sayi((sayi(_ilk(satir, "pac", "current_power")) or 0) / 1000),
+        "bugun_kwh": sayi(_ilk(satir, "eday", "day_power", "today_power")),
+        "invertorler": [],
+    }
+
+
+Sems.listeden = _listeden
+
+
+def _sekil(j):
+    d = j.get("data") if isinstance(j, dict) else None
+    ozet = {"code": j.get("code"), "msg": j.get("msg"), "data_tipi": type(d).__name__}
+    if isinstance(d, dict):
+        ozet["data_anahtarlari"] = sorted(d)
+        for k, v in d.items():
+            if isinstance(v, list):
+                ozet[f"{k}[{len(v)}]"] = sorted(v[0]) if v and isinstance(v[0], dict) else type(v[0]).__name__ if v else None
+            elif isinstance(v, dict):
+                ozet[f"{k}{{}}"] = sorted(v)
+    elif isinstance(d, list):
+        ozet["uzunluk"] = len(d)
+        if d:
+            ozet["ilk"] = sorted(d[0]) if isinstance(d[0], dict) else type(d[0]).__name__
+    return ozet
+
+
+def kesif_invertor(s):
+    """GEÇİCİ tanılama: invertör verisi hangi alanlarla geliyor? Yalnızca alan adları yazılır."""
+    try:
+        d = (s.post("v2/HistoryData/QueryPowerStationByHistory").get("data") or {}).get("list") or []
+        inv = (d[0].get("inverters") if d else None) or []
+        print("KESİF invertör şekli:", type(inv).__name__, len(inv),
+              sorted(inv[0]) if inv and isinstance(inv[0], dict) else (inv[:1] if inv else None))
+    except Exception as e:
+        print("KESİF invertör HATA", str(e)[:150])
+
+
 def goodwe():
     user, pwd = os.getenv("GOODWE_USER"), os.getenv("GOODWE_PASS")
     if not user or not pwd:
@@ -142,6 +206,8 @@ def goodwe():
     s.login()
     ids = s.istasyon_listesi()
     print(f"GoodWe: {len(ids)} santral bulundu")
+    if ids:
+        kesif_invertor(s)
     sonuc = []
     for sid in ids:
         try:
@@ -169,10 +235,12 @@ def main():
     simdi = datetime.now(timezone.utc).isoformat(timespec="seconds")
     yeni = {"guncelleme": simdi, "kaynaklar": {}, "santraller": []}
 
+    atlanan = []
     for ad, fn in TOPLAYICILAR.items():
         try:
             veri = fn()
             if veri is None:
+                atlanan.append(ad)
                 continue
             for v in veri:
                 v["zaman"] = simdi
@@ -184,6 +252,13 @@ def main():
             yeni["santraller"] += [s for s in eski.get("santraller", []) if s.get("kaynak") == ad]
             onceki = (eski.get("kaynaklar") or {}).get(ad, {})
             yeni["kaynaklar"][ad] = {"ok": False, "hata": str(e)[:200], "zaman": onceki.get("zaman")}
+
+    if len(atlanan) == len(TOPLAYICILAR):
+        print("HATA: Hiçbir portal için giriş bilgisi tanımlı değil (atlananlar: "
+              + ", ".join(atlanan) + ").\n"
+              "GitHub → Settings → Secrets and variables → Actions bölümüne "
+              "GOODWE_USER ve GOODWE_PASS ekleyin.", file=sys.stderr)
+        return 1
 
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
     with open(OUT_PATH, "w", encoding="utf-8") as f:
