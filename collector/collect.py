@@ -247,7 +247,9 @@ def huawei():
     from fusion_solar_py.client import FusionSolarClient
 
     model = os.getenv("HUAWEI_CAPTCHA_MODEL") or "models/captcha_huawei.onnx"
-    sub = os.getenv("HUAWEI_SUBDOMAIN") or "region01eu5"
+    # "intl", "intl.", " intl " veya yapıştırılmış tam adres -> "intl"
+    sub = re.sub(r"^https?://", "", (os.getenv("HUAWEI_SUBDOMAIN") or "").strip())
+    sub = sub.split(".")[0].strip() or "region01eu5"
     c = FusionSolarClient(user, pwd, huawei_subdomain=sub,
                           captcha_model_path=model if os.path.exists(model) else None)
     try:
