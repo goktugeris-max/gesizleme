@@ -26,21 +26,13 @@ jobs:
       - name: Kütüphaneleri kur
         run: pip install requests
 
-      - name: SMA keşfi (geçici, yalnızca bu dalda)
-        continue-on-error: true
-        run: |
-          pip install playwright
-          playwright install --with-deps chromium
-          python collector/sma_kesif.py
-        env:
-          SMA_USER: ${{ secrets.SMA_USER }}
-          SMA_PASS: ${{ secrets.SMA_PASS }}
-
       - name: Portallardan veri çek
         run: python collector/collect.py
         env:
           GOODWE_USER: ${{ secrets.GOODWE_USER }}
           GOODWE_PASS: ${{ secrets.GOODWE_PASS }}
+          SMA_USER: ${{ secrets.SMA_USER }}
+          SMA_PASS: ${{ secrets.SMA_PASS }}
           HUAWEI_KIOSK_URLS: ${{ secrets.HUAWEI_KIOSK_URLS }}
           # Huawei web girişi şu an KAPALI: hesap intl.fusionsolar.huawei.com'da ve bu adres GitHub'ın
           # ağından çözülemiyor. Açmak için HUAWEI_USER/HUAWEI_PASS/HUAWEI_SUBDOMAIN satırlarını

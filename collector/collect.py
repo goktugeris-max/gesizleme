@@ -9,7 +9,7 @@ import os
 import re
 import sys
 import traceback
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import requests
 
@@ -419,11 +419,95 @@ def huawei():
 
 
 # ======================================================================
-# SMA — sonraki aşamada eklenecek
+# SMA SUNNY PORTAL (ennexOS) — tarayıcısız OAuth girişi + santral durum listesi
 # ======================================================================
+SMA_AUTH = "https://login.sma.energy/auth/realms/SMA/protocol/openid-connect"
+SMA_API = "https://uiapi.sunnyportal.com/api/v1"
+SMA_CLIENT = "SPpbeOS"  # portalın kendi herkese açık istemci kimliği
+SMA_REDIRECT = "https://ennexos.sunnyportal.com/dashboard/initialize"
+# SMA cihaz durum kodları (bilinenler); bilinmeyen kod "Kontrol Edilmedi" kalır ve günlüğe yazılır.
+SMA_DURUM = {307: "Çalışıyor", 303: "Beklemede", 35: "Arızalı", 455: "Arızalı"}
+
+
+def sma_token(user, pwd):
+    import base64
+    import hashlib
+    import html as _html
+    import secrets
+    from urllib.parse import parse_qs, urlparse, urljoin
+
+    s = requests.Session()
+    dogrulayici = secrets.token_urlsafe(64)
+    sinama = base64.urlsafe_b64encode(hashlib.sha256(dogrulayici.encode()).digest()).rstrip(b"=").decode()
+    r = s.get(f"{SMA_AUTH}/auth", params={
+        "response_type": "code", "client_id": SMA_CLIENT, "redirect_uri": SMA_REDIRECT,
+        "scope": "openid profile", "code_challenge": sinama, "code_challenge_method": "S256",
+        "state": secrets.token_urlsafe(16), "nonce": secrets.token_urlsafe(16)}, timeout=TIMEOUT)
+    r.raise_for_status()
+    m = re.search(r'<form[^>]*\baction="([^"]+)"', r.text)
+    if not m:
+        raise RuntimeError("SMA giriş formu bulunamadı")
+    eylem = _html.unescape(m.group(1))
+
+    r = s.post(eylem, data={"username": user, "password": pwd, "credentialId": ""},
+               allow_redirects=False, timeout=TIMEOUT)
+    # Yönlendirme zincirini elle izle; kod, redirect_uri'ye giden adreste gelir.
+    for _ in range(6):
+        konum = r.headers.get("Location")
+        if not konum:
+            break
+        konum = urljoin(r.url, konum)
+        if konum.startswith(SMA_REDIRECT):
+            kod = (parse_qs(urlparse(konum).query).get("code") or [None])[0]
+            if not kod:
+                raise RuntimeError("SMA yönlendirmesinde kod yok")
+            t = s.post(f"{SMA_AUTH}/token", data={
+                "grant_type": "authorization_code", "code": kod, "redirect_uri": SMA_REDIRECT,
+                "code_verifier": dogrulayici, "client_id": SMA_CLIENT}, timeout=TIMEOUT)
+            t.raise_for_status()
+            return t.json()["access_token"]
+        r = s.get(konum, allow_redirects=False, timeout=TIMEOUT)
+    hata = re.search(r'kc-feedback-text[^>]*>([^<]+)<', r.text or "")
+    raise RuntimeError("SMA girişi başarısız: " + (hata.group(1).strip() if hata else f"HTTP {r.status_code}"))
+
+
+def sma():
+    user, pwd = os.getenv("SMA_USER"), os.getenv("SMA_PASS")
+    if not user or not pwd:
+        return None  # tanımlı değil, atla
+    token = sma_token(user, pwd)
+    bugun = (datetime.now(timezone.utc) + timedelta(hours=3)).strftime("%Y-%m-%d")  # Türkiye saati
+    r = requests.get(f"{SMA_API}/statuslist/plants", params={"todayDate": bugun},
+                     headers={"Authorization": f"Bearer {token}", "Accept": "application/json"}, timeout=TIMEOUT)
+    r.raise_for_status()
+    liste = (r.json() or {}).get("items") or []
+    print(f"SMA: {len(liste)} santral bulundu")
+
+    sonuc = []
+    for it in liste:
+        kod = it.get("state")
+        durum = SMA_DURUM.get(kod, "Kontrol Edilmedi")
+        print(f"SMA {str(it.get('plantId'))[:6]}: state={kod!r} gücW={it.get('pvPower')!r} -> {durum}")
+        guc_w = sayi(it.get("pvPower"))
+        kwp = sayi((sayi(it.get("dcPowerInputMax")) or 0) / 1000) or None
+        wh = sayi(it.get("yieldToday"))
+        sonuc.append({
+            "kaynak": "SMA",
+            "kaynakId": str(it.get("plantId")),
+            "ad": it.get("name") or str(it.get("plantId")),
+            "kapasite_kwp": kwp,
+            "durum": durum,
+            "anlik_kw": sayi((guc_w or 0) / 1000),
+            "bugun_kwh": sayi(wh / 1000) if wh is not None else None,
+            "invertorler": [],
+        })
+    return sonuc
+
+
 TOPLAYICILAR = {
     "GoodWe": goodwe,
     "Huawei": huawei,
+    "SMA": sma,
 }
 
 
