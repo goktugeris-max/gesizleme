@@ -102,6 +102,19 @@ class Sems:
                     ids.append(sid)
         return list(dict.fromkeys(ids))
 
+    def invertor_haritasi(self):
+        """sid -> invertör listesi (HistoryData uç noktası bu hesapta invertörleri verir)."""
+        if getattr(self, "_inv", None) is None:
+            self._inv = {}
+            try:
+                d = self.post("v2/HistoryData/QueryPowerStationByHistory").get("data") or {}
+                for st in d.get("list") or []:
+                    if isinstance(st, dict) and st.get("id"):
+                        self._inv[st["id"]] = st.get("inverters") or []
+            except Exception as e:
+                print("GoodWe invertör listesi alınamadı:", str(e)[:120])
+        return self._inv
+
     def detay(self, sid):
         j = self.post("v3/PowerStation/GetPlantDetailByPowerstationId", {"powerStationId": sid})
         d = j.get("data") or {}
@@ -115,7 +128,7 @@ class Sems:
             raise RuntimeError(f"GoodWe detay boş döndü: {j.get('msg')}")
 
         invertorler = []
-        for inv in d.get("inverter") or []:
+        for inv in (d.get("inverter") or self.invertor_haritasi().get(sid) or []):
             kod = inv.get("status")
             try:
                 kod = int(kod)
@@ -126,10 +139,15 @@ class Sems:
                 "ad": inv.get("name") or inv.get("sn"),
                 "model": inv.get("type") or (inv.get("invert_full") or {}).get("model_type"),
                 "durum": SEMS_INV_DURUM.get(kod, "Kontrol Edilmedi"),
+                "kod": kod,
             })
 
-        durum = en_kotu([i["durum"] for i in invertorler]) if invertorler else \
-            SEMS_INV_DURUM.get(info.get("status"), "Kontrol Edilmedi")
+        # Santral durumu: bilinen invertör durumlarının en kötüsü; hiç yoksa santralin kendi durumu
+        bilinen = [i["durum"] for i in invertorler if i["durum"] != "Kontrol Edilmedi"]
+        durum = en_kotu(bilinen) if bilinen else SEMS_INV_DURUM.get(info.get("status"), "Kontrol Edilmedi")
+        # Tanılama: yalnızca durum kodları ve sayıları
+        print(f"GoodWe {sid[:8]}: santral status={info.get('status')!r} "
+              f"invertör kodları={sorted(str(i['kod']) for i in invertorler)} -> {durum}")
 
         return {
             "kaynak": "GoodWe",
@@ -188,17 +206,6 @@ def _sekil(j):
     return ozet
 
 
-def kesif_invertor(s):
-    """GEÇİCİ tanılama: invertör verisi hangi alanlarla geliyor? Yalnızca alan adları yazılır."""
-    try:
-        d = (s.post("v2/HistoryData/QueryPowerStationByHistory").get("data") or {}).get("list") or []
-        inv = (d[0].get("inverters") if d else None) or []
-        print("KESİF invertör şekli:", type(inv).__name__, len(inv),
-              sorted(inv[0]) if inv and isinstance(inv[0], dict) else (inv[:1] if inv else None))
-    except Exception as e:
-        print("KESİF invertör HATA", str(e)[:150])
-
-
 def goodwe():
     user, pwd = os.getenv("GOODWE_USER"), os.getenv("GOODWE_PASS")
     if not user or not pwd:
@@ -207,8 +214,6 @@ def goodwe():
     s.login()
     ids = s.istasyon_listesi()
     print(f"GoodWe: {len(ids)} santral bulundu")
-    if ids:
-        kesif_invertor(s)
     sonuc = []
     for sid in ids:
         try:
