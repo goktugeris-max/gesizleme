@@ -45,6 +45,7 @@ class Sems:
         self.user, self.pwd = user, pwd
         self.api = None
         self.token = None
+        self.liste = {}  # sid -> santral listesi satırı (detay boşsa yedek)
 
     def login(self):
         r = requests.post(
@@ -85,6 +86,7 @@ class Sems:
                 sid = s.get("powerstation_id") or s.get("id")
                 if sid:
                     ids.append(sid)
+                    self.liste[sid] = s
         except Exception as e:
             print("Liste uç noktası 1 başarısız:", e)
 
@@ -101,14 +103,20 @@ class Sems:
         return list(dict.fromkeys(ids))
 
     def detay(self, sid):
-        j = self.post("v2/PowerStation/GetMonitorDetailByPowerstationId", {"powerStationId": sid})
-        d = j.get("data") or {}
+        d = {}
+        for govde in ({"powerStationId": sid}, {"powerstation_id": sid},
+                      {"powerStationID": sid}, {"id": sid}):
+            j = self.post("v2/PowerStation/GetMonitorDetailByPowerstationId", govde)
+            d = j.get("data") or {}
+            if d.get("info"):
+                break
         info, kpi = d.get("info") or {}, d.get("kpi") or {}
         if not info:
-            # Tanılama: yanıtın şekli (içerik değil, yalnızca alan adları)
-            print(f"GoodWe {sid}: detay boş. code={j.get('code')!r} msg={j.get('msg')!r} "
-                  f"hasError={j.get('hasError')!r} data_tipi={type(j.get('data')).__name__} "
-                  f"anahtarlar={sorted(j.keys())} data_anahtarlari={sorted(d) if isinstance(d, dict) else None}")
+            satir = self.liste.get(sid)
+            if satir:
+                # Tanılama: yalnızca alan adları (içerik değil)
+                print(f"GoodWe {sid}: detay boş, liste satırı kullanılıyor. alanlar={sorted(satir)}")
+                return self.listeden(sid, satir)
             raise RuntimeError(f"GoodWe detay boş döndü: {j.get('msg')}")
 
         invertorler = []
@@ -138,6 +146,34 @@ class Sems:
             "bugun_kwh": sayi(kpi.get("power")),
             "invertorler": invertorler,
         }
+
+
+def _ilk(d, *anahtarlar):
+    for k in anahtarlar:
+        if d.get(k) not in (None, ""):
+            return d[k]
+    return None
+
+
+def _listeden(self, sid, satir):
+    kod = _ilk(satir, "status", "powerstation_status")
+    try:
+        kod = int(kod)
+    except (TypeError, ValueError):
+        pass
+    return {
+        "kaynak": "GoodWe",
+        "kaynakId": sid,
+        "ad": _ilk(satir, "stationname", "stationName", "name") or sid,
+        "kapasite_kwp": sayi(_ilk(satir, "capacity", "capacity_kw")),
+        "durum": SEMS_INV_DURUM.get(kod, "Kontrol Edilmedi"),
+        "anlik_kw": sayi((sayi(_ilk(satir, "pac", "current_power")) or 0) / 1000),
+        "bugun_kwh": sayi(_ilk(satir, "eday", "day_power", "today_power")),
+        "invertorler": [],
+    }
+
+
+Sems.listeden = _listeden
 
 
 def goodwe():
