@@ -1,5 +1,111 @@
 {
-  "guncelleme": "2026-10-17T10:28:35+00:00",
-  "kaynaklar": {},
-  "santraller": []
+  "guncelleme": "2026-10-17T10:48:32+00:00",
+  "kaynaklar": {
+    "GoodWe": {
+      "ok": true,
+      "zaman": "2026-10-17T10:48:32+00:00",
+      "adet": 9
+    }
+  },
+  "santraller": [
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "b331296d-e14e-47c5-a0ca-a86f0ed3eb31",
+      "ad": "b331296d-e14e-47c5-a0ca-a86f0ed3eb31",
+      "kapasite_kwp": null,
+      "durum": "Kontrol Edilmedi",
+      "anlik_kw": 0.0,
+      "bugun_kwh": null,
+      "invertorler": [],
+      "zaman": "2026-10-17T10:48:32+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "78b76ed6-118d-4c56-8f96-94362a57875e",
+      "ad": "78b76ed6-118d-4c56-8f96-94362a57875e",
+      "kapasite_kwp": null,
+      "durum": "Kontrol Edilmedi",
+      "anlik_kw": 0.0,
+      "bugun_kwh": null,
+      "invertorler": [],
+      "zaman": "2026-10-17T10:48:32+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "126f8c03-81df-4dbe-8318-10575322e6a1",
+      "ad": "126f8c03-81df-4dbe-8318-10575322e6a1",
+      "kapasite_kwp": null,
+      "durum": "Kontrol Edilmedi",
+      "anlik_kw": 0.0,
+      "bugun_kwh": null,
+      "invertorler": [],
+      "zaman": "2026-10-17T10:48:32+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "b1ffbc3b-fb0f-498d-bdf1-9254d3035823",
+      "ad": "b1ffbc3b-fb0f-498d-bdf1-9254d3035823",
+      "kapasite_kwp": null,
+      "durum": "Kontrol Edilmedi",
+      "anlik_kw": 0.0,
+      "bugun_kwh": null,
+      "invertorler": [],
+      "zaman": "2026-10-17T10:48:32+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "a0754562-7492-4dbe-93dd-079500eb482b",
+      "ad": "a0754562-7492-4dbe-93dd-079500eb482b",
+      "kapasite_kwp": null,
+      "durum": "Kontrol Edilmedi",
+      "anlik_kw": 0.0,
+      "bugun_kwh": null,
+      "invertorler": [],
+      "zaman": "2026-10-17T10:48:32+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "8a36369a-044a-4c67-bc85-d2b0a4856bec",
+      "ad": "8a36369a-044a-4c67-bc85-d2b0a4856bec",
+      "kapasite_kwp": null,
+      "durum": "Kontrol Edilmedi",
+      "anlik_kw": 0.0,
+      "bugun_kwh": null,
+      "invertorler": [],
+      "zaman": "2026-10-17T10:48:32+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "de7a0671-d98a-4f53-aaae-2c0cf7ac8083",
+      "ad": "de7a0671-d98a-4f53-aaae-2c0cf7ac8083",
+      "kapasite_kwp": null,
+      "durum": "Kontrol Edilmedi",
+      "anlik_kw": 0.0,
+      "bugun_kwh": null,
+      "invertorler": [],
+      "zaman": "2026-10-17T10:48:32+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "e242dc8e-c965-46ce-bc89-c467299ca6e7",
+      "ad": "e242dc8e-c965-46ce-bc89-c467299ca6e7",
+      "kapasite_kwp": null,
+      "durum": "Kontrol Edilmedi",
+      "anlik_kw": 0.0,
+      "bugun_kwh": null,
+      "invertorler": [],
+      "zaman": "2026-10-17T10:48:32+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "114b4df3-8909-4dd5-bc93-4cbf828b9711",
+      "ad": "114b4df3-8909-4dd5-bc93-4cbf828b9711",
+      "kapasite_kwp": null,
+      "durum": "Kontrol Edilmedi",
+      "anlik_kw": 0.0,
+      "bugun_kwh": null,
+      "invertorler": [],
+      "zaman": "2026-10-17T10:48:32+00:00"
+    }
+  ]
 }
