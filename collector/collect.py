@@ -249,9 +249,22 @@ def huawei():
     model = os.getenv("HUAWEI_CAPTCHA_MODEL") or "models/captcha_huawei.onnx"
     # "intl", "intl.", " intl " veya yapıştırılmış tam adres -> "intl"
     sub = re.sub(r"^https?://", "", (os.getenv("HUAWEI_SUBDOMAIN") or "").strip())
-    sub = sub.split(".")[0].strip() or "region01eu5"
-    c = FusionSolarClient(user, pwd, huawei_subdomain=sub,
-                          captcha_model_path=model if os.path.exists(model) else None)
+    sub = sub.split(".")[0].strip()
+    # Ayarlanan adres bu ağdan çözülemezse kütüphanenin AB varsayılanını da dene
+    adaylar = list(dict.fromkeys([a for a in (sub, "region01eu5") if a]))
+    model = model if os.path.exists(model) else None
+    c, son_hata = None, None
+    for aday in adaylar:
+        try:
+            c = FusionSolarClient(user, pwd, huawei_subdomain=aday, captcha_model_path=model)
+            sub = aday
+            print(f"Huawei: '{aday}' ile giriş yapıldı")
+            break
+        except requests.exceptions.ConnectionError as e:
+            print(f"Huawei: '{aday}' adresine bağlanılamadı: {str(e)[:120]}")
+            son_hata = e
+    if c is None:
+        raise son_hata
     try:
         # Kütüphanenin get_station_list()'i yalnızca 10 kayıt getirir; sayfalayarak hepsini al.
         liste, sayfa = [], 1
