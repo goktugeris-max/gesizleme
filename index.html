@@ -228,6 +228,29 @@
     // ================== VERİ ==================
     let plants = load();
 
+    // Huawei santralleri: otomatik veri yok (hesap intl sunucusunda), elle takip edilir.
+    // Tarayıcıda kayıtlı listeye eksik olanlar BİR KEZ eklenir; mevcut düzenlemeler korunur.
+    const HUAWEI_PLANTS = [
+      'TR-Buca İtfaiye Ges', 'Aliaga Kultur Merkezi GES', 'Bornova Kultur Merkezi GES',
+      'Çiğli Kadın Sığınma GES', 'Gumuldur Itfaiye GES', 'Selcuk Itfaiye GES', 'TR-Karşıyaka Örnekköy'
+    ];
+    function seedHuawei(list) {
+      let eklendi = false;
+      HUAWEI_PLANTS.forEach(n => {
+        if (!list.some(p => p.portal === 'Huawei' && norm(p.name) === norm(n))) {
+          list.push({ id: uid(), name: n, portal: 'Huawei', cap: '', status: 'Kontrol Edilmedi', osos: '', note: '', updated: '' });
+          eklendi = true;
+        }
+      });
+      return eklendi;
+    }
+    try {
+      if (!localStorage.getItem('ges_osos_huawei_seed_v1')) {
+        if (seedHuawei(plants)) save();
+        localStorage.setItem('ges_osos_huawei_seed_v1', '1');
+      }
+    } catch (e) { seedHuawei(plants); }
+
     function uid() { return Math.random().toString(36).slice(2, 10); }
     function load() {
       try { const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); if (Array.isArray(d)) return d; } catch (e) {}
