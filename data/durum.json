@@ -1,5 +1,11 @@
 {
-  "guncelleme": "2026-10-17T10:28:35+00:00",
-  "kaynaklar": {},
+  "guncelleme": "2026-10-17T10:49:26+00:00",
+  "kaynaklar": {
+    "GoodWe": {
+      "ok": true,
+      "zaman": "2026-10-17T10:49:26+00:00",
+      "adet": 0
+    }
+  },
   "santraller": []
 }
