@@ -2,3 +2,4 @@ models/
 __pycache__/
 *.xlsx
 *.xls
+data/elektrik.json

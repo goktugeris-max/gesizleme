@@ -1,7 +1,8 @@
 """Elektrik tüketimi Excel'inden data/elektrik.json üretir.
 
 Kullanım:
-    python collector/elektrik_to_json.py "Elektrik.xlsx"
+    ELEKTRIK_PAROLA="parolaniz" python collector/elektrik_to_json.py "Elektrik.xlsx"
+    (ELEKTRIK_PAROLA verilmezse parola sorulur.) Çıktı: data/elektrik.enc.json (şifreli)
 
 Depo ve site herkese açık olduğu için ABONE NO, ADRES, kabin bilgisi ve fatura TUTARLARI (TL)
 çıktıya YAZILMAZ; yalnızca toplamlar (ay / daire başkanlığı / tarife / tedarikçi, kWh) yazılır.
@@ -11,7 +12,9 @@ Kaynaklar (Excel sayfaları):
   Yıllık Durum  aylık faturalı tüketim (2023 → ...), genel aydınlatma hariç
   Sonuç         genel aydınlatmadan gelen %20 pay, müstecir noktalar, GES net üretim, üretim fazlası
 """
+import base64
 import collections
+import getpass
 import json
 import os
 import sys
@@ -19,7 +22,10 @@ from datetime import datetime
 
 import openpyxl
 
-OUT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "elektrik.json")
+# Düz metin YAZILMAZ: depo herkese açık. Çıktı parolayla şifrelenir (AES-256-GCM, PBKDF2-SHA256);
+# tarayıcıda site açılırken girilen parolayla çözülür.
+OUT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "elektrik.enc.json")
+PBKDF2_TUR = 600000
 AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
 
 
@@ -104,6 +110,18 @@ def sonuc_sayfasi(wb):
     return bloklar
 
 
+def sifrele(veri, parola):
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+    salt, iv = os.urandom(16), os.urandom(12)
+    anahtar = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=PBKDF2_TUR).derive(parola.encode("utf-8"))
+    sifreli = AESGCM(anahtar).encrypt(iv, json.dumps(veri, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), None)
+    b64 = lambda b: base64.b64encode(b).decode("ascii")
+    return {"v": 1, "iter": PBKDF2_TUR, "salt": b64(salt), "iv": b64(iv), "data": b64(sifreli)}
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -162,9 +180,13 @@ def main():
         "tedarikci": kisalt(tedarikci),
         "veri_notlari": notlar,
     }
+    parola = os.environ.get("ELEKTRIK_PAROLA") or getpass.getpass("Elektrik verisi için parola: ")
+    if len(parola) < 12:
+        print("Parola en az 12 karakter olmalı (herkese açık dosya çevrimdışı denenebilir).")
+        return 1
     os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
     with open(OUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(cikti, f, ensure_ascii=False, separators=(",", ":"))
+        json.dump(sifrele(cikti, parola), f, separators=(",", ":"))
     print(f"{satir_sayisi} ham satır, {len(db)} daire başkanlığı, son dönem {en_son_yil}-{son_ay:02d} -> {os.path.abspath(OUT_PATH)}")
     for n in notlar:
         print("NOT:", n)

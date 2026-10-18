@@ -20,7 +20,10 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   **bilerek yazılmaz** (site herkese açık). `*.xlsx` `.gitignore`'da; Excel'i asla commit etme.
   Santral → canlı veri eşleşmeleri `excel_to_json.py` içindeki `SANTRALLER` sözlüğünde.
   Aylık güncelleme: kullanıcı yeni Excel'leri verir → betik yeniden çalıştırılır → `performans.json` commit'lenir.
-- `data/elektrik.json` — elektrik tüketimi Excel'inden üretilir: `collector/elektrik_to_json.py "<Elektrik.xlsx>"`.
+- `data/elektrik.enc.json` — **ŞİFRELİ** (AES-256-GCM, PBKDF2) elektrik verisi; düz metin depoya asla girmez (`data/elektrik.json`
+  .gitignore'da). Üretim: `ELEKTRIK_PAROLA="..." python3 collector/elektrik_to_json.py "<Elektrik.xlsx>"` (parola ≥12 karakter).
+  Sekme açılınca "Yönetici girişi" parolayı sorar, çözme tarayıcıda yapılır (parola oturum boyunca sessionStorage'da). Parola
+  unutulursa veri kurtarılamaz; Excel'den yeniden şifrelenir. Not: bu, istemci taraflı koruma — zayıf parola çevrimdışı denenebilir.
   Yalnızca toplamlar yazılır (ay / daire başkanlığı / tarife / tedarikçi, kWh). **Abone no, adres, kabin bilgisi ve fatura
   tutarları (TL) bilerek yazılmaz.** Tanım (Excel `Sonuç` sayfasıyla aynı): Gerçek tüketim = faturalı tüketim (genel aydınlatma
   hariç) + genel aydınlatmadan gelen %20 pay − müstecir noktalara verilen − üretim fazlası + GES net üretim.

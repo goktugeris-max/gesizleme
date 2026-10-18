@@ -180,22 +180,60 @@
     if (window.lucide) lucide.createIcons();
   }
 
+  // ---- Şifreli veri: data/elektrik.enc.json (AES-GCM + PBKDF2), parola yalnızca tarayıcıda kullanılır ----
+  let sifreli = null;
+  const b64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+  const oturum = (k, v) => { try { return v === undefined ? sessionStorage.getItem(k) : (v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v)); } catch (e) { return null; } };
+
+  async function coz(parola) {
+    const anahtarMalzeme = await crypto.subtle.importKey('raw', new TextEncoder().encode(parola), 'PBKDF2', false, ['deriveKey']);
+    const anahtar = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt: b64(sifreli.salt), iterations: sifreli.iter, hash: 'SHA-256' },
+      anahtarMalzeme, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    const acik = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(sifreli.iv) }, anahtar, b64(sifreli.data));
+    return JSON.parse(new TextDecoder().decode(acik));
+  }
+
+  function girisFormu(hata) {
+    document.getElementById('elKartlar').innerHTML = `<form id="elGiris" class="col-span-full max-w-sm mx-auto my-10 bg-slate-800/60 border border-slate-700 rounded-xl p-5 space-y-3">
+      <div class="flex items-center gap-2 text-amber-300 font-semibold"><i data-lucide="lock" class="w-4 h-4"></i> Yönetici girişi</div>
+      <p class="text-xs text-slate-400">Elektrik tüketim verileri şifreli saklanır. Görmek için parolayı girin.</p>
+      <input id="elParola" type="password" autocomplete="current-password" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm" placeholder="Parola" />
+      <p class="text-xs text-rose-400 ${hata ? '' : 'hidden'}">${hata || ''}</p>
+      <button class="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold rounded-lg py-2 text-sm">Giriş</button>
+    </form>`;
+    if (window.lucide) lucide.createIcons();
+    document.getElementById('elGiris').onsubmit = async (ev) => {
+      ev.preventDefault();
+      const p = document.getElementById('elParola').value;
+      if (await ac_dene(p)) { oturum('elp', p); window.Elek.ac(); } else girisFormu('Parola yanlış.');
+    };
+  }
+
+  async function ac_dene(parola) {
+    try { E = await coz(parola); yuklendi = true; ozetSerit(); return true; } catch (e) { return false; }
+  }
+
   async function yukle() {
     try {
-      const r = await fetch('data/elektrik.json?t=' + Date.now(), { cache: 'no-store' });
-      if (!r.ok) throw new Error(r.status);
-      E = await r.json();
-      yuklendi = true;
-      ozetSerit();
+      if (!sifreli) {
+        const r = await fetch('data/elektrik.enc.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error(r.status);
+        sifreli = await r.json();
+      }
+      const kayitli = oturum('elp');
+      if (kayitli && await ac_dene(kayitli)) return;
+      oturum('elp', null);
     } catch (e) {
       document.getElementById('elKartlar').innerHTML = '<p class="col-span-full text-sm text-slate-400">Elektrik verisi yüklenemedi.</p>';
+      sifreli = null;
     }
   }
 
   window.Elek = {
     async ac() {
       if (!yuklendi) await yukle();
-      if (!yuklendi) return;
+      if (!yuklendi) { if (sifreli) girisFormu(); return; }
       if (!cizildi) ciz();
       setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);
     },
