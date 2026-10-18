@@ -59,6 +59,7 @@
     <nav class="max-w-7xl mx-auto px-4 sm:px-6 pb-3 flex flex-wrap items-center gap-1.5">
       <button id="nav-genel" onclick="Dash.sekme('genel')">Genel Bakış</button>
       <button id="nav-santraller" onclick="Dash.sekme('santraller')">Santraller</button>
+      <button id="nav-elektrik" onclick="Dash.sekme('elektrik')">Elektrik</button>
       <button id="nav-canli" onclick="Dash.sekme('canli')">Canlı Durum</button>
       <button id="nav-ariza" onclick="Dash.sekme('ariza')">Arıza Takip</button>
     </nav>
@@ -69,6 +70,7 @@
     <!-- SEKME: GENEL BAKIŞ -->
     <div id="tab-genel" data-tab class="hidden space-y-6">
       <section id="genelKartlar" class="grid grid-cols-2 lg:grid-cols-5 gap-4"></section>
+      <a id="genelElektrik" href="#elektrik" class="hidden glass-card rounded-xl px-4 py-3 text-xs text-slate-300 hover:bg-slate-800/60 transition flex flex-wrap items-center gap-x-3 gap-y-1"></a>
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="glass-card rounded-xl p-4 lg:col-span-2">
           <h2 class="text-sm font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="line-chart" class="w-4 h-4 text-amber-400"></i> Aylık toplam üretim</h2>
@@ -102,6 +104,51 @@
         <div class="overflow-x-auto"><table id="perfTablo" class="w-full text-xs"></table></div>
       </section>
       <div id="veriNotlari"></div>
+    </div>
+
+    <!-- SEKME: ELEKTRİK -->
+    <div id="tab-elektrik" data-tab class="hidden space-y-6">
+      <section id="elKartlar" class="grid grid-cols-2 lg:grid-cols-5 gap-4"></section>
+      <div class="glass-card rounded-xl px-4 py-3 text-[11px] text-slate-400">
+        <b class="text-slate-300">Gerçek tüketim</b> = faturalı tüketim (genel aydınlatma hariç) + genel aydınlatmadan gelen %20 pay − müstecir noktalara verilen − üretim fazlası + GES net üretim.
+        <b class="text-slate-300">GES payı</b> = GES net üretim ÷ gerçek tüketim.
+      </div>
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-white flex items-center gap-2"><i data-lucide="line-chart" class="w-4 h-4 text-amber-400"></i> Aylık tüketim</h2>
+            <div class="flex gap-1 bg-slate-900/80 rounded-lg p-0.5">
+              <button data-elsecim="gercek" onclick="Elek.sec('gercek')">Gerçek</button>
+              <button data-elsecim="faturali" onclick="Elek.sec('faturali')">Faturalı</button>
+            </div>
+          </div>
+          <div class="h-72"><canvas id="chElAylik"></canvas></div>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <h2 class="text-sm font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="sun" class="w-4 h-4 text-amber-400"></i> GES katkısı (aylık net üretim ve tüketimdeki pay)</h2>
+          <div class="h-72"><canvas id="chElGes"></canvas></div>
+        </div>
+      </section>
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-4 lg:col-span-2">
+          <h2 class="text-sm font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="building-2" class="w-4 h-4 text-cyan-400"></i> Daire başkanlıklarına göre tüketim (ilk 15)</h2>
+          <div class="h-[28rem]"><canvas id="chElDb"></canvas></div>
+        </div>
+        <div class="space-y-4">
+          <div class="glass-card rounded-xl p-4"><h2 class="text-sm font-semibold text-white mb-2">Tarife dağılımı</h2><div class="h-52"><canvas id="chElTarife"></canvas></div></div>
+          <div class="glass-card rounded-xl p-4"><h2 class="text-sm font-semibold text-white mb-2">Tedarikçi dağılımı</h2><div class="h-52"><canvas id="chElTedarikci"></canvas></div></div>
+        </div>
+      </section>
+      <section class="glass-card rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800"><h2 class="text-sm font-semibold text-white">Yıllık özet</h2></div>
+        <div class="overflow-x-auto"><table id="elYillik" class="w-full text-xs"></table></div>
+      </section>
+      <section class="glass-card rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800"><h2 class="text-sm font-semibold text-white">Tüm daire başkanlıkları</h2></div>
+        <div class="overflow-x-auto"><table id="elDbTablo" class="w-full text-xs"></table></div>
+      </section>
+      <div id="elNotlar"></div>
+      <p id="elKaynak" class="text-[11px] text-slate-500 text-center"></p>
     </div>
 
     <!-- SEKME: ARIZA TAKİP -->
@@ -626,5 +673,6 @@
     loadLive();
   </script>
   <script src="dashboard.js"></script>
+  <script src="elektrik.js"></script>
 </body>
 </html>
