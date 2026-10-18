@@ -5,9 +5,11 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
 
 ## Mimari (sunucusuz)
 
-- `index.html` + `dashboard.js` — GitHub Pages'te yayınlanan panel (Tailwind + Lucide + Chart.js, CDN). 4 sekme:
+- `index.html` + `dashboard.js` + `elektrik.js` — GitHub Pages'te yayınlanan panel (Tailwind + Lucide + Chart.js, CDN). 5 sekme:
   - **Genel Bakış**: kurulu güç, yıllık üretim, beklenene göre verim, aylık/yıllık grafikler, "dikkat gerektirenler".
   - **Santraller**: performans tablosu (verim, geçen yıl farkı, son ay, kWh/kW, canlı durum) + santral detay penceresi.
+  - **Elektrik** (`elektrik.js`): belediye elektrik tüketimi — kartlar, aylık tüketim, GES katkısı (aylık net üretim ve tüketimdeki
+    pay), daire başkanlığı/tarife/tedarikçi kırılımı, yıllık özet. Genel Bakış'ta tek satırlık özet şeridi var.
   - **Canlı Durum**: eski kontrol paneli (portal bağlantıları, santral tablosu; isim/saha notu/kWp/tesisat no elle
     düzenlenir ve localStorage'a kaydedilir; GDZ kopyala-yapıştır, WhatsApp raporu, JSON yedek). `loadLive()`
     `data/durum.json`'u okur, `window.CANLI`'ya koyar. Eşleştirme: `portal + kaynakId`, yoksa normalize isim.
@@ -18,6 +20,11 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   **bilerek yazılmaz** (site herkese açık). `*.xlsx` `.gitignore`'da; Excel'i asla commit etme.
   Santral → canlı veri eşleşmeleri `excel_to_json.py` içindeki `SANTRALLER` sözlüğünde.
   Aylık güncelleme: kullanıcı yeni Excel'leri verir → betik yeniden çalıştırılır → `performans.json` commit'lenir.
+- `data/elektrik.json` — elektrik tüketimi Excel'inden üretilir: `collector/elektrik_to_json.py "<Elektrik.xlsx>"`.
+  Yalnızca toplamlar yazılır (ay / daire başkanlığı / tarife / tedarikçi, kWh). **Abone no, adres, kabin bilgisi ve fatura
+  tutarları (TL) bilerek yazılmaz.** Tanım (Excel `Sonuç` sayfasıyla aynı): Gerçek tüketim = faturalı tüketim (genel aydınlatma
+  hariç) + genel aydınlatmadan gelen %20 pay − müstecir noktalara verilen − üretim fazlası + GES net üretim.
+  Faturalı tüketim için `Yıllık Durum` (ham `Veri` ile uyumlu) esas alınır; `Sonuç` sayfasıyla fark varsa `veri_notlari`'na yazılır.
 - `collector/collect.py` — canlı veri toplayıcı. Çıktı: `data/durum.json` (`guncelleme`, `kaynaklar{ad:{ok,adet,hata}}`,
   `santraller[]`). Bir portal hata verirse o portalın eski verisi korunur; hiçbir portal için Secret yoksa hata verip çıkar.
   - **GoodWe SEMS** (hk.semsportal.com, CrossLogin): liste `v2/PowerStationMonitor/QueryPowerStationMonitor`, detay

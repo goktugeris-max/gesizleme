@@ -7,7 +7,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['genel', 'santraller', 'canli', 'ariza'];
+  const SEKMELER = ['genel', 'santraller', 'elektrik', 'canli', 'ariza'];
 
   let PERF = null;
   let M = [];            // santral başına hesaplanan göstergeler
@@ -284,6 +284,7 @@
       b.className = 'px-3.5 py-2 rounded-lg text-xs font-semibold transition ' + (t === ad ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200 border border-transparent');
     });
     document.getElementById('liveButtons').classList.toggle('hidden', ad !== 'canli');
+    if (ad === 'elektrik' && window.Elek) Elek.ac();
     if (history.replaceState) history.replaceState(null, '', '#' + ad);
     // Grafikler gizli sekmede çizilirse boyutları bozulur; görünür olunca yeniden boyutla
     setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);
