@@ -60,6 +60,7 @@
       <button id="nav-genel" onclick="Dash.sekme('genel')">Genel Bakış</button>
       <button id="nav-santraller" onclick="Dash.sekme('santraller')">Santraller</button>
       <button id="nav-elektrik" onclick="Dash.sekme('elektrik')">Elektrik</button>
+      <button id="nav-iso" onclick="Dash.sekme('iso')">ISO 50001</button>
       <button id="nav-canli" onclick="Dash.sekme('canli')">Canlı Durum</button>
       <button id="nav-ariza" onclick="Dash.sekme('ariza')">Arıza Takip</button>
     </nav>
@@ -107,6 +108,7 @@
     </div>
 
     <!-- SEKME: ELEKTRİK -->
+    <div id="tab-iso" data-tab class="hidden"><div id="isoIcerik"></div></div>
     <div id="tab-elektrik" data-tab class="hidden space-y-6">
       <section id="elKartlar" class="grid grid-cols-2 lg:grid-cols-5 gap-4"></section>
       <div class="glass-card rounded-xl px-4 py-3 text-[11px] text-slate-400">
@@ -687,5 +689,6 @@
   </script>
   <script src="dashboard.js"></script>
   <script src="elektrik.js"></script>
+  <script src="iso.js"></script>
 </body>
 </html>
