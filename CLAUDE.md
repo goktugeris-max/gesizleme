@@ -24,7 +24,8 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   .gitignore'da). Üretim: `ELEKTRIK_PAROLA="..." python3 collector/elektrik_to_json.py "<Elektrik.xlsx>"` (parola ≥12 karakter).
   Sekme açılınca "Yönetici girişi" parolayı sorar, çözme tarayıcıda yapılır (parola oturum boyunca sessionStorage'da). Parola
   unutulursa veri kurtarılamaz; Excel'den yeniden şifrelenir. Not: bu, istemci taraflı koruma — zayıf parola çevrimdışı denenebilir.
-  Yalnızca toplamlar yazılır (ay / daire başkanlığı / tarife / tedarikçi, kWh). **Abone no, adres, kabin bilgisi ve fatura
+  Şifreli veri ayrıca `db_tarife` (DB × tarife) ve `genel_aydinlatma` (aylık kWh) içerir; Elektrik sekmesindeki **Raporlar** bölümü
+  (rapor/yıl/ay aralığı seçilir, CSV indir, yazdır) bunlardan beslenir. Yalnızca toplamlar yazılır (ay / daire başkanlığı / tarife / tedarikçi, kWh). **Abone no, adres, kabin bilgisi ve fatura
   tutarları (TL) bilerek yazılmaz.** Tanım (Excel `Sonuç` sayfasıyla aynı): Gerçek tüketim = faturalı tüketim (genel aydınlatma
   hariç) + genel aydınlatmadan gelen %20 pay − müstecir noktalara verilen − üretim fazlası + GES net üretim.
   Faturalı tüketim için `Yıllık Durum` (ham `Veri` ile uyumlu) esas alınır; `Sonuç` sayfasıyla fark varsa `veri_notlari`'na yazılır.

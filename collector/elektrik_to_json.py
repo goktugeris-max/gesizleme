@@ -24,7 +24,7 @@ import openpyxl
 
 # Düz metin YAZILMAZ: depo herkese açık. Çıktı parolayla şifrelenir (AES-256-GCM, PBKDF2-SHA256);
 # tarayıcıda site açılırken girilen parolayla çözülür.
-OUT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "elektrik.enc.json")
+OUT_PATH = os.environ.get("ELEKTRIK_CIKTI") or os.path.join(os.path.dirname(__file__), "..", "data", "elektrik.enc.json")
 PBKDF2_TUR = 600000
 AYLAR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
 
@@ -50,6 +50,7 @@ def ham_veri(wb):
     db = collections.defaultdict(lambda: collections.defaultdict(lambda: [0.0] * 12))
     tarife = collections.defaultdict(lambda: collections.defaultdict(lambda: [0.0] * 12))
     tedarikci = collections.defaultdict(lambda: collections.defaultdict(lambda: [0.0] * 12))
+    db_tarife = collections.defaultdict(lambda: collections.defaultdict(lambda: collections.defaultdict(lambda: [0.0] * 12)))
     toplam = collections.defaultdict(lambda: [0.0] * 12)
     aboneler = collections.defaultdict(set)
     sayac = 0
@@ -68,13 +69,14 @@ def ham_veri(wb):
         db[ad][yil][i] += kwh
         tarife[t][yil][i] += kwh
         tedarikci[s][yil][i] += kwh
+        db_tarife[ad][t][yil][i] += kwh
         toplam[yil][i] += kwh
         aboneler[(yil, ay)].add(str(r[1]))
         sayac += 1
     abone_sayisi = collections.defaultdict(lambda: [None] * 12)
     for (yil, ay), kume in aboneler.items():
         abone_sayisi[yil][ay - 1] = len(kume)
-    return db, tarife, tedarikci, toplam, abone_sayisi, sayac
+    return db, tarife, tedarikci, toplam, abone_sayisi, sayac, db_tarife
 
 
 def yillik_durum(wb):
@@ -86,6 +88,18 @@ def yillik_durum(wb):
         if y is None:
             continue
         sonuc[int(y)] = [sayi(ws.cell(2 + a, c).value) for a in range(1, 13)]
+    return sonuc
+
+
+def genel_aydinlatma_sayfasi(wb):
+    """Genel Aydınlatma sayfası: yıl bloklarında B sütunu aylık tüketim (kWh). Fatura/kesinti tutarları (TL) alınmaz."""
+    ws = wb["Genel Aydınlatma"]
+    sonuc = {}
+    satirlar = list(ws.iter_rows(values_only=True))
+    for i, r in enumerate(satirlar):
+        y = sayi(r[0])
+        if y is not None and 2015 <= y <= 2100 and r[1]:
+            sonuc[str(int(y))] = [yuvarla(sayi(satirlar[i + 2 + a][1])) if i + 2 + a < len(satirlar) else None for a in range(12)]
     return sonuc
 
 
@@ -127,7 +141,8 @@ def main():
         print(__doc__)
         return 1
     wb = openpyxl.load_workbook(sys.argv[1], data_only=True, read_only=True)
-    db, tarife, tedarikci, toplam, abone_sayisi, satir_sayisi = ham_veri(wb)
+    db, tarife, tedarikci, toplam, abone_sayisi, satir_sayisi, db_tarife = ham_veri(wb)
+    genel_aydinlatma = genel_aydinlatma_sayfasi(wb)
     yd = yillik_durum(wb)
     sn = sonuc_sayfasi(wb)
     notlar = []
@@ -178,6 +193,8 @@ def main():
         "db": kisalt(db),
         "tarife": kisalt(tarife),
         "tedarikci": kisalt(tedarikci),
+        "db_tarife": {ad: kisalt(t) for ad, t in sorted(db_tarife.items())},
+        "genel_aydinlatma": genel_aydinlatma,
         "veri_notlari": notlar,
     }
     parola = os.environ.get("ELEKTRIK_PAROLA") or getpass.getpass("Elektrik verisi için parola: ")

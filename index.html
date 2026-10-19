@@ -139,6 +139,19 @@
           <div class="glass-card rounded-xl p-4"><h2 class="text-sm font-semibold text-white mb-2">Tedarikçi dağılımı</h2><div class="h-52"><canvas id="chElTedarikci"></canvas></div></div>
         </div>
       </section>
+      <section id="elRaporlar" class="glass-card rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-800 flex flex-wrap items-end gap-3">
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2 mr-auto"><i data-lucide="file-bar-chart" class="w-4 h-4 text-amber-400"></i> Raporlar</h2>
+          <label class="text-[11px] text-slate-400">Rapor<br><select id="elRaporSec" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 min-w-[16rem]"></select></label>
+          <label class="text-[11px] text-slate-400">Yıl<br><select id="elRaporYil" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100"></select></label>
+          <label class="text-[11px] text-slate-400">Başlangıç<br><select id="elRaporBas" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100"></select></label>
+          <label class="text-[11px] text-slate-400">Bitiş<br><select id="elRaporBit" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100"></select></label>
+          <button onclick="Elek.csv()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-100 flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> CSV</button>
+          <button onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-100 flex items-center gap-1.5"><i data-lucide="printer" class="w-3.5 h-3.5"></i> Yazdır</button>
+        </div>
+        <div id="elRaporAciklama" class="px-4 py-2 text-[11px] text-slate-400 border-b border-slate-800"></div>
+        <div class="overflow-x-auto max-h-[36rem]"><table id="elRaporTablo" class="w-full text-xs"></table></div>
+      </section>
       <section class="glass-card rounded-xl overflow-hidden">
         <div class="p-4 border-b border-slate-800"><h2 class="text-sm font-semibold text-white">Yıllık özet</h2></div>
         <div class="overflow-x-auto"><table id="elYillik" class="w-full text-xs"></table></div>
