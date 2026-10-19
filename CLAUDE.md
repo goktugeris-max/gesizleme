@@ -24,10 +24,18 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   .gitignore'da). Üretim: `ELEKTRIK_PAROLA="..." python3 collector/elektrik_to_json.py "<Elektrik.xlsx>"` (parola ≥12 karakter).
   Sekme açılınca "Yönetici girişi" parolayı sorar, çözme tarayıcıda yapılır (parola oturum boyunca sessionStorage'da). Parola
   unutulursa veri kurtarılamaz; Excel'den yeniden şifrelenir. Not: bu, istemci taraflı koruma — zayıf parola çevrimdışı denenebilir.
-  Yalnızca toplamlar yazılır (ay / daire başkanlığı / tarife / tedarikçi, kWh). **Abone no, adres, kabin bilgisi ve fatura
+  Şifreli veri ayrıca `db_tarife` (DB × tarife) ve `genel_aydinlatma` (aylık kWh) içerir; Elektrik sekmesindeki **Raporlar** bölümü
+  (rapor/yıl/ay aralığı seçilir, CSV indir, yazdır) bunlardan beslenir. Yalnızca toplamlar yazılır (ay / daire başkanlığı / tarife / tedarikçi, kWh). **Abone no, adres, kabin bilgisi ve fatura
   tutarları (TL) bilerek yazılmaz.** Tanım (Excel `Sonuç` sayfasıyla aynı): Gerçek tüketim = faturalı tüketim (genel aydınlatma
   hariç) + genel aydınlatmadan gelen %20 pay − müstecir noktalara verilen − üretim fazlası + GES net üretim.
   Faturalı tüketim için `Yıllık Durum` (ham `Veri` ile uyumlu) esas alınır; `Sonuç` sayfasıyla fark varsa `veri_notlari`'na yazılır.
+- `data/iso50001.enc.json` — **ŞİFRELİ** ISO 50001 verisi (elektrikle aynı parola/oturum). Üretim:
+  `ELEKTRIK_PAROLA="..." python3 collector/iso50001_to_json.py "<TSE GİDEN EVRAK klasörü>"`. Kaynak: `FRM.06.07 Enerji Referans
+  Çizgileri/<yıl>/<no>.EnRÇ ....xlsx` (aylık takip + referans çizgisi, HDD/CDD/etkinlik değişkenleri, sapma gerekçesi) ve
+  `PLN.06.01 Enerji Eylem Planı.xlsx`. Üç tesis: AASSM (dosya 1-2), Buz Sporları (3-4), Buca Sosyal Yaşam Kampüsü (5-11: Huzurevi,
+  Aşevi, Kapalı Spor Salonu, Soğutma). Yatırım tutarları (TL) alınmaz. Sapma = (gerçekleşen−referans)/referans, pozitif = aşım.
+  `iso.js` "ISO 50001" sekmesini çizer. Yeni yıl: yeni `<yıl>/` klasörünü ekle, betikteki `for yil in (2023, 2024)` listesini güncelle.
+  Excel'de bilinen hata: Aşevi Mutfak 2024 toplam formülü Aralık'ı dışarıda bırakıyor (`veri_notlari`).
 - `collector/collect.py` — canlı veri toplayıcı. Çıktı: `data/durum.json` (`guncelleme`, `kaynaklar{ad:{ok,adet,hata}}`,
   `santraller[]`). Bir portal hata verirse o portalın eski verisi korunur; hiçbir portal için Secret yoksa hata verip çıkar.
   - **GoodWe SEMS** (hk.semsportal.com, CrossLogin): liste `v2/PowerStationMonitor/QueryPowerStationMonitor`, detay

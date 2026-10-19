@@ -153,11 +153,86 @@
       </details>` : '';
   }
 
+  // ---------- seçilebilir raporlar ----------
+  const RAPORLAR = {
+    db: { ad: 'Daire başkanlığı kırılımı (dönem karşılaştırması)', tur: 'kars', ac: 'Seçilen dönemin toplam tüketimi, geçen yılın aynı dönemiyle.', kaynak: () => E.db },
+    db_aylik: { ad: 'Daire başkanlığı × ay (seçili yıl)', tur: 'matris', ac: 'Seçilen yılın aylık tüketimi, daire başkanlığı bazında (kWh).', satirlar: (y) => Object.entries(E.db).map(([a, v]) => [a, v[y]]) },
+    aydinlatma_db: { ad: 'Aydınlatma tarifesi — daire başkanlığı bazında', tur: 'kars', ac: 'Yalnızca "AYDINLATMA" tarifeli abonelerin tüketimi (genel aydınlatma hariç).',
+      kaynak: () => Object.fromEntries(Object.entries(E.db_tarife || {}).filter(([, t]) => t.AYDINLATMA).map(([a, t]) => [a, t.AYDINLATMA])) },
+    genel_aydinlatma: { ad: 'Genel aydınlatma — aylık tüketim (tüm yıllar)', tur: 'matris', ac: 'Genel aydınlatma aylık tüketimi (kWh). Satırlar yıl, sütunlar ay; seçili yıl ayarı kullanılmaz.', satirlar: () => Object.entries(E.genel_aydinlatma || {}).sort((a, b) => b[0] - a[0]).map(([y, v]) => [y, v]), yilsiz: true },
+    tarife: { ad: 'Tarife dağılımı', tur: 'kars', ac: 'Ticarethane, mesken, aydınlatma tarifelerine göre tüketim.', kaynak: () => E.tarife },
+    tedarikci: { ad: 'Tedarikçi dağılımı', tur: 'kars', ac: 'Tedarikçi firmaya göre tüketim.', kaynak: () => E.tedarikci },
+    ozet: { ad: 'Aylık özet (faturalı, gerçek, GES)', tur: 'matris', ac: 'Seçili yıl için aylık faturalı/gerçek tüketim ve GES kalemleri (kWh).',
+      satirlar: (y) => [['Faturalı tüketim', 'faturali'], ['Genel aydınlatma %20 payı', 'aydinlatma_pay'], ['Müstecir noktalar', 'mustecir'], ['GES net üretim', 'ges_net'], ['Üretim fazlası', 'fazla'], ['Gerçek tüketim', 'gercek']].map(([a, k]) => [a, E.aylik[y][k]]) },
+  };
+  let raporSon = null;
+
+  function raporKur() {
+    const sec = document.getElementById('elRaporSec');
+    if (!sec || sec.options.length) return;
+    sec.innerHTML = Object.entries(RAPORLAR).map(([k, r]) => `<option value="${k}">${esc(r.ad)}</option>`).join('');
+    const yillar = yilSayi().reverse();
+    document.getElementById('elRaporYil').innerHTML = yillar.map((y) => `<option>${y}</option>`).join('');
+    const aylar = AY_UZUN.map((a, i) => `<option value="${i + 1}">${a}</option>`).join('');
+    document.getElementById('elRaporBas').innerHTML = aylar;
+    document.getElementById('elRaporBit').innerHTML = aylar;
+    document.getElementById('elRaporYil').value = String(E.son_donem.yil);
+    document.getElementById('elRaporBas').value = '1';
+    document.getElementById('elRaporBit').value = String(E.son_donem.ay);
+    ['elRaporSec', 'elRaporYil', 'elRaporBas', 'elRaporBit'].forEach((id) => { document.getElementById(id).onchange = () => raporCiz(id === 'elRaporYil'); });
+  }
+
+  function raporCiz(yilDegisti) {
+    const rk = document.getElementById('elRaporSec').value, r = RAPORLAR[rk];
+    const yil = document.getElementById('elRaporYil').value;
+    if (yilDegisti) document.getElementById('elRaporBit').value = String(yil === String(E.son_donem.yil) ? E.son_donem.ay : 12);
+    let bas = +document.getElementById('elRaporBas').value, bit = +document.getElementById('elRaporBit').value;
+    if (bas > bit) { [bas, bit] = [bit, bas]; document.getElementById('elRaporBas').value = bas; document.getElementById('elRaporBit').value = bit; }
+    const aralik = (a) => (a || []).slice(bas - 1, bit).reduce((t, v) => t + (v || 0), 0);
+    const baslikSinif = 'bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[11px] sticky top-0';
+    let kol, satir, ozet;
+    if (r.tur === 'kars') {
+      const onceki = String(+yil - 1);
+      const donem = `${AY[bas - 1]}–${AY[bit - 1]}`;
+      const s = Object.entries(r.kaynak()).map(([ad, y]) => [ad, aralik(y[yil]), aralik(y[onceki])]).filter((x) => x[1] > 0 || x[2] > 0).sort((a, b) => b[1] - a[1]);
+      const top = s.reduce((t, x) => t + x[1], 0), topO = s.reduce((t, x) => t + x[2], 0);
+      kol = ['Ad', `${yil} ${donem} (kWh)`, `${+yil - 1} aynı dönem (kWh)`, 'Değişim', 'Pay'];
+      satir = s.map((x) => [x[0], x[1], x[2], x[2] > 0 ? x[1] / x[2] - 1 : null, top ? x[1] / top : null]);
+      ozet = ['TOPLAM', top, topO, topO > 0 ? top / topO - 1 : null, 1];
+    } else {
+      kol = ['Ad', ...AY_UZUN, 'Toplam'];
+      const bos = (i, y) => +y === E.son_donem.yil && i >= E.son_donem.ay;
+      satir = r.satirlar(yil).map(([a, v]) => { const m = (v || []).map((x, i) => (x == null || bos(i, r.yilsiz ? a : yil) ? null : x)); return [a, ...m, m.reduce((t, x) => t + (x || 0), 0)]; });
+      ozet = null;
+    }
+    document.getElementById('elRaporAciklama').textContent = r.ac + (r.tur === 'kars' ? '' : r.yilsiz ? '' : ` Yıl: ${yil}.`);
+    const hucre = (v, j, tur) => {
+      if (j === 0) return `<td class="px-3 py-2 text-slate-100 whitespace-nowrap">${esc(String(v))}</td>`;
+      if (tur === 'kars' && j === 3) return `<td class="px-3 py-2 text-right font-mono ${v != null && v > 0.1 ? 'text-red-400' : v != null && v < -0.1 ? 'text-emerald-400' : 'text-slate-300'}">${fark(v)}</td>`;
+      if (tur === 'kars' && j === 4) return `<td class="px-3 py-2 text-right font-mono text-slate-400">${yuzde(v, 1)}</td>`;
+      return `<td class="px-3 py-2 text-right font-mono">${v == null ? '—' : tr0(v)}</td>`;
+    };
+    document.getElementById('elRaporTablo').innerHTML = `<thead class="${baslikSinif}"><tr>${kol.map((k, i) => `<th class="px-3 py-3 ${i ? 'text-right' : 'text-left'} whitespace-nowrap">${k}</th>`).join('')}</tr></thead>
+      <tbody class="divide-y divide-slate-800/70">${satir.map((x) => `<tr>${x.map((v, j) => hucre(v, j, r.tur)).join('')}</tr>`).join('')}${ozet ? `<tr class="bg-slate-900/60 font-semibold">${ozet.map((v, j) => hucre(v, j, r.tur)).join('')}</tr>` : ''}</tbody>`;
+    raporSon = { ad: r.ad, kol, satir: ozet ? [...satir, ozet] : satir, tur: r.tur };
+  }
+
+  function csvIndir() {
+    if (!raporSon) return;
+    const hucre = (v, j) => (v == null ? '' : typeof v === 'number' ? (raporSon.tur === 'kars' && j >= 3 ? v.toFixed(4) : String(Math.round(v))).replace('.', ',') : '"' + String(v).replace(/"/g, '""') + '"');
+    const metin = '\ufeff' + [raporSon.kol.map((k) => '"' + k + '"').join(';'), ...raporSon.satir.map((x) => x.map(hucre).join(';'))].join('\r\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([metin], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'elektrik_' + raporSon.ad.toLowerCase().replace(/[^a-z0-9çğıöşü]+/gi, '_').slice(0, 40) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
   function ciz() {
     kartlar(); aylikGrafik(); gesGrafik(); dbTablosu();
     dagilim('chElTarife', E.tarife);
     dagilim('chElTedarikci', E.tedarikci);
     yillikTablo(); notlar();
+    raporKur(); raporCiz();
     const { yil, ay } = E.son_donem;
     document.getElementById('elKaynak').textContent = `Veri: ${AY_UZUN[ay - 1]} ${yil} sonuna kadar (Excel, abone bazında toplanmış). Abone numarası, adres ve fatura tutarı yayınlanmaz.`;
     cizildi = true;
@@ -237,6 +312,7 @@
       if (!cizildi) ciz();
       setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);
     },
+    csv: csvIndir,
     sec(k) { secim = k; if (yuklendi) aylikGrafik(); },
   };
   // Sayfa doğrudan #elektrik ile açıldıysa (dashboard.js bu dosyadan önce çalışır) kendini başlat;
