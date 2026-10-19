@@ -25,7 +25,7 @@ from elektrik_to_json import sifrele
 OUT_PATH = os.environ.get("ISO_CIKTI") or os.path.join(os.path.dirname(__file__), "..", "data", "iso50001.enc.json")
 
 TESISLER = {
-    "aassm": "Ahmed Adnan Saygun Sanat Merkezi (AASSM)",
+    "aassm": "Ahmed Adnan Saygın Sanat Merkezi (AASSM)",
     "buz": "Buz Sporları Salonu",
     "buca": "Buca Sosyal Yaşam Kampüsü",
 }
