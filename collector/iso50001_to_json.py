@@ -173,6 +173,13 @@ VERILERIM = {
 # referans yöntemi: ortalama = (2022+2023)/2 × (1−hedef), 2024 dosyasındaki referansla aynı (sabit baz dönem);
 # regresyon = (kesişim + katsayı × HDD/CDD) × (1−hedef), katsayılar 2024 EnRÇ dosyasındaki regresyon çıktısından
 REGRESYON = {2, 6, 8, 10, 11}
+# Verilerim.xlsx'in DEĞİŞKENLER sayfası 2025'te bitiyor; eksik yılların derece-gün değerleri MGM'den
+# (mgm.gov.tr/Veridegerlendirme/gun-derece.aspx, İzmir merkez 35-00). Aynı tanım: 2024-2025 değerleri Excel'dekiyle birebir tutuyor.
+# Aylar Ocak..Aralık; henüz açıklanmamış aylar None. Sayfada o yıl varsa sayfa esas alınır.
+MGM_DERECE_GUN = {
+    2026: {"HDD": [216, 162, 190, 40, 17, 0, 0, 0, 0, None, None, None],
+           "CDD": [0, 0, 0, 0, 16, 153, 221, 234, 90, None, None, None]},  # Eylül kısmi (22 gün)
+}
 
 
 def aylik12():
@@ -232,6 +239,9 @@ def verilerim_oku(yol, klasor, seriler, notlar):
         if isinstance(r[0], datetime.datetime):
             hdd.setdefault(r[0].year, aylik12())[r[0].month - 1] = sayi(r[3])
             cdd.setdefault(r[0].year, aylik12())[r[0].month - 1] = sayi(r[1])
+    for y, d in MGM_DERECE_GUN.items():
+        hdd.setdefault(y, d["HDD"])
+        cdd.setdefault(y, d["CDD"])
 
     for no, s in seriler.items():
         tur, ad = VERILERIM[no]
