@@ -35,6 +35,8 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   `PLN.06.01 Enerji Eylem Planı.xlsx`. Üç tesis: AASSM (dosya 1-2), Buz Sporları (3-4), Buca Sosyal Yaşam Kampüsü (5-11: Huzurevi,
   Aşevi, Kapalı Spor Salonu, Soğutma). Yatırım tutarları (TL) alınmaz. Sapma = (gerçekleşen−referans)/referans, pozitif = aşım.
   `iso.js` "ISO 50001" sekmesini çizer. Yeni yıl: yeni `<yıl>/` klasörünü ekle, betikteki `for yil in (2023, 2024)` listesini güncelle.
+  İkinci argüman olarak `FRM.06.01 Risk ve Fırsat Değerlendirmesi.xlsx` verilirse (sayfalar: Genel, BSYK=Buca, AASSM, Buz Pisti) ISO sekmesinde
+  "Risk ve fırsat" bölümü çıkar (seviye = O×E; ≥12 yüksek). Betik her çalıştığında dosyanın tamamı yeniden üretilir; iki Excel'i birlikte ver.
   Excel'de bilinen hata: Aşevi Mutfak 2024 toplam formülü Aralık'ı dışarıda bırakıyor (`veri_notlari`).
 - `collector/collect.py` — canlı veri toplayıcı. Çıktı: `data/durum.json` (`guncelleme`, `kaynaklar{ad:{ok,adet,hata}}`,
   `santraller[]`). Bir portal hata verirse o portalın eski verisi korunur; hiçbir portal için Secret yoksa hata verip çıkar.

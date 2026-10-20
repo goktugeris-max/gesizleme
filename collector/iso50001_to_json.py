@@ -1,11 +1,12 @@
 """ISO 50001 enerji yönetimi verisinden data/iso50001.enc.json üretir (parolayla şifreli).
 
 Kullanım:
-    ELEKTRIK_PAROLA="parola" python collector/iso50001_to_json.py "<TSE GİDEN EVRAK klasörü>"
+    ELEKTRIK_PAROLA="parola" python collector/iso50001_to_json.py "<TSE GİDEN EVRAK klasörü>" ["<FRM.06.01 Risk ve Fırsat.xlsx>"]
 
 Klasörde şunlar aranır:
   FRM.06.07 Enerji Referans Çizgileri/<yıl>/<no>.EnRÇ ... .xlsx   (her enerji kullanımı için aylık takip ve referans çizgisi)
   PLN.06.01 Enerji Eylem Planı.xlsx                                (tesis bazında eylemler)
+İkinci argüman verilirse FRM.06.01 Risk ve Fırsat Değerlendirmesi de eklenir.
 
 Depo herkese açık olduğu için düz metin YAZILMAZ; elektrik verisiyle aynı yöntemle (AES-256-GCM) şifrelenir.
 Yatırım tutarları (TL) bilerek alınmaz. Excel dosyaları depoya konmaz.
@@ -127,6 +128,33 @@ def eylem_plani(yol):
     return sonuc
 
 
+RISK_SAYFALARI = {"Risk ve Fırsat Değerlendirmesi": "genel", "BSYK": "buca", "AASSM": "aassm", "Buz Pisti": "buz"}
+
+
+def risk_firsat(yol):
+    """FRM.06.01 Risk ve Fırsat Değerlendirmesi: sayfa başına satırlar. No ve proses birleşik hücreden geldiği için aşağı taşınır."""
+    wb = openpyxl.load_workbook(yol, data_only=True, read_only=True)
+    sonuc = {}
+    for sayfa, tid in RISK_SAYFALARI.items():
+        if sayfa not in wb.sheetnames:
+            continue
+        liste, no, proses = [], None, None
+        for r in wb[sayfa].iter_rows(min_row=7, max_col=14, values_only=True):
+            if metin(r[1]):
+                no = metin(r[1])
+            if metin(r[2]):
+                proses = metin(r[2])
+            tur, tanim = metin(r[3]), metin(r[5])
+            if tur not in ("Risk", "Fırsat") or not tanim:
+                continue
+            o, e = sayi(r[6]), sayi(r[7])
+            seviye = sayi(r[8]) if sayi(r[8]) is not None else (o * e if o is not None and e is not None else None)
+            liste.append({"no": no, "proses": proses, "tur": tur, "kaynak": metin(r[4]), "tanim": tanim, "o": o, "e": e, "seviye": seviye,
+                          "sonra": sayi(r[9]), "aksiyon": metin(r[10]), "sorumlu": metin(r[11]), "faaliyet": metin(r[12])})
+        sonuc[tid] = liste
+    return sonuc
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -154,11 +182,13 @@ def main():
                 notlar.append({"seri": f"{s['tesis']} / {s['bolum']} / {s['enerji']}", "yil": yil, "excel_toplam": None if excel is None else round(excel), "aylik_toplam": round(ben),
                                "not": "Excel'deki toplam satırı aylık değerlerin toplamıyla uyuşmuyor (formül bir ayı dışarıda bırakıyor olabilir); aylık değerlerin toplamı kullanıldı."})
     eylem = eylem_plani(os.path.join(kok, "PLN.06.01 Enerji Eylem Planı.xlsx"))
+    risk = risk_firsat(sys.argv[2]) if len(sys.argv) > 2 else {}
     cikti = {
         "olusturma": datetime.date.today().isoformat(),
         "tesisler": [{"id": k, "ad": v} for k, v in TESISLER.items()],
         "seriler": [seriler[k] for k in sorted(seriler)],
         "eylem": eylem,
+        "risk": risk,
         "veri_notlari": notlar,
     }
     parola = os.environ.get("ELEKTRIK_PAROLA") or getpass.getpass("Parola: ")

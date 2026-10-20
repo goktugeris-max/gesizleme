@@ -8,7 +8,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const RENK = { Elektrik: '#fbbf24', 'Doğalgaz': '#22d3ee' };
-  let D = null, sifreli = null, tesis = 'aassm', yil = '2024', yuklendi = false;
+  let D = null, sifreli = null, tesis = 'aassm', yil = '2024', yuklendi = false, rfTur = 'hepsi';
   const grafik = {};
 
   const tr0 = (n) => (n == null || isNaN(n) ? '—' : Math.round(n).toLocaleString('tr-TR'));
@@ -132,6 +132,35 @@
       <tbody class="divide-y divide-slate-800/70">${blok('Tesise özel eylemler (' + liste.length + ')', liste)}${blok('Genel eylemler (' + genel.length + ')', genel)}</tbody>`;
   }
 
+  const seviyeSinif = (n) => (n == null ? 'bg-slate-700 text-slate-300' : n >= 12 ? 'bg-red-500/20 text-red-300' : n >= 6 ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300');
+
+  function riskBolumu() {
+    const el = document.getElementById('isoRisk');
+    const tesisRisk = (D.risk && D.risk[tesis]) || [], genel = (D.risk && D.risk.genel) || [];
+    if (!tesisRisk.length && !genel.length) { el.classList.add('hidden'); return; }
+    el.classList.remove('hidden');
+    const sec = (l) => l.filter((x) => rfTur === 'hepsi' || x.tur === (rfTur === 'risk' ? 'Risk' : 'Fırsat'));
+    const say = (l) => ({ r: l.filter((x) => x.tur === 'Risk').length, f: l.filter((x) => x.tur === 'Fırsat').length, y: l.filter((x) => x.tur === 'Risk' && (x.seviye || 0) >= 12).length });
+    const t = say(tesisRisk), g = say(genel);
+    const satir = (x) => `<tr class="align-top"><td class="px-3 py-2 text-slate-400 whitespace-nowrap">${esc(x.no || '')}<div class="text-[10px] text-slate-500">${esc(x.proses || '')}</div></td>
+      <td class="px-3 py-2"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${x.tur === 'Risk' ? 'bg-rose-500/15 text-rose-300' : 'bg-sky-500/15 text-sky-300'}">${esc(x.tur)}</span><div class="text-[10px] text-slate-500 mt-1">${esc(x.kaynak || '')}</div></td>
+      <td class="px-3 py-2 text-slate-100 w-[32%]">${esc(x.tanim)}</td>
+      <td class="px-3 py-2 whitespace-nowrap text-center"><span class="px-2 py-0.5 rounded-md font-mono text-[11px] font-semibold ${seviyeSinif(x.seviye)}">${x.seviye == null ? '—' : tr0(x.seviye)}</span><div class="text-[10px] text-slate-500 mt-1">O${tr0(x.o)} × E${tr0(x.e)}</div></td>
+      <td class="px-3 py-2 text-center">${x.sonra != null ? `<span class="px-2 py-0.5 rounded-md font-mono text-[11px] font-semibold ${seviyeSinif(x.sonra)}">${tr0(x.sonra)}</span>` : '<span class="text-slate-600">—</span>'}</td>
+      <td class="px-3 py-2 text-slate-300 w-[22%]">${esc(x.aksiyon || '—')}<div class="text-[10px] text-slate-500 mt-1">${esc(x.sorumlu || '')}</div></td>
+      <td class="px-3 py-2 text-slate-400 w-[22%]">${esc(x.faaliyet || '—')}</td></tr>`;
+    const blok = (baslik, l) => (sec(l).length ? `<tr class="bg-slate-900/60"><td colspan="7" class="px-3 py-2 text-[11px] uppercase tracking-wider text-slate-400">${baslik}</td></tr>${sec(l).map(satir).join('')}` : '');
+    const dugme = (k, ad) => `<button onclick="Iso.rf('${k}')" class="px-2.5 py-1 rounded-md text-[11px] font-semibold ${rfTur === k ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-slate-200'}">${ad}</button>`;
+    el.innerHTML = `<div class="p-4 border-b border-slate-800 flex flex-wrap items-center gap-3">
+        <h2 class="text-sm font-semibold text-white mr-auto">Risk ve fırsat değerlendirmesi</h2>
+        <div class="text-[11px] text-slate-400">Bu tesis: <b class="text-rose-300">${t.r} risk</b> (${t.y} yüksek) • <b class="text-sky-300">${t.f} fırsat</b> &nbsp; Genel: ${g.r} risk • ${g.f} fırsat</div>
+        <div class="flex gap-1 bg-slate-900/80 rounded-lg p-0.5">${dugme('hepsi', 'Tümü')}${dugme('risk', 'Riskler')}${dugme('firsat', 'Fırsatlar')}</div>
+      </div>
+      <div class="overflow-auto max-h-[40rem]"><table class="w-full text-xs"><thead class="bg-slate-900 text-slate-400 uppercase tracking-wider text-[11px] sticky top-0 z-10"><tr><th class="text-left px-3 py-3">No / proses</th><th class="text-left px-3">Tür</th><th class="text-left px-3">Tanım</th><th class="px-3">Seviye</th><th class="px-3">Aksiyon sonrası</th><th class="text-left px-3">Aksiyon / sorumlu</th><th class="text-left px-3">Sistematik faaliyetler</th></tr></thead>
+      <tbody class="divide-y divide-slate-800/70">${blok('Tesise özel (' + sec(tesisRisk).length + ')', tesisRisk)}${blok('Genel (' + sec(genel).length + ')', genel)}</tbody></table></div>
+      <div class="px-4 py-2 text-[11px] text-slate-500 border-t border-slate-800">Seviye = olasılık (O) × etki (E). 12 ve üzeri yüksek (kırmızı), 6–11 orta (turuncu), 5 ve altı düşük (yeşil).</div>`;
+  }
+
   function notlar() {
     const n = D.veri_notlari || [];
     document.getElementById('isoNotlar').innerHTML = `<details class="glass-card rounded-xl p-4 text-xs text-slate-400"><summary class="cursor-pointer text-slate-300 font-medium">Okuma notları${n.length ? ` ve Excel'de ${n.length} tutarsızlık` : ''}</summary>
@@ -153,6 +182,7 @@
       <section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section>
       <section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section>
       <section class="glass-card rounded-xl overflow-hidden"><div class="p-4 border-b border-slate-800"><h2 class="text-sm font-semibold text-white">Enerji eylem planı</h2></div><div class="overflow-x-auto"><table id="isoEylem" class="w-full text-xs"></table></div></section>
+      <section id="isoRisk" class="glass-card rounded-xl overflow-hidden hidden"></section>
       <div id="isoNotlar"></div></div>`;
   }
 
@@ -164,7 +194,7 @@
     document.getElementById('isoBaslik').textContent = t ? t.ad : '';
     ozetKartlari();
     document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('');
-    seriGrafikleri(); eylemTablosu(); notlar();
+    seriGrafikleri(); eylemTablosu(); riskBolumu(); notlar();
     if (window.lucide) lucide.createIcons();
   }
 
@@ -176,5 +206,6 @@
     },
     tesis(id) { tesis = id; ciz(); },
     yil(y) { yil = y; ciz(); },
+    rf(k) { rfTur = k; riskBolumu(); },
   };
 })();
