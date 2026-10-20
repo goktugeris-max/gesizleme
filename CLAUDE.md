@@ -40,9 +40,9 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   Üçüncü argüman `Verilerim.xlsx` verilirse 2025–2026 gerçekleşen tüketim eklenir (kaynak: AASSM/Buca Aşevi sayfaları = toplam − mahsup,
   "Ayrıştırılmış Tüketimler" özet matrisleri, Ham Veri, Buz Pisti-Havuz; 2023–2024 değerleri EnRÇ dosyalarıyla karşılaştırılıp
   uyuşmazlık `veri_notlari`'na yazılır) ve motorin + havuz ayrımı (`ek`). Referans: baz dönem (2022–2023) sabit — ortalama tipli serilerde
-  2024 referansı aynen; HDD/CDD'li serilerde (aassm-2, buca-6/8/10/11) 2024 dosyasındaki regresyon katsayıları × HDD/CDD. **2026 HDD/CDD
-  Verilerim'de yok → o serilerde referans yok**; kullanıcı 2026 derece-gün değerlerini DEĞİŞKENLER sayfasına girerse betik otomatik hesaplar
-  (betikteki hdd/cdd okuması `DEĞİŞKENLER Ort.` sayfası col0 tarih, col1 CDD, col3 HDD). Veri kesim ayı Ham Veri'den (elektrik) alınır.
+  2024 referansı aynen; HDD/CDD'li serilerde (aassm-2, buca-6/8/10/11) 2024 dosyasındaki regresyon katsayıları × HDD/CDD. HDD/CDD: Verilerim'in `DEĞİŞKENLER Ort.`
+  sayfasından (col0 tarih, col1 CDD, col3 HDD); sayfada olmayan yıllar betikteki `MGM_DERECE_GUN` sözlüğünden (MGM İzmir gün-derece tablosu,
+  mgm.gov.tr/Veridegerlendirme/gun-derece.aspx?g=merkez&m=35-00; 2024-2025 Excel değerleriyle birebir doğrulandı). Yeni ay açıklanınca sözlüğe ekle. Veri kesim ayı Ham Veri'den (elektrik) alınır.
   Komut: `... iso50001_to_json.py "<TSE klasörü>" "<risk.xlsx>" "<Verilerim.xlsx>"` (üçü birlikte verilmeli, dosya baştan üretilir).
   Excel'de bilinen hata: Aşevi Mutfak 2024 toplam formülü Aralık'ı dışarıda bırakıyor (`veri_notlari`).
 - `collector/collect.py` — canlı veri toplayıcı. Çıktı: `data/durum.json` (`guncelleme`, `kaynaklar{ad:{ok,adet,hata}}`,
