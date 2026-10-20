@@ -37,6 +37,13 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   `iso.js` "ISO 50001" sekmesini çizer. Yeni yıl: yeni `<yıl>/` klasörünü ekle, betikteki `for yil in (2023, 2024)` listesini güncelle.
   İkinci argüman olarak `FRM.06.01 Risk ve Fırsat Değerlendirmesi.xlsx` verilirse (sayfalar: Genel, BSYK=Buca, AASSM, Buz Pisti) ISO sekmesinde
   "Risk ve fırsat" bölümü çıkar (seviye = O×E; ≥12 yüksek). Betik her çalıştığında dosyanın tamamı yeniden üretilir; iki Excel'i birlikte ver.
+  Üçüncü argüman `Verilerim.xlsx` verilirse 2025–2026 gerçekleşen tüketim eklenir (kaynak: AASSM/Buca Aşevi sayfaları = toplam − mahsup,
+  "Ayrıştırılmış Tüketimler" özet matrisleri, Ham Veri, Buz Pisti-Havuz; 2023–2024 değerleri EnRÇ dosyalarıyla karşılaştırılıp
+  uyuşmazlık `veri_notlari`'na yazılır) ve motorin + havuz ayrımı (`ek`). Referans: baz dönem (2022–2023) sabit — ortalama tipli serilerde
+  2024 referansı aynen; HDD/CDD'li serilerde (aassm-2, buca-6/8/10/11) 2024 dosyasındaki regresyon katsayıları × HDD/CDD. **2026 HDD/CDD
+  Verilerim'de yok → o serilerde referans yok**; kullanıcı 2026 derece-gün değerlerini DEĞİŞKENLER sayfasına girerse betik otomatik hesaplar
+  (betikteki hdd/cdd okuması `DEĞİŞKENLER Ort.` sayfası col0 tarih, col1 CDD, col3 HDD). Veri kesim ayı Ham Veri'den (elektrik) alınır.
+  Komut: `... iso50001_to_json.py "<TSE klasörü>" "<risk.xlsx>" "<Verilerim.xlsx>"` (üçü birlikte verilmeli, dosya baştan üretilir).
   Excel'de bilinen hata: Aşevi Mutfak 2024 toplam formülü Aralık'ı dışarıda bırakıyor (`veri_notlari`).
 - `collector/collect.py` — canlı veri toplayıcı. Çıktı: `data/durum.json` (`guncelleme`, `kaynaklar{ad:{ok,adet,hata}}`,
   `santraller[]`). Bir portal hata verirse o portalın eski verisi korunur; hiçbir portal için Secret yoksa hata verip çıkar.
