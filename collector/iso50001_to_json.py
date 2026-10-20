@@ -1,7 +1,7 @@
 """ISO 50001 enerji yönetimi verisinden data/iso50001.enc.json üretir (parolayla şifreli).
 
 Kullanım:
-    ELEKTRIK_PAROLA="parola" python collector/iso50001_to_json.py "<TSE GİDEN EVRAK klasörü>" ["<FRM.06.01 Risk ve Fırsat.xlsx>"]
+    ELEKTRIK_PAROLA="parola" python collector/iso50001_to_json.py "<TSE GİDEN EVRAK klasörü>" ["<FRM.06.01 Risk ve Fırsat.xlsx>" ["<Verilerim.xlsx>"]]
 
 Klasörde şunlar aranır:
   FRM.06.07 Enerji Referans Çizgileri/<yıl>/<no>.EnRÇ ... .xlsx   (her enerji kullanımı için aylık takip ve referans çizgisi)
@@ -155,6 +155,128 @@ def risk_firsat(yol):
     return sonuc
 
 
+AYLAR_TR = ["ocak", "şubat", "mart", "nisan", "mayıs", "haziran", "temmuz", "ağustos", "eylül", "ekim", "kasım", "aralık"]
+# seri no -> (kaynak türü, kaynak adı) ; 2025-2026 gerçekleşen tüketim Verilerim.xlsx'ten alınır
+VERILERIM = {
+    1: ("fark", "AASSM"),                      # AASSM sayfası: toplam − mahsup edilen
+    2: ("ozet", "AASSM"),                      # Ayrıştırılmış Tüketimler özet matrisi
+    3: ("havuz", None),                        # Buz Pisti-Havuz Ayırma: havuz çıkarılmış
+    4: ("ozet", "Buz pisti"),
+    5: ("ham_el", "HUZUREVİ ELEKTRİK (795)"),
+    6: ("ham_gaz", "HUZUREVİ DOĞALGAZ"),
+    7: ("fark", "Buca Aşevi"),                 # Buca Aşevi sayfası: toplam − Necati Kültür Merkezi
+    8: ("ozet", "AŞEVİ KAZAN"),
+    9: ("ozet", "AŞEVİ FIRIN"),
+    10: ("ozet", "Kapalı spor salonu"),
+    11: ("ham_el", "İKLİMLENDİRME ELEKTRİK (855)"),
+}
+# referans yöntemi: ortalama = (2022+2023)/2 × (1−hedef), 2024 dosyasındaki referansla aynı (sabit baz dönem);
+# regresyon = (kesişim + katsayı × HDD/CDD) × (1−hedef), katsayılar 2024 EnRÇ dosyasındaki regresyon çıktısından
+REGRESYON = {2, 6, 8, 10, 11}
+
+
+def aylik12():
+    return [None] * 12
+
+
+def ay_no(ad):
+    return AYLAR_TR.index(kucuk(str(ad).strip()))
+
+
+def regresyon_katsayilari(yol):
+    wb = openpyxl.load_workbook(yol, data_only=True, read_only=True)
+    satirlar = list(wb[wb.sheetnames[0]].iter_rows(min_row=1, max_row=60, max_col=8, values_only=True))
+    for i, r in enumerate(satirlar):
+        if r[0] and str(r[0]).strip() == "Kesişim":
+            a = next(sayi(x) for x in r[1:] if sayi(x) is not None)
+            b = next(sayi(x) for x in satirlar[i + 1][1:] if sayi(x) is not None)
+            return a, b, str(satirlar[i + 1][0]).strip().upper()
+    raise ValueError("regresyon katsayısı bulunamadı: " + yol)
+
+
+def verilerim_oku(yol, klasor, seriler, notlar):
+    wb = openpyxl.load_workbook(yol, data_only=True, read_only=True)
+    # Ham Veri: abone × yıl × ay
+    el, gaz, son = {}, {}, (0, 0)
+    for r in wb["Ham Veri"].iter_rows(min_row=6, max_col=12, values_only=True):
+        if r[1] and sayi(r[2]) and r[3] and sayi(r[4]) is not None:
+            el.setdefault(str(r[1]).strip(), {}).setdefault(int(sayi(r[2])), aylik12())[ay_no(r[3])] = sayi(r[4])
+            son = max(son, (int(sayi(r[2])), ay_no(r[3]) + 1))
+        if r[8] and sayi(r[9]) and r[10] and sayi(r[11]) is not None:
+            gaz.setdefault(str(r[8]).strip(), {}).setdefault(int(sayi(r[9])), aylik12())[ay_no(r[10])] = sayi(r[11])
+    # Ayrıştırılmış Tüketimler: 73. satırdan sonra bölüm başına yıl × 12 ay
+    ozet, etiket = {}, None
+    for r in wb["Ayrıştırılmış Tüketimler"].iter_rows(min_row=73, max_col=16, values_only=True):
+        if r[2]:
+            etiket = str(r[2]).strip()
+        if etiket and sayi(r[3]) and 2000 < sayi(r[3]) < 2100 and any(isinstance(x, (int, float)) for x in r[4:16]):
+            ozet.setdefault(etiket, {})[int(sayi(r[3]))] = [sayi(x) for x in r[4:16]]
+
+    def fark(sayfa):
+        sh = list(wb[sayfa].iter_rows(min_row=4, max_row=15, max_col=11, values_only=True))
+        sonuc = {}
+        for k, y in enumerate((2023, 2024, 2025, 2026)):
+            sonuc[y] = [None if sayi(r[1 + k]) is None else sayi(r[1 + k]) - (sayi(r[7 + k]) or 0) for r in sh]
+        return sonuc
+
+    havuz, buz = {}, {}
+    for r in wb["Buz Pisti-Havuz Ayırma"].iter_rows(min_row=4, max_col=4, values_only=True):
+        if isinstance(r[0], datetime.datetime) and sayi(r[3]) is not None:
+            y, a = r[0].year, r[0].month - 1
+            buz.setdefault(y, aylik12())[a] = sayi(r[3])
+            havuz.setdefault(y, {"toplam": aylik12(), "havuz": aylik12()})
+            havuz[y]["toplam"][a] = sayi(r[1]); havuz[y]["havuz"][a] = sayi(r[2])
+    # HDD / CDD
+    hdd, cdd = {}, {}
+    for r in wb["DEĞİŞKENLER Ort."].iter_rows(min_row=5, max_col=4, values_only=True):
+        if isinstance(r[0], datetime.datetime):
+            hdd.setdefault(r[0].year, aylik12())[r[0].month - 1] = sayi(r[3])
+            cdd.setdefault(r[0].year, aylik12())[r[0].month - 1] = sayi(r[1])
+
+    for no, s in seriler.items():
+        tur, ad = VERILERIM[no]
+        deger = {"fark": lambda: fark(ad), "ozet": lambda: ozet.get(ad, {}), "havuz": lambda: buz,
+                 "ham_el": lambda: el.get(ad, {}), "ham_gaz": lambda: gaz.get(ad, {})}[tur]()
+        # doğrulama: 2023-2024 değerleri eski EnRÇ dosyalarıyla aynı olmalı
+        for y in ("2023", "2024"):
+            if y in s["yillar"] and int(y) in deger:
+                ben = sum(x for x in deger[int(y)] if x is not None)
+                eski = sum(x for x in s["yillar"][y]["takip"] if x is not None)
+                if abs(ben - eski) > 1:
+                    notlar.append({"seri": f"{s['tesis']} / {s['bolum']} / {s['enerji']}", "yil": y, "excel_toplam": round(eski), "aylik_toplam": round(ben),
+                                   "not": "Verilerim.xlsx toplamı EnRÇ dosyasından farklı (EnRÇ değeri kullanıldı)."})
+        ref24 = s["yillar"]["2024"]
+        hedef = ref24["hedef"] or 0.02
+        reg = None
+        if no in REGRESYON:
+            dosya = [f for f in glob.glob(os.path.join(klasor, "2024", f"{no}.*.xlsx")) if not os.path.basename(f).startswith("~$")][0]
+            a, b, degisken = regresyon_katsayilari(dosya)
+            reg = (a, b, degisken)
+        for y in (2025, 2026):
+            if y not in deger:
+                continue
+            takip = [None if (v is None or (y, i + 1) > son) else round(v, 1) for i, v in enumerate(deger[y])]
+            if reg:
+                kaynak = hdd if reg[2] == "HDD" else cdd
+                var = kaynak.get(y)
+                ref = [None if (var is None or var[i] is None) else round((reg[0] + reg[1] * var[i]) * (1 - hedef), 1) for i in range(12)]
+                degisken = {f"{reg[2]} {y}": var} if var else {}
+            else:
+                ref, degisken = list(ref24["referans"]), {}
+            s["yillar"][str(y)] = {"takip": takip, "referans": ref, "gerekce": [None] * 12, "degiskenler": degisken, "hedef": hedef,
+                                   "yontem": "regresyon" if reg else "ortalama"}
+        if reg and 2026 in deger and 2026 not in (hdd if reg[2] == "HDD" else cdd):
+            notlar.append({"seri": f"{s['tesis']} / {s['bolum']} / {s['enerji']}", "yil": "2026", "excel_toplam": None, "aylik_toplam": None,
+                           "not": f"2026 için {reg[2]} değerleri Verilerim.xlsx'te yok; referans çizgisi hesaplanamadı (yalnızca gerçekleşen gösteriliyor)."})
+    motorin = {}
+    for r in wb["Motorin"].iter_rows(min_row=4, max_row=12, max_col=6, values_only=True):
+        if sayi(r[2]) and 2000 < sayi(r[2]) < 2100:
+            for k, t in ((3, "buca"), (4, "aassm"), (5, "buz")):
+                if sayi(r[k]) is not None:
+                    motorin.setdefault(t, {})[str(int(sayi(r[2])))] = sayi(r[k])
+    return {"motorin": motorin, "havuz": {str(y): v for y, v in havuz.items()}, "son_donem": {"yil": son[0], "ay": son[1]}}
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -183,12 +305,16 @@ def main():
                                "not": "Excel'deki toplam satırı aylık değerlerin toplamıyla uyuşmuyor (formül bir ayı dışarıda bırakıyor olabilir); aylık değerlerin toplamı kullanıldı."})
     eylem = eylem_plani(os.path.join(kok, "PLN.06.01 Enerji Eylem Planı.xlsx"))
     risk = risk_firsat(sys.argv[2]) if len(sys.argv) > 2 else {}
+    ek = {}
+    if len(sys.argv) > 3:
+        ek = verilerim_oku(sys.argv[3], klasor, seriler, notlar)
     cikti = {
         "olusturma": datetime.date.today().isoformat(),
         "tesisler": [{"id": k, "ad": v} for k, v in TESISLER.items()],
         "seriler": [seriler[k] for k in sorted(seriler)],
         "eylem": eylem,
         "risk": risk,
+        "ek": ek,
         "veri_notlari": notlar,
     }
     parola = os.environ.get("ELEKTRIK_PAROLA") or getpass.getpass("Parola: ")

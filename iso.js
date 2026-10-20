@@ -16,6 +16,9 @@
   const topla = (a) => (a || []).reduce((t, v) => t + (v || 0), 0);
   const b64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
   const oturum = (k, v) => { try { return v === undefined ? sessionStorage.getItem(k) : (v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v)); } catch (e) { return null; } };
+  // kısmi yıllarda sapma yalnızca hem gerçekleşen hem referansı olan aylar üzerinden hesaplanır
+  const karsilastir = (v) => { let t = 0, r = 0, n = 0; v.takip.forEach((x, i) => { if (x != null && v.referans[i] != null) { t += x; r += v.referans[i]; n++; } }); return { t, r, n }; };
+  const veriAy = (v) => v.takip.filter((x) => x != null).length;
   const sinif = (s) => (s == null ? 'text-slate-300' : s > 0.02 ? 'text-red-400' : s > 0 ? 'text-amber-300' : 'text-emerald-400');
 
   async function coz(parola) {
@@ -72,21 +75,23 @@
   function ozetKartlari() {
     const gruplar = {};
     seriler().forEach((s) => {
-      const v = s.yillar[yil];
-      const g = (gruplar[s.enerji] = gruplar[s.enerji] || { birim: s.birim, takip: 0, ref: 0, hedef: v.hedef });
-      g.takip += topla(v.takip); g.ref += topla(v.referans);
+      const v = s.yillar[yil], c = karsilastir(v);
+      const g = (gruplar[s.enerji] = gruplar[s.enerji] || { birim: s.birim, takip: 0, kt: 0, kr: 0, ay: 0, sn: 0, sr: 0 });
+      g.takip += topla(v.takip); g.kt += c.t; g.kr += c.r; g.ay = Math.max(g.ay, veriAy(v)); g.sn++; if (c.n) g.sr++;
     });
     const kart = (b, d, alt, renk) => `<div class="glass-card rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400">${b}</div><div class="text-2xl font-bold mt-1 ${renk || 'text-white'}">${d}</div><div class="text-[11px] text-slate-500 mt-1">${alt}</div></div>`;
     document.getElementById('isoKartlar').innerHTML = Object.entries(gruplar).map(([e, g]) => {
-      const sapma = g.ref ? g.takip / g.ref - 1 : null;
-      return kart(`${e} (${yil})`, `${tr0(g.takip)} <span class="text-sm font-medium text-slate-400">${g.birim}</span>`,
-        `Referans ${tr0(g.ref)} • <span class="${sinif(sapma)} font-semibold">${yuzde(sapma)}</span> ${sapma != null && sapma <= 0 ? '(referansın altında)' : '(referansın üstünde)'}`, e === 'Elektrik' ? 'text-amber-300' : 'text-cyan-300');
+      const sapma = g.kr ? g.kt / g.kr - 1 : null;
+      const donem = g.ay < 12 ? `Oca–${AY[g.ay - 1]} ${yil}` : yil;
+      return kart(`${e} (${donem})`, `${tr0(g.takip)} <span class="text-sm font-medium text-slate-400">${g.birim}</span>`,
+        g.kr ? `${g.sr < g.sn ? `Yalnızca referansı olan ${g.sr}/${g.sn} seride: ` : ''}Referans ${tr0(g.kr)} • <span class="${sinif(sapma)} font-semibold">${yuzde(sapma)}</span> ${sapma <= 0 ? '(referansın altında)' : '(referansın üstünde)'}` : 'Referans çizgisi yok (bkz. okuma notları)', e === 'Elektrik' ? 'text-amber-300' : 'text-cyan-300');
     }).join('') + kart('Hedef', '%' + ((seriler()[0] && seriler()[0].yillar[yil].hedef || 0.02) * 100).toLocaleString('tr-TR'), 'Her enerji kullanımı için yıllık tasarruf hedefi (Excel\'deki HEDEF hücresi)');
   }
 
   function seriKarti(s, i) {
     const v = s.yillar[yil], cid = 'chIso' + i;
-    const t = topla(v.takip), r = topla(v.referans), sapma = r ? t / r - 1 : null;
+    const c = karsilastir(v), t = topla(v.takip), sapma = c.r ? c.t / c.r - 1 : null;
+    const yontem = v.yontem === 'regresyon' ? 'Referans: regresyon (2024 katsayıları)' : v.yontem === 'ortalama' ? 'Referans: 2022–2023 ortalaması' : '';
     const aylik = v.takip.map((x, a) => ({ x, r: v.referans[a], d: x != null && v.referans[a] ? x / v.referans[a] - 1 : null }));
     const degAd = Object.keys(v.degiskenler);
     const tablo = `<div class="overflow-x-auto"><table class="w-full text-[11px]">
@@ -95,8 +100,8 @@
         <td class="text-right font-mono ${sinif(m.d)}">${yuzde(m.d)}</td>${degAd.map((d) => `<td class="text-right font-mono text-slate-400">${tr0(v.degiskenler[d][a])}</td>`).join('')}<td class="pl-3 text-slate-400">${esc(v.gerekce[a] || '')}</td></tr>`).join('')}</tbody></table></div>`;
     return `<div class="glass-card rounded-xl p-4">
       <div class="flex items-start justify-between gap-3">
-        <div><div class="text-sm font-semibold text-white">${esc(s.bolum)}</div><div class="text-[11px]" style="color:${RENK[s.enerji]}">${esc(s.enerji)} • ${esc(s.birim)}</div></div>
-        <div class="text-right"><div class="text-lg font-bold ${sinif(sapma)}">${yuzde(sapma)}</div><div class="text-[11px] text-slate-500">${tr0(t)} / ${tr0(r)}</div></div>
+        <div><div class="text-sm font-semibold text-white">${esc(s.bolum)}</div><div class="text-[11px]" style="color:${RENK[s.enerji]}">${esc(s.enerji)} • ${esc(s.birim)}</div>${yontem ? `<div class="text-[10px] text-slate-500 mt-0.5">${yontem}</div>` : ''}</div>
+        <div class="text-right"><div class="text-lg font-bold ${sinif(sapma)}">${yuzde(sapma)}</div><div class="text-[11px] text-slate-500">${c.r ? `${tr0(c.t)} / ${tr0(c.r)}` : `${tr0(t)} • referans yok`}</div></div>
       </div>
       <div class="h-44 mt-3"><canvas id="${cid}"></canvas></div>
       <details class="mt-2 text-xs"><summary class="cursor-pointer text-slate-300">Aylık ayrıntı ve gerekçeler</summary><div class="mt-2">${tablo}</div></details>
@@ -130,6 +135,30 @@
     const blok = (baslik, l) => l.length ? `<tr class="bg-slate-900/60"><td colspan="6" class="px-3 py-2 text-[11px] uppercase tracking-wider text-slate-400">${baslik}</td></tr>${l.map(satir).join('')}` : '';
     document.getElementById('isoEylem').innerHTML = `<thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[11px]"><tr><th class="text-left px-3 py-3">No</th><th class="text-left px-3">Enerji</th><th class="text-left px-3">Önlem / iyileştirme</th><th class="text-left px-3">Termin</th><th class="text-left px-3">Hedeflenen kazanç</th><th class="text-left px-3">Gerçekleşme durumu</th></tr></thead>
       <tbody class="divide-y divide-slate-800/70">${blok('Tesise özel eylemler (' + liste.length + ')', liste)}${blok('Genel eylemler (' + genel.length + ')', genel)}</tbody>`;
+  }
+
+  function ekBolum() {
+    const el = document.getElementById('isoEk');
+    const ek = D.ek || {}, m = (ek.motorin || {})[tesis], h = ek.havuz && tesis === 'buz' ? ek.havuz[yil] : null;
+    let html = '';
+    if (m) {
+      const yl = Object.keys(m).sort();
+      html += `<div class="glass-card rounded-xl p-4"><h2 class="text-sm font-semibold text-white mb-3">Motorin kullanımı</h2>
+        <table class="w-full text-xs"><thead class="text-slate-400 uppercase tracking-wider text-[11px]"><tr><th class="text-left py-1.5">Yıl</th><th class="text-right">Miktar</th></tr></thead>
+        <tbody class="divide-y divide-slate-800/70">${yl.map((y) => `<tr><td class="py-1.5 text-slate-200">${y}</td><td class="text-right font-mono ${m[y] ? 'text-amber-300' : 'text-slate-500'}">${tr0(m[y])}</td></tr>`).join('')}</tbody></table>
+        <p class="text-[11px] text-slate-500 mt-2">Excel'de birim yazmıyor; litre varsayılmıştır.</p></div>`;
+    }
+    if (h) html += `<div class="glass-card rounded-xl p-4"><h2 class="text-sm font-semibold text-white mb-3">Buz pisti ve havuz elektriği (${yil})</h2><div class="h-52"><canvas id="chIsoHavuz"></canvas></div>
+        <p class="text-[11px] text-slate-500 mt-2">Havuz tüketimi toplamdan ayrılır; yukarıdaki Buz Sporları elektrik serisi havuz çıkarılmış değerdir.</p></div>`;
+    el.innerHTML = html;
+    el.classList.toggle('hidden', !html);
+    if (h) cizGrafik('chIsoHavuz', {
+      data: { labels: AY, datasets: [
+        { type: 'bar', label: 'Buz pisti (havuz hariç)', data: h.toplam.map((x, i) => (x == null ? null : x - (h.havuz[i] || 0))), backgroundColor: '#fbbf24', stack: 'a', borderRadius: 3 },
+        { type: 'bar', label: 'Havuz', data: h.havuz, backgroundColor: '#22d3ee', stack: 'a', borderRadius: 3 },
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } }, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: (x) => (x / 1000).toLocaleString('tr-TR') + ' bin' } } } },
+    });
   }
 
   const seviyeSinif = (n) => (n == null ? 'bg-slate-700 text-slate-300' : n >= 12 ? 'bg-red-500/20 text-red-300' : n >= 6 ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300');
@@ -167,7 +196,7 @@
       <ul class="mt-2 list-disc pl-5 space-y-1">
         <li><b class="text-slate-300">Sapma</b> = (gerçekleşen − referans) ÷ referans. Pozitif (kırmızı/turuncu) değer referans çizgisinin aşıldığını, negatif (yeşil) değer altında kaldığını gösterir.</li>
         <li>Referans çizgisi, Excel'deki EnRÇ hesabından (önceki yıl verisi, gerekirse HDD/CDD, etkinlik sayısı gibi değişkenlerle) aynen alınmıştır; burada yeniden hesaplanmaz. 2023 için referans yılı 2022'dir; 2024'te dosyaların çoğunda 2022–2023 ortalaması kullanılır.</li>
-        <li>Yatırım tutarları (TL) eylem planından bilerek alınmamıştır.</li>
+        <li><b class="text-slate-300">2025–2026</b> gerçekleşen tüketimler Verilerim.xlsx'ten alınmıştır (2023–2024 ile eşleşmesi EnRÇ dosyalarına göre doğrulanmıştır). Referans çizgisinde baz dönem (2022–2023) sabit tutulmuştur: elektrik ve benzeri serilerde 2024 dosyasındaki referans aynen; HDD/CDD'li serilerde 2024 dosyasındaki regresyon katsayıları × ilgili ayın HDD/CDD değeri. 2026 için HDD/CDD verisi dosyada olmadığından o serilerde referans yoktur, yalnızca gerçekleşen görünür. Kısmi yıllarda sapma yalnızca verisi olan aylar üzerinden hesaplanır.</li>\n        <li>Yatırım tutarları (TL) eylem planından bilerek alınmamıştır.</li>
         ${n.map((x) => `<li>${esc(x.yil)} ${esc(x.seri)}: Excel toplamı ${tr0(x.excel_toplam)}, aylık değerlerin toplamı ${tr0(x.aylik_toplam)}. ${esc(x.not)}</li>`).join('')}
       </ul></details>`;
   }
@@ -182,6 +211,7 @@
       <section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section>
       <section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section>
       <section class="glass-card rounded-xl overflow-hidden"><div class="p-4 border-b border-slate-800"><h2 class="text-sm font-semibold text-white">Enerji eylem planı</h2></div><div class="overflow-x-auto"><table id="isoEylem" class="w-full text-xs"></table></div></section>
+      <section id="isoEk" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section>
       <section id="isoRisk" class="glass-card rounded-xl overflow-hidden hidden"></section>
       <div id="isoNotlar"></div></div>`;
   }
@@ -190,11 +220,11 @@
     if (!document.getElementById('isoTesisler')) iskelet();
     const t = D.tesisler.find((x) => x.id === tesis);
     document.getElementById('isoTesisler').innerHTML = D.tesisler.map((x) => `<button data-iso-tesis="${x.id}" onclick="Iso.tesis('${x.id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${x.id === tesis ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-300 hover:text-white'}">${esc(x.ad)}</button>`).join('');
-    document.getElementById('isoYil').innerHTML = ['2023', '2024'].map((y) => `<option ${y === yil ? 'selected' : ''}>${y}</option>`).join('');
+    document.getElementById('isoYil').innerHTML = [...new Set(D.seriler.flatMap((x) => Object.keys(x.yillar)))].sort().map((y) => `<option ${y === yil ? 'selected' : ''}>${y}</option>`).join('');
     document.getElementById('isoBaslik').textContent = t ? t.ad : '';
     ozetKartlari();
     document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('');
-    seriGrafikleri(); eylemTablosu(); riskBolumu(); notlar();
+    seriGrafikleri(); eylemTablosu(); ekBolum(); riskBolumu(); notlar();
     if (window.lucide) lucide.createIcons();
   }
 
