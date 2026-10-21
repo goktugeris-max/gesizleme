@@ -1,14 +1,14 @@
 {
-  "guncelleme": "2026-10-20T17:38:19+00:00",
+  "guncelleme": "2026-10-21T03:33:35+00:00",
   "kaynaklar": {
     "GoodWe": {
       "ok": true,
-      "zaman": "2026-10-20T17:38:19+00:00",
+      "zaman": "2026-10-21T03:33:35+00:00",
       "adet": 9
     },
     "SMA": {
       "ok": true,
-      "zaman": "2026-10-20T17:38:19+00:00",
+      "zaman": "2026-10-21T03:33:35+00:00",
       "adet": 2
     }
   },
@@ -20,7 +20,7 @@
       "kapasite_kwp": 68.4,
       "durum": "Beklemede",
       "anlik_kw": 0.0,
-      "bugun_kwh": 215.5,
+      "bugun_kwh": 0.0,
       "invertorler": [
         {
           "sn": "9020KDTU192R0002",
@@ -37,7 +37,7 @@
           "kod": -1
         }
       ],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -46,7 +46,7 @@
       "kapasite_kwp": 60.0,
       "durum": "Beklemede",
       "anlik_kw": 0.0,
-      "bugun_kwh": 211.8,
+      "bugun_kwh": 0.0,
       "invertorler": [
         {
           "sn": "5060KMTO22BW0485",
@@ -56,7 +56,7 @@
           "kod": -1
         }
       ],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -65,7 +65,7 @@
       "kapasite_kwp": 74.1,
       "durum": "Beklemede",
       "anlik_kw": 0.0,
-      "bugun_kwh": 233.6,
+      "bugun_kwh": 0.0,
       "invertorler": [
         {
           "sn": "9020KDTU192R0013",
@@ -82,7 +82,7 @@
           "kod": -1
         }
       ],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -91,7 +91,7 @@
       "kapasite_kwp": 121.73,
       "durum": "Beklemede",
       "anlik_kw": 0.0,
-      "bugun_kwh": 440.7,
+      "bugun_kwh": 0.0,
       "invertorler": [
         {
           "sn": "9060KMTN215W0012",
@@ -108,7 +108,7 @@
           "kod": -1
         }
       ],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -117,7 +117,7 @@
       "kapasite_kwp": 76.96,
       "durum": "Beklemede",
       "anlik_kw": 0.0,
-      "bugun_kwh": 269.1,
+      "bugun_kwh": 0.0,
       "invertorler": [
         {
           "sn": "5036KMTS217W0005",
@@ -134,7 +134,7 @@
           "kod": -1
         }
       ],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -143,7 +143,7 @@
       "kapasite_kwp": 25.0,
       "durum": "Beklemede",
       "anlik_kw": 0.0,
-      "bugun_kwh": 118.0,
+      "bugun_kwh": 0.0,
       "invertorler": [
         {
           "sn": "5025KDTT227W0052",
@@ -153,7 +153,7 @@
           "kod": -1
         }
       ],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -162,7 +162,7 @@
       "kapasite_kwp": 35.91,
       "durum": "Beklemede",
       "anlik_kw": 0.0,
-      "bugun_kwh": 80.3,
+      "bugun_kwh": 0.0,
       "invertorler": [
         {
           "sn": "9020KDTU192R0001",
@@ -179,7 +179,7 @@
           "kod": -1
         }
       ],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -188,7 +188,7 @@
       "kapasite_kwp": 20.0,
       "durum": "Beklemede",
       "anlik_kw": 0.0,
-      "bugun_kwh": 67.5,
+      "bugun_kwh": 0.0,
       "invertorler": [
         {
           "sn": "5020KDTT215W0017",
@@ -198,7 +198,7 @@
           "kod": -1
         }
       ],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -207,7 +207,7 @@
       "kapasite_kwp": 25.9,
       "durum": "Beklemede",
       "anlik_kw": 0.0,
-      "bugun_kwh": 88.2,
+      "bugun_kwh": 0.0,
       "invertorler": [
         {
           "sn": "5020KDTT215W0019",
@@ -217,7 +217,7 @@
           "kod": -1
         }
       ],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "SMA",
@@ -226,9 +226,9 @@
       "kapasite_kwp": 401.76,
       "durum": "Kontrol Edilmedi",
       "anlik_kw": 0.0,
-      "bugun_kwh": 989.7,
+      "bugun_kwh": null,
       "invertorler": [],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     },
     {
       "kaynak": "SMA",
@@ -237,9 +237,9 @@
       "kapasite_kwp": 77.25,
       "durum": "Çalışıyor",
       "anlik_kw": 0.0,
-      "bugun_kwh": 294.5,
+      "bugun_kwh": 0.0,
       "invertorler": [],
-      "zaman": "2026-10-20T17:38:19+00:00"
+      "zaman": "2026-10-21T03:33:35+00:00"
     }
   ]
 }
