@@ -20,7 +20,8 @@
     try {
       const r = await fetch(A().url.replace(/\/$/, '') + yol, {
         method, signal: k.signal,
-        headers: Object.assign({ apikey: A().anonKey, Authorization: 'Bearer ' + (token || A().anonKey), 'Content-Type': 'application/json' }, prefer ? { Prefer: prefer } : {}),
+        // Yeni tip "publishable" anahtarlar JWT değildir: yalnızca apikey başlığıyla gönderilir; Authorization sadece giriş yapmış kullanıcının jetonu için eklenir
+        headers: Object.assign({ apikey: A().anonKey, 'Content-Type': 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}, prefer ? { Prefer: prefer } : {}),
         body: body === undefined ? undefined : JSON.stringify(body),
       });
       const metin = await r.text();
