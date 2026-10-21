@@ -1,0 +1,107 @@
+{
+ "ekrem-akurgal": {
+  "lat": 38.477069,
+  "lon": 27.162549,
+  "ilce": "Bayraklı"
+ },
+ "selcuk-transfer": {
+  "lat": 37.975011,
+  "lon": 27.34917,
+  "ilce": "Selçuk"
+ },
+ "seyrek-hayvan-hastanesi": {
+  "lat": 38.596757,
+  "lon": 27.004662,
+  "ilce": "Menemen"
+ },
+ "aliaga-itfaiye": {
+  "lat": 38.789282,
+  "lon": 26.969474,
+  "ilce": "Aliağa"
+ },
+ "bergama-mezbahasi": {
+  "lat": 39.11313,
+  "lon": 27.194639,
+  "ilce": "Bergama"
+ },
+ "uzundere-spor": {
+  "lat": 38.352908,
+  "lon": 27.081524,
+  "ilce": "Karabağlar"
+ },
+ "cigli-aile-danisma": {
+  "lat": 38.495299,
+  "lon": 27.082521,
+  "ilce": "Çiğli"
+ },
+ "yesilyurt-kultur-merkezi": {
+  "lat": 38.397785,
+  "lon": 27.112038,
+  "ilce": "Karabağlar"
+ },
+ "bornova-havuz": {
+  "lat": 38.468861,
+  "lon": 27.212064,
+  "ilce": "Bornova"
+ },
+ "cesme-itfaiye": {
+  "lat": 38.337483,
+  "lon": 26.302528,
+  "ilce": "Çeşme"
+ },
+ "caybasi-itfaiye": {
+  "lat": 38.130306,
+  "lon": 27.385205,
+  "ilce": "Torbalı"
+ },
+ "konak-tuneller": {
+  "lat": 38.401283,
+  "lon": 27.14028,
+  "ilce": "Konak"
+ },
+ "bergama-itfaiye": {
+  "lat": 39.108111,
+  "lon": 27.193533,
+  "ilce": "Bergama"
+ },
+ "seyrek-itfaiye": {
+  "lat": 38.588529,
+  "lon": 26.97397,
+  "ilce": "Menemen"
+ },
+ "buca-toros-itfaiye": {
+  "lat": 38.405702,
+  "lon": 27.191749,
+  "ilce": "Buca"
+ },
+ "ornekkoy-sosyal-projeler": {
+  "lat": 38.497284,
+  "lon": 27.11623,
+  "ilce": "Karşıyaka"
+ },
+ "selcuk-itfaiye": {
+  "lat": 37.958906,
+  "lon": 27.367283,
+  "ilce": "Selçuk"
+ },
+ "gumuldur-itfaiye": {
+  "lat": 38.070631,
+  "lon": 27.000706,
+  "ilce": "Menderes"
+ },
+ "bornova-kultur-merkezi": {
+  "lat": 38.481028,
+  "lon": 27.207179,
+  "ilce": "Bornova"
+ },
+ "aliaga-kultur-merkezi": {
+  "lat": 38.795803,
+  "lon": 26.973284,
+  "ilce": "Aliağa"
+ },
+ "akkaya-dges": {
+  "lat": 38.06286,
+  "lon": 27.090817,
+  "ilce": "Menderes"
+ }
+}
