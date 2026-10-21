@@ -60,8 +60,8 @@ def cek(lat, lon, bas, son, egim, yon):
         except ValueError:
             neden = r.text[:120]
         if r.status_code == 429:
-            if "Daily" in neden:
-                raise SystemExit_Gunluk(neden)
+            if "Daily" in neden or "Hourly" in neden:
+                raise SystemExit_Gunluk(neden)   # saatlik/günlük sınır: beklemek yerine kaydedip çık, sonraki çalıştırma sürdürür
             print(f"  429 ({neden}); 65 sn beklenip yeniden denenecek", flush=True)
             time.sleep(65)
             continue
@@ -82,6 +82,14 @@ def aylara_topla(js):
     return {k: (round(toplam[k] / 1000, 2), round(sicak[k] / sayac[k], 1) if sayac.get(k) else None) for k in toplam}
 
 
+def kaydet(hava):
+    hava["kaynak"] = "Open-Meteo.com (ERA5 / ECMWF), CC BY 4.0"
+    hava["varsayim"] = {"egim": VARSAYILAN_EGIM, "yon": "güney (azimut 0)"}
+    hava["guncelleme"] = date.today().isoformat()
+    with open(OUT, "w", encoding="utf-8") as f:
+        json.dump(hava, f, ensure_ascii=False, separators=(",", ":"))
+
+
 def main():
     konum = yukle("data/santral_konumlari.json", {})
     perf = yukle("data/performans.json", {"santraller": []})
@@ -92,7 +100,8 @@ def main():
     ay_sonu = (bugun.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
     onceki = bugun.replace(day=1) - timedelta(days=1)
     son_tam = (bugun.year, bugun.month) if bugun >= ay_sonu else (onceki.year, onceki.month)
-    yeni_ay, durdu = 0, None
+    # Görevler: (santral, yıl, aylar). Önce en yeni yıllar (panel hemen işe yarasın), sonra eskiler.
+    gorevler = []
     for s in perf["santraller"]:
         k = konum.get(s["id"])
         if not k:
@@ -101,36 +110,32 @@ def main():
         yil0 = int(akt) if akt.isdigit() else min((int(y) for y in s.get("aylik", {})), default=2019)
         mevcut = hava["santraller"].setdefault(s["id"], {})
         eksik = eksik_aylar(mevcut, yil0, son_tam)
-        if not eksik:
-            continue
+        for yil in sorted({y for y, _ in eksik}, reverse=True):
+            gorevler.append((yil, s["id"], k, mevcut, [a for y, a in eksik if y == yil], eksik))
+    gorevler.sort(key=lambda g: -g[0])
+    yeni_ay, durdu = 0, None
+    for yil, sid, k, mevcut, aylar, eksik in gorevler:
         egim, yon = k.get("egim", VARSAYILAN_EGIM), k.get("yon", VARSAYILAN_YON)
-        # yıl yıl çek (istek boyutu makul kalsın)
-        for yil in sorted({y for y, _ in eksik}):
-            aylar = [a for y, a in eksik if y == yil]
-            bas = date(yil, min(aylar), 1)
-            son = date(yil, 12, 31) if yil < son_tam[0] else (date(yil, son_tam[1], 28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-            print(f"{s['id']} {yil}: {bas} → {son}", flush=True)
-            try:
-                js = cek(k["lat"], k["lon"], bas, son, egim, yon)
-            except SystemExit_Gunluk as e:
-                durdu = str(e)
-                break
-            except Exception as e:  # tek santralin hatası diğerlerini durdurmasın
-                print(f"  hata: {e}", flush=True)
-                continue
-            for (y, a), (gti, sic) in aylara_topla(js).items():
-                if (y, a) in {(yy, aa) for yy, aa in eksik}:
-                    d = mevcut.setdefault(str(y), {"gti": [None] * 12, "sic": [None] * 12})
-                    d["gti"][a - 1], d["sic"][a - 1] = gti, sic
-                    yeni_ay += 1
-            time.sleep(1.5)
-        if durdu:
+        bas = date(yil, min(aylar), 1)
+        son = date(yil, 12, 31) if yil < son_tam[0] else (date(yil, son_tam[1], 28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        print(f"{sid} {yil}: {bas} → {son}", flush=True)
+        try:
+            js = cek(k["lat"], k["lon"], bas, son, egim, yon)
+        except SystemExit_Gunluk as e:
+            durdu = str(e)
             break
-    hava["kaynak"] = "Open-Meteo.com (ERA5 / ECMWF), CC BY 4.0"
-    hava["varsayim"] = {"egim": VARSAYILAN_EGIM, "yon": "güney (azimut 0)"}
-    hava["guncelleme"] = date.today().isoformat()
-    with open(OUT, "w", encoding="utf-8") as f:
-        json.dump(hava, f, ensure_ascii=False, separators=(",", ":"))
+        except Exception as e:  # tek santralin hatası diğerlerini durdurmasın
+            print(f"  hata: {e}", flush=True)
+            continue
+        istenen = {(yy, aa) for yy, aa in eksik}
+        for (y, a), (gti, sic) in aylara_topla(js).items():
+            if (y, a) in istenen:
+                d = mevcut.setdefault(str(y), {"gti": [None] * 12, "sic": [None] * 12})
+                d["gti"][a - 1], d["sic"][a - 1] = gti, sic
+                yeni_ay += 1
+        kaydet(hava)                                   # iş yarıda kalsa bile o ana kadarki veri korunur
+        time.sleep(max(1.5, (son - bas).days / 14 / 9))  # istek ağırlığına göre dakikalık sınırın altında kal
+    kaydet(hava)
     print(f"{yeni_ay} yeni ay yazıldı.")
     if durdu:
         print("UYARI: günlük API sınırına ulaşıldı, kalan aylar sonraki çalıştırmada çekilecek:", durdu)
