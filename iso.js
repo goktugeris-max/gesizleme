@@ -22,6 +22,28 @@
   let takip = {};
   try { takip = JSON.parse(localStorage.getItem(TAKIP_ANAHTAR) || '{}') || {}; } catch (e) { takip = {}; }
   const takipKaydet = () => { try { localStorage.setItem(TAKIP_ANAHTAR, JSON.stringify(takip)); } catch (e) { /* özel pencere vb. */ } };
+  // ---- ORTAK takip (Supabase): giriş yapılmışsa durum/ilerleme/sorumlu/not ve yorumlar ekip arasında paylaşılır; yoksa yukarıdaki yerel takip kullanılır
+  const ortak = { acik: false, satirlar: {}, yorumlar: {}, mesaj: '', giris: false };
+  const tkOku = (id) => (ortak.acik ? ortak.satirlar[id] || {} : takip[id] || {});
+  const dbHazir = () => !!(window.VeriDB && VeriDB.hazir());
+  async function ortakYukle() {
+    if (!dbHazir() || !VeriDB.oturum()) { ortak.acik = false; return; }
+    try {
+      const rol = await VeriDB.rol();
+      const [satirlar, yorumlar] = await Promise.all([
+        VeriDB.istek('/rest/v1/eylem_takip?select=*&kaynak=eq.iso&limit=5000'),
+        VeriDB.istek('/rest/v1/eylem_yorum?select=*&kaynak=eq.iso&order=zaman.asc&limit=5000'),
+      ]);
+      ortak.satirlar = {}; ortak.yorumlar = {};
+      (satirlar || []).forEach((r) => { ortak.satirlar[r.eylem_id] = { durum: r.durum, yuzde: r.yuzde, not: r.not_, sorumlu: r.sorumlu, tarih: (r.guncelleme || '').slice(0, 10), ad: r.guncelleyen_ad }; });
+      (yorumlar || []).forEach((r) => { (ortak.yorumlar[r.eylem_id] = ortak.yorumlar[r.eylem_id] || []).push(r); });
+      ortak.rol = rol && rol.rol; ortak.yazabilir = ortak.rol === 'girisci' || ortak.rol === 'yonetici';
+      ortak.acik = true; ortak.mesaj = '';
+    } catch (e) { ortak.acik = false; ortak.mesaj = 'Ortak takip yüklenemedi: ' + e.message; }
+  }
+  const ortakYaz = (id, m) => VeriDB.istek('/rest/v1/eylem_takip?on_conflict=kaynak,eylem_id', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal',
+    body: [{ kaynak: 'iso', eylem_id: id, durum: m.durum || 'oto', yuzde: m.yuzde == null ? null : m.yuzde, sorumlu: m.sorumlu || null, not_: m.not || null }] });
+
   const DURUMLAR = {
     tamamlandi: { ad: 'Tamamlandı', sinif: 'bg-emerald-500/15 text-emerald-300', renk: '#10b981' },
     surekli: { ad: 'Sürekli faaliyet', sinif: 'bg-sky-500/15 text-sky-300', renk: '#38bdf8' },
@@ -46,7 +68,7 @@
     if (/^\d{4}-\d{2}-\d{2}$/.test(e.termin || '') && new Date(e.termin + 'T23:59:59') < new Date()) return 'gecikmis';
     return e.durum ? 'devam' : 'planli';
   }
-  const etkinDurum = (k) => { const m = takip[k.id]; return m && m.durum && m.durum !== 'oto' ? m.durum : otoDurum(k.e); };
+  const etkinDurum = (k) => { const m = tkOku(k.id); return m && m.durum && m.durum !== 'oto' ? m.durum : otoDurum(k.e); };
   const sayilar = (liste) => { const c = Object.fromEntries(SIRA.map((x) => [x, 0])); liste.forEach((k) => c[etkinDurum(k)]++); return c; };
   const kayit = (t) => (D.eylem[t] || []).map((e) => ({ e, t, id: eylemId(t, e) }));
   const tamamlanma = (c) => { const pay = c.tamamlandi + c.devam + c.planli + c.gecikmis; return pay ? c.tamamlandi / pay : null; };
@@ -204,13 +226,19 @@
     const alan = (b, d) => (d ? `<div><div class="text-[10px] uppercase tracking-wider text-slate-500">${b}</div><div class="text-slate-200 whitespace-pre-line">${esc(d)}</div></div>` : '');
     const satir = (k) => {
       const e = k.e, n = kayitlar.length; kayitlar.push(k);
-      const m = takip[k.id] || {}, d = etkinDurum(k), oto = otoDurum(k.e), acikMi = acikSatir.has(k.id);
+      const m = tkOku(k.id), d = etkinDurum(k), oto = otoDurum(k.e), acikMi = acikSatir.has(k.id);
       const yuzde = m.yuzde != null && m.yuzde !== '' && d !== 'tamamlandi' ? `<div class="flex items-center gap-1.5 mt-1"><div class="h-1.5 w-20 rounded-full bg-slate-800 overflow-hidden"><div class="h-full bg-amber-400" style="width:${Math.min(100, +m.yuzde)}%"></div></div><span class="text-[10px] text-slate-400">%${esc(String(m.yuzde))}</span></div>` : '';
+      const yaz = !ortak.acik || ortak.yazabilir, kapali = yaz ? '' : 'disabled';
+      const yorumlar = ortak.acik ? (ortak.yorumlar[k.id] || []) : [];
       const form = `<div class="mt-3 pt-3 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 items-start">
-          <label class="text-[11px] text-slate-400">Durum<select onchange="Iso.tk(${n},'durum',this.value)" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100">
+          <label class="text-[11px] text-slate-400">Durum<select ${kapali} onchange="Iso.tk(${n},'durum',this.value)" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100">
             <option value="oto" ${!m.durum || m.durum === 'oto' ? 'selected' : ''}>Otomatik (${DURUMLAR[oto].ad})</option>${ELLE.map((x) => `<option value="${x}" ${m.durum === x ? 'selected' : ''}>${DURUMLAR[x].ad}</option>`).join('')}</select></label>
-          <label class="text-[11px] text-slate-400">İlerleme (%)<input type="number" min="0" max="100" value="${m.yuzde == null ? '' : esc(String(m.yuzde))}" onchange="Iso.tk(${n},'yuzde',this.value)" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100" placeholder="örn. 40" /></label>
-          <label class="text-[11px] text-slate-400 sm:col-span-3">Takip notum${m.tarih ? ` <span class="text-slate-600">(son güncelleme ${esc(m.tarih)})</span>` : ''}<textarea rows="2" onchange="Iso.tk(${n},'not',this.value)" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100" placeholder="Son durum, yapılacak iş, görüşülen kişi…">${esc(m.not || '')}</textarea></label>
+          <label class="text-[11px] text-slate-400">İlerleme (%)<input ${kapali} type="number" min="0" max="100" value="${m.yuzde == null ? '' : esc(String(m.yuzde))}" onchange="Iso.tk(${n},'yuzde',this.value)" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100" placeholder="örn. 40" /></label>
+          ${ortak.acik ? `<label class="text-[11px] text-slate-400">Sorumlu (ekip içi)<input ${kapali} value="${esc(m.sorumlu || '')}" onchange="Iso.tk(${n},'sorumlu',this.value)" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100" placeholder="${esc(e.sorumlu || 'kişi / birim')}" /></label>` : '<div></div>'}
+          <label class="text-[11px] text-slate-400 sm:col-span-3">${ortak.acik ? 'Takip notu (ekip)' : 'Takip notum'}${m.tarih ? ` <span class="text-slate-600">(son güncelleme ${esc(m.tarih)}${m.ad ? ', ' + esc(m.ad) : ''})</span>` : ''}<textarea ${kapali} rows="2" onchange="Iso.tk(${n},'not',this.value)" class="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100" placeholder="Son durum, yapılacak iş, görüşülen kişi…">${esc(m.not || '')}</textarea></label>
+          ${ortak.acik ? `<div class="sm:col-span-3"><div class="text-[11px] text-slate-400 mb-1">Yorumlar (${yorumlar.length})</div>
+            ${yorumlar.map((y) => `<div class="text-xs bg-slate-900/70 rounded-lg px-3 py-2 mb-1.5"><span class="text-slate-400">${esc(y.yazan_ad || 'Kullanıcı')} • ${esc(new Date(y.zaman).toLocaleString('tr-TR'))}</span><div class="text-slate-200 whitespace-pre-line">${esc(y.metin)}</div></div>`).join('')}
+            ${ortak.yazabilir ? `<div class="flex gap-2"><input id="yorum${n}" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100" placeholder="Yorum yaz…" maxlength="1000" /><button onclick="Iso.yorum(${n})" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-900 hover:bg-amber-400">Gönder</button></div>` : ''}</div>` : ''}
         </div>`;
       return `<tr class="align-top cursor-pointer hover:bg-slate-800/40" onclick="Iso.satir(${n})"><td class="px-3 py-2 text-slate-400 whitespace-nowrap"><span id="esc${n}" class="inline-block w-3 text-slate-500">${acikMi ? '▾' : '▸'}</span> ${esc(e.no)}</td>
         <td class="px-3 py-2"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${e.enerji === 'Elektrik' ? 'bg-amber-500/15 text-amber-300' : e.enerji === 'Doğalgaz' ? 'bg-cyan-500/15 text-cyan-300' : 'bg-slate-700 text-slate-300'}">${esc(e.enerji || '')}</span></td>
@@ -226,12 +254,19 @@
       <tbody class="divide-y divide-slate-800/70">${blok('Tesise özel eylemler', liste)}${blok('Genel eylemler', genel)}</tbody></table></div>`;
     const bos = sec(hepsi).length ? '' : '<p class="px-4 py-6 text-center text-xs text-slate-500">Bu süzgece uyan eylem yok.</p>';
 
+    const oturumVar = dbHazir() && VeriDB.oturum();
+    const ortakCubuk = !dbHazir() ? '' : ortak.acik
+      ? `<div class="px-4 py-2.5 border-b border-slate-800 flex flex-wrap items-center gap-3 text-[11px] bg-emerald-500/5"><span class="text-emerald-300 font-semibold">● Ortak takip açık</span><span class="text-slate-400">${esc(VeriDB.oturum().user.email)} (${esc(ortak.rol || 'rol yok')}) — durum, ilerleme, sorumlu, not ve yorumlar ekiple paylaşılır${ortak.yazabilir ? '' : '; yalnızca okuyabilirsiniz'}</span>
+          ${ortak.yazabilir && Object.keys(takip).length ? '<button onclick="Iso.ortakAktar()" class="ml-auto px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold">Bu tarayıcıdaki notları ortağa aktar</button>' : '<span class="ml-auto"></span>'}
+          <button onclick="Iso.ortakCikis()" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold">Çıkış</button></div>`
+      : `<div class="px-4 py-2.5 border-b border-slate-800 flex flex-wrap items-center gap-3 text-[11px]"><span class="text-slate-400">${oturumVar ? 'Ortak takip yüklenemedi.' : 'Takibi ekiple paylaşmak için Veri Girişi hesabınızla giriş yapın.'} ${esc(ortak.mesaj || '')}</span>
+          ${oturumVar ? '' : (ortak.giris ? `<form onsubmit="return Iso.ortakGiris(event)" class="ml-auto flex flex-wrap gap-2"><input id="ogEposta" type="email" placeholder="E-posta" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs" /><input id="ogSifre" type="password" placeholder="Şifre" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs" /><button class="px-3 py-1 rounded-lg bg-amber-500 text-slate-900 font-semibold">Giriş</button></form>` : '<button onclick="Iso.ortakGirisAc()" class="ml-auto px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold">Ortak takibe giriş</button>')}</div>`;
     const alt = `<div class="px-4 py-3 border-t border-slate-800 flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
-        <span>Durum Excel'deki termin ve açıklamalardan otomatik belirlenir; satırı açıp elle düzeltebilir, ilerleme yüzdesi ve not girebilirsiniz. Elle girilenler <b class="text-slate-300">yalnızca bu tarayıcıda</b> saklanır, başkalarına görünmez.</span>
+        <span>Durum Excel'deki termin ve açıklamalardan otomatik belirlenir; satırı açıp elle düzeltebilir, ilerleme yüzdesi ve not girebilirsiniz. ${ortak.acik ? 'Ortak takip açıkken girilenler <b class="text-slate-300">ekiple paylaşılır</b>.' : 'Giriş yapmadan girilenler <b class="text-slate-300">yalnızca bu tarayıcıda</b> saklanır, başkalarına görünmez.'}</span>
         <button onclick="Iso.yedekle()" class="ml-auto px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold">Takip notlarını yedekle</button>
         <label class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold cursor-pointer">Yedeği yükle<input type="file" accept="application/json" class="hidden" onchange="Iso.yukleYedek(this)" /></label></div>`;
     el.innerHTML = bolum('eylem', 'Enerji eylem planı ve ilerleme takibi', ozet,
-      `${karsilastirma}<div class="px-4 py-3 border-t border-slate-800 flex flex-wrap items-center gap-3"><span class="text-[11px] text-slate-400">Seçili tesis ve genel eylemler:</span>${suzgec}</div>${tablo}${bos}${alt}`);
+      `${ortakCubuk}${karsilastirma}<div class="px-4 py-3 border-t border-slate-800 flex flex-wrap items-center gap-3"><span class="text-[11px] text-slate-400">Seçili tesis ve genel eylemler:</span>${suzgec}</div>${tablo}${bos}${alt}`);
   }
 
   function ekBolum() {
@@ -350,6 +385,7 @@
     async ac() {
       if (!yuklendi) await yukle();
       if (!yuklendi) { if (sifreli) girisFormu(); return; }
+      await ortakYukle();
       ciz();
     },
     tesis(id) { tesis = id; ciz(); },
@@ -358,14 +394,45 @@
     ed(k) { eDurum = k; eylemBolumu(); },
     satir(n) { satirAc('es', n, 'esc'); },
     rsatir(k) { satirAc('er', k, 'ec'); },
-    // elle takip: durum / yüzde / not (tarayıcıda saklanır)
-    tk(n, alan, deger) {
+    // elle takip: durum / yüzde / sorumlu / not — ortak takip açıksa Supabase'e, değilse tarayıcıya yazılır
+    async tk(n, alan, deger) {
       const k = kayitlar[n]; if (!k) return;
+      if (ortak.acik) {
+        const m = Object.assign({}, ortak.satirlar[k.id] || {});
+        if (alan === 'yuzde') { const v = deger === '' ? null : Math.max(0, Math.min(100, Math.round(+deger))); m.yuzde = isNaN(v) ? null : v; } else m[alan] = deger;
+        try { await ortakYaz(k.id, m); await ortakYukle(); ortak.mesaj = ''; } catch (e) { ortak.mesaj = 'Kaydedilemedi: ' + e.message; }
+        acikSatir.add(k.id); eylemBolumu(); return;
+      }
       const m = (takip[k.id] = takip[k.id] || {});
       if (alan === 'yuzde') { const v = deger === '' ? null : Math.max(0, Math.min(100, Math.round(+deger))); m.yuzde = isNaN(v) ? null : v; } else m[alan] = deger;
       m.tarih = new Date().toISOString().slice(0, 10);
       if ((!m.durum || m.durum === 'oto') && (m.yuzde == null) && !m.not) delete takip[k.id];
       takipKaydet(); acikSatir.add(k.id); eylemBolumu();
+    },
+    async yorum(n) {
+      const k = kayitlar[n], el = document.getElementById('yorum' + n); if (!k || !el || !el.value.trim()) return;
+      try {
+        await VeriDB.istek('/rest/v1/eylem_yorum', { method: 'POST', prefer: 'return=minimal', body: [{ kaynak: 'iso', eylem_id: k.id, metin: el.value.trim() }] });
+        await ortakYukle();
+      } catch (e) { ortak.mesaj = 'Yorum gönderilemedi: ' + e.message; }
+      acikSatir.add(k.id); eylemBolumu();
+    },
+    ortakGirisAc() { ortak.giris = true; eylemBolumu(); },
+    async ortakGiris(ev) {
+      ev.preventDefault();
+      try { await VeriDB.giris(document.getElementById('ogEposta').value.trim(), document.getElementById('ogSifre').value); ortak.giris = false; await ortakYukle(); }
+      catch (e) { ortak.mesaj = /invalid|credentials/i.test(e.message) ? 'E-posta veya şifre yanlış.' : 'Giriş yapılamadı: ' + e.message; }
+      eylemBolumu(); return false;
+    },
+    ortakCikis() { VeriDB.cikis(); ortak.acik = false; ortak.satirlar = {}; ortak.yorumlar = {}; eylemBolumu(); },
+    async ortakAktar() {
+      const kimler = Object.entries(takip); if (!kimler.length || !confirm(`${kimler.length} yerel not/durum ortak takibe aktarılsın mı? (Ortakta aynı eylem için kayıt varsa üzerine yazılır.)`)) return;
+      try {
+        await VeriDB.istek('/rest/v1/eylem_takip?on_conflict=kaynak,eylem_id', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal',
+          body: kimler.map(([id, m]) => ({ kaynak: 'iso', eylem_id: id, durum: m.durum || 'oto', yuzde: m.yuzde == null ? null : m.yuzde, not_: m.not || null })) });
+        await ortakYukle(); ortak.mesaj = '';
+      } catch (e) { ortak.mesaj = 'Aktarılamadı: ' + e.message; }
+      eylemBolumu();
     },
     yedekle() {
       const a = document.createElement('a');
@@ -380,4 +447,6 @@
       r.readAsText(f); inp.value = '';
     },
   };
+  // Sayfa doğrudan #iso ile açılırsa dashboard.js bu dosyadan önce çalışmış olur
+  if ((location.hash || '').slice(1) === 'iso') window.Iso.ac();
 })();

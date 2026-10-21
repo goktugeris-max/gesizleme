@@ -23,6 +23,10 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
     santrallerin ≥%70'inde verisi olan en son ay `son_donem` olur; o dönemin inceleme satırları Arıza Takip'e gelir). `supabase-ayar.js` boşsa/ulaşılamazsa panel yalnızca Excel'le çalışır.
     Şema ve RLS: `supabase/kurulum.sql` (rol: okuyucu/girisci/yonetici; anon yalnız okur; yazma `yazabilir()`; her değişiklik `degisiklik_gecmisi`'ne). Kurulum: `supabase/KURULUM.md`.
     Elektrik/ISO verisi veritabanına KONMAZ (şifreli statik kalır). `service_role` anahtarı asla siteye/depoya yazılmaz. Test: sahte PostgREST/GoTrue sunucusu (yerel) ile yapıldı; gerçek Supabase henüz bağlanmadı.
+  - **Ortak eylem takibi (ISO)**: Veri Girişi hesabıyla giriş yapılınca (`iso.js` → `ortakYukle()`) ISO eylem planı satırlarındaki durum, ilerleme, sorumlu, not ve YORUMLAR Supabase'te
+    (`eylem_takip`, `eylem_yorum`; `supabase/eylem_takip.sql` bir kez çalıştırılmalı) ekiple paylaşılır; giriş yoksa eski yerel (localStorage) takip çalışır. Bu tablolar anon'a KAPALI
+    (okuma: profili olan giriş yapmışlar, yazma: girisci/yonetici); kim/ne zaman sunucuda yazılır, `degisiklik_gecmisi`'ne düşer. "Bu tarayıcıdaki notları ortağa aktar" düğmesi yerel notları taşır.
+    Eylem kimliği `tesis|no|önlem[0:40]` (Excel'de önlem metni değişirse kimlik değişir → ortak kayıt eşleşmez). Karbon eylem listesi henüz yerel.
   - **Verim Analizi** (`analiz.js`, `#analiz`): Open-Meteo ışınımıyla düzeltilmiş performans oranı. Veri `data/hava.json` (`collector/hava_cek.py`, workflow
     `hava-cek.yml`: ayda bir + elle; Open-Meteo Historical API, anahtarsız, CC BY 4.0, yalnız ticari olmayan kullanım; IP başına günlük sınır var → 429'da kalan aylar sonraki
     çalıştırmada çekilir, artımlıdır). Santral başına aylık eğik yüzey ışınımı (varsayım 30° eğim, güney; `santral_konumlari.json`'a `egim`/`yon` yazılabilir) ve gündüz sıcaklığı.
