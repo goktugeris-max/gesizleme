@@ -18,6 +18,12 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
     İlçe sınırları katmanı (açılıp kapanır, ilçedeki kurulu güce göre boyalı): `data/izmir_ilceler.geojson` — İzBB Açık Veri Portalı "İzmir Şehir Haritası"
     (CC BY 4.0, atıf harita altında), `collector/ilce_sinir_to_json.py` ile indirilip sadeleştirilir (~200 KB). Konumlar `data/santral_konumlari.json`
     (`collector/konum_to_json.py "<GES_CBS.xlsx>"`; yalnız lat/lon/ilçe — adres, maliyet, tasarruf yazılmaz). Yeni santral = Excel'e satır + betikteki `ID` eşlemesi.
+  - **Karbon & İklim** (`karbon.js`, üst modül `#karbon`): kurumsal sera gazı envanteri (Kapsam 1+2, KISMİ kapsam) + yerel iklim eylem planı (SECAP) altlığı.
+    Girdi: GES üretimi (`performans.json`, giriş gerekmez → kaçınılan CO₂), elektrik (`elektrik.enc.json`: faturalı − müstecir = bina/tesis, `genel_aydinlatma` = kamu aydınlatması),
+    doğalgaz Sm³ ve motorin (`iso50001.enc.json`, yalnız 3 ISO tesisi; ISO elektriği toplam elektriğin içinde olduğundan eklenmez). Envanter fatura esaslıdır;
+    GES kaçınılan emisyonu ayrı gösterilir, envanterden düşülmez. Faktörler: elektrik 0,479 kg/kWh (ekibin Excel'i), doğalgaz (9,5 kWh/Sm³ × 0,184) ve motorin (2,68 kg/L) IPCC tabanlı
+    VARSAYIMDIR → resmî değerle değiştirilmeli. Parametreler, eylem listesi, risk (RVA) tablosu ve veri toplama listesi yalnızca tarayıcı localStorage'ındadır (`karbon_v1_*`), CSV indirilir.
+    Envanter bölümü giriş ister (Elektrik/ISO ile aynı parola). Özet sayfasındaki Karbon kartı `Karbon.efElek()` kullanır.
   - **Canlı Durum**: eski kontrol paneli (portal bağlantıları, santral tablosu; isim/saha notu/kWp/tesisat no elle
     düzenlenir ve localStorage'a kaydedilir; GDZ kopyala-yapıştır, WhatsApp raporu, JSON yedek). `loadLive()`
     `data/durum.json`'u okur, `window.CANLI`'ya koyar. Eşleştirme: `portal + kaynakId`, yoksa normalize isim.

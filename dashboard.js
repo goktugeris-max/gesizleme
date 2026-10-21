@@ -7,7 +7,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'elektrik', 'iso', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'elektrik', 'iso', 'karbon', 'canli', 'ariza'];
 
   const GES_ALT = ['genel', 'santraller', 'harita', 'canli', 'ariza'];
 
@@ -106,6 +106,8 @@
       k('Anlık', canli.length ? tr1(anlik) + ' <span class="text-xs text-slate-400">kW</span>' : '—') +
       k(`${yil} üretimi`, mwh(uretim)) +
       k('Verim', yuzde(verim), verimSinifi(verim).yazi);
+    const ef = window.Karbon ? Karbon.efElek() : 0.479, kac = (topla(M.map((m) => m.uretim)) * ef) / 1000;
+    document.getElementById('ozetKarbon').innerHTML = `<div class="text-[10px] uppercase tracking-wider text-slate-500">${yil} GES ile kaçınılan CO₂</div><div class="text-lg font-bold text-lime-300">${tr0(kac)} <span class="text-xs text-slate-400">t</span></div>`;
     const u = document.getElementById('ozetUyari');
     u.classList.toggle('hidden', !sorunlu.length);
     u.innerHTML = sorunlu.length ? `<a href="#canli" class="inline-flex items-center gap-2 text-xs font-semibold text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i> ${sorunlu.length} santralde sorun var: ${esc(sorunlu.slice(0, 3).map((c) => c.ad).join(', '))}${sorunlu.length > 3 ? '…' : ''}</a>` : '';
@@ -316,6 +318,7 @@
     if (ad === 'elektrik' && window.Elek) Elek.ac();
     if (ad === 'iso' && window.Iso) Iso.ac();
     if (ad === 'harita' && window.Harita) Harita.ac();
+    if (ad === 'karbon' && window.Karbon) Karbon.ac();
     if (history.replaceState) history.replaceState(null, '', '#' + ad);
     // Grafikler gizli sekmede çizilirse boyutları bozulur; görünür olunca yeniden boyutla
     setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);
