@@ -1,11 +1,14 @@
-# gesizleme — GES & OSOS Durum Kontrol Merkezi
+# gesizleme — Enerji Yönetim Merkezi (GES, Elektrik, ISO 50001)
 
 İZBB İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü (Enerji Ekibi) için belediye çatı GES'lerinin
 durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımcı değil; açıklamalar Türkçe ve adım adım olmalı.
 
 ## Mimari (sunucusuz)
 
-- `index.html` + `dashboard.js` + `elektrik.js` — GitHub Pages'te yayınlanan panel (Tailwind + Lucide + Chart.js, CDN). 5 sekme:
+- `index.html` + `dashboard.js` + `elektrik.js` + `iso.js` — GitHub Pages'te yayınlanan panel (Tailwind + Lucide + Chart.js, CDN).
+  **Gezinme iki katmanlı:** üstte modüller (Özet `#ozet` = açılış, Güneş Enerjisi `#genel`, Elektrik `#elektrik`, ISO 50001 `#iso`);
+  GES seçilince altta alt sekmeler (Genel Bakış, Santraller, Canlı Durum `#canli`, Arıza Takip `#ariza`). Özet'teki modül kartları
+  `ozetCiz()` ile GES göstergelerini doldurur; yeni modül = yeni üst düğme + `tab-<ad>` + `SEKMELER`'e ekleme. Sekmeler:
   - **Genel Bakış**: kurulu güç, yıllık üretim, beklenene göre verim, aylık/yıllık grafikler, "dikkat gerektirenler".
   - **Santraller**: performans tablosu (verim, geçen yıl farkı, son ay, kWh/kW, canlı durum) + santral detay penceresi.
   - **Elektrik** (`elektrik.js`): belediye elektrik tüketimi — kartlar, aylık tüketim, GES katkısı (aylık net üretim ve tüketimdeki

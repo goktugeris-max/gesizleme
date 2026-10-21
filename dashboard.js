@@ -7,7 +7,9 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['genel', 'santraller', 'elektrik', 'iso', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'elektrik', 'iso', 'canli', 'ariza'];
+
+  const GES_ALT = ['genel', 'santraller', 'canli', 'ariza'];
 
   let PERF = null;
   let M = [];            // santral başına hesaplanan göstergeler
@@ -87,6 +89,27 @@
       kart(`${AY_UZUN[ay - 1]} ayı`, mwh(sonU), `Verim ${yuzde(sonB ? sonU / sonB : null)} • geçen yıl ${fark(onceki ? sonU / onceki - 1 : null)}`, verimSinifi(sonB ? sonU / sonB : null).yazi) +
       kart('Canlı (şu an)', tr1(anlik) + ' <span class="text-sm font-medium text-slate-400">kW</span>',
         canli.length ? `Bugün ${tr0(bugun)} kWh • ${calisan} çalışıyor${sorunlu ? ` • <span class="text-red-400">${sorunlu} sorunlu</span>` : ''} • ${canli.length}/${M.length} santral canlı` : 'Canlı veri henüz yok');
+  }
+
+  // ---------- Özet (modül kartları) ----------
+  function ozetCiz() {
+    const { yil, ay } = PERF.son_donem;
+    const kw = topla(M.map((m) => m.kw));
+    const uretim = topla(M.map((m) => m.uretim)), beklenen = topla(M.map((m) => m.beklenen));
+    const verim = beklenen ? uretim / beklenen : null;
+    const canli = M.map((m) => canliBul(m.s)).filter(Boolean);
+    const anlik = topla(canli.map((c) => c.anlik_kw));
+    const sorunlu = canli.filter((c) => c.durum === 'Arızalı' || c.durum === 'Haberleşme Yok');
+    const k = (e, d, r) => `<div><div class="text-[10px] uppercase tracking-wider text-slate-500">${e}</div><div class="text-lg font-bold ${r || 'text-white'}">${d}</div></div>`;
+    document.getElementById('ozetGes').innerHTML =
+      k('Kurulu güç', tr0(kw) + ' <span class="text-xs text-slate-400">kW</span>') +
+      k('Anlık', canli.length ? tr1(anlik) + ' <span class="text-xs text-slate-400">kW</span>' : '—') +
+      k(`${yil} üretimi`, mwh(uretim)) +
+      k('Verim', yuzde(verim), verimSinifi(verim).yazi);
+    const u = document.getElementById('ozetUyari');
+    u.classList.toggle('hidden', !sorunlu.length);
+    u.innerHTML = sorunlu.length ? `<a href="#canli" class="inline-flex items-center gap-2 text-xs font-semibold text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i> ${sorunlu.length} santralde sorun var: ${esc(sorunlu.slice(0, 3).map((c) => c.ad).join(', '))}${sorunlu.length > 3 ? '…' : ''}</a>` : '';
+    lucide.createIcons();
   }
 
   function grafikOlustur(id, yapi) {
@@ -277,12 +300,18 @@
 
   // ---------- sekmeler ----------
   function sekmeGoster(ad) {
-    if (!SEKMELER.includes(ad)) ad = 'genel';
+    if (!SEKMELER.includes(ad)) ad = 'ozet';
     SEKMELER.forEach((t) => {
       document.getElementById('tab-' + t).classList.toggle('hidden', t !== ad);
       const b = document.getElementById('nav-' + t);
-      b.className = 'px-3.5 py-2 rounded-lg text-xs font-semibold transition ' + (t === ad ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200 border border-transparent');
+      if (!b) return;
+      const alt = GES_ALT.includes(t);
+      b.className = (alt ? 'px-3 py-1.5 rounded-md text-xs font-medium transition ' : 'px-3.5 py-2 rounded-lg text-xs font-semibold transition ') +
+        (t === ad ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200 border border-transparent');
     });
+    const ges = GES_ALT.includes(ad);
+    document.getElementById('nav-ges').className = 'px-3.5 py-2 rounded-lg text-xs font-semibold transition ' + (ges ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200 border border-transparent');
+    document.getElementById('subNav').classList.toggle('hidden', !ges);
     document.getElementById('liveButtons').classList.toggle('hidden', ad !== 'canli');
     if (ad === 'elektrik' && window.Elek) Elek.ac();
     if (ad === 'iso' && window.Iso) Iso.ac();
@@ -294,13 +323,13 @@
 
   function hepsiniCiz() {
     if (!PERF) return;
-    kartlar(); dikkat(); tabloCiz(); arizaCiz();
+    kartlar(); dikkat(); tabloCiz(); arizaCiz(); ozetCiz();
     if (window.Chart) genelGrafikler();
     lucide.createIcons();
   }
 
   async function yukle() {
-    sekmeGoster((location.hash || '#genel').slice(1));
+    sekmeGoster((location.hash || '#ozet').slice(1));
     try {
       const r = await fetch('data/performans.json?t=' + Date.now(), { cache: 'no-store' });
       if (!r.ok) throw new Error(r.status);
@@ -318,8 +347,8 @@
     sekme: sekmeGoster,
     detay,
     sirala(k) { sirala = { anahtar: k, yon: sirala.anahtar === k ? -sirala.yon : (k === 'ad' ? 1 : -1) }; tabloCiz(); },
-    canliGuncelle() { if (PERF) { kartlar(); dikkat(); tabloCiz(); } },
+    canliGuncelle() { if (PERF) { kartlar(); dikkat(); tabloCiz(); ozetCiz(); } },
   };
-  window.addEventListener('hashchange', () => sekmeGoster((location.hash || '#genel').slice(1)));
+  window.addEventListener('hashchange', () => sekmeGoster((location.hash || '#ozet').slice(1)));
   yukle();
 })();
