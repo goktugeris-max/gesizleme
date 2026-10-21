@@ -68,6 +68,7 @@
         <button id="nav-genel" onclick="Dash.sekme('genel')">Genel Bakış</button>
         <button id="nav-santraller" onclick="Dash.sekme('santraller')">Santraller</button>
         <button id="nav-harita" onclick="Dash.sekme('harita')">Harita</button>
+        <button id="nav-analiz" onclick="Dash.sekme('analiz')">Verim Analizi</button>
         <button id="nav-canli" onclick="Dash.sekme('canli')">Canlı Durum</button>
         <button id="nav-ariza" onclick="Dash.sekme('ariza')">Arıza Takip</button>
       </div>
@@ -112,6 +113,9 @@
       </section>
       <p class="text-[11px] text-slate-500 text-center">GES canlı veri kaynakları: SMA ennexOS • GoodWe SEMS+ • Huawei FusionSolar (elle) • GDZ Elektrik ARİL OSOS</p>
     </div>
+
+    <!-- SEKME: VERİM ANALİZİ (Open-Meteo) -->
+    <div id="tab-analiz" data-tab class="hidden"><div id="analizIcerik"></div></div>
 
     <!-- SEKME: KARBON & İKLİM -->
     <div id="tab-karbon" data-tab class="hidden"><div id="karbonIcerik"></div></div>
@@ -756,5 +760,6 @@
   <script src="iso.js"></script>
   <script src="harita.js"></script>
   <script src="karbon.js"></script>
+  <script src="analiz.js"></script>
 </body>
 </html>

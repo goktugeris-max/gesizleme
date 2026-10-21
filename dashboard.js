@@ -7,9 +7,9 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'elektrik', 'iso', 'karbon', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'iso', 'karbon', 'canli', 'ariza'];
 
-  const GES_ALT = ['genel', 'santraller', 'harita', 'canli', 'ariza'];
+  const GES_ALT = ['genel', 'santraller', 'harita', 'analiz', 'canli', 'ariza'];
 
   let PERF = null;
   let M = [];            // santral başına hesaplanan göstergeler
@@ -319,6 +319,7 @@
     if (ad === 'iso' && window.Iso) Iso.ac();
     if (ad === 'harita' && window.Harita) Harita.ac();
     if (ad === 'karbon' && window.Karbon) Karbon.ac();
+    if (ad === 'analiz' && window.Analiz) Analiz.ac();
     if (history.replaceState) history.replaceState(null, '', '#' + ad);
     // Grafikler gizli sekmede çizilirse boyutları bozulur; görünür olunca yeniden boyutla
     setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);

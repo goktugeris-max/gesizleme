@@ -1,0 +1,40 @@
+name: Hava Verisi Çek
+
+on:
+  schedule:
+    # Ayda bir (ayın 3'ü, Türkiye saatiyle 07:23): önceki ayın ışınım verisi tamamlanmış olur
+    - cron: '23 4 3 * *'
+  workflow_dispatch:       # Actions sekmesinden elle çalıştırma (ilk kurulumda geçmiş aylar çekilir)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hava-cek
+  cancel-in-progress: false
+
+jobs:
+  cek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Kütüphaneleri kur
+        run: pip install requests
+
+      # Open-Meteo ücretsiz API'si; günlük sınıra takılırsa kalan aylar sonraki çalıştırmada çekilir
+      - name: Open-Meteo'dan ışınım ve sıcaklık çek
+        run: python collector/hava_cek.py
+
+      - name: Sonucu kaydet
+        run: |
+          git config user.name "ges-bot"
+          git config user.email "ges-bot@users.noreply.github.com"
+          git add data/hava.json
+          git diff --staged --quiet || git commit -m "Hava verisi güncellendi"
+          git pull --rebase origin main
+          git push

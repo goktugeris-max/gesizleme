@@ -18,6 +18,11 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
     İlçe sınırları katmanı (açılıp kapanır, ilçedeki kurulu güce göre boyalı): `data/izmir_ilceler.geojson` — İzBB Açık Veri Portalı "İzmir Şehir Haritası"
     (CC BY 4.0, atıf harita altında), `collector/ilce_sinir_to_json.py` ile indirilip sadeleştirilir (~200 KB). Konumlar `data/santral_konumlari.json`
     (`collector/konum_to_json.py "<GES_CBS.xlsx>"`; yalnız lat/lon/ilçe — adres, maliyet, tasarruf yazılmaz). Yeni santral = Excel'e satır + betikteki `ID` eşlemesi.
+  - **Verim Analizi** (`analiz.js`, `#analiz`): Open-Meteo ışınımıyla düzeltilmiş performans oranı. Veri `data/hava.json` (`collector/hava_cek.py`, workflow
+    `hava-cek.yml`: ayda bir + elle; Open-Meteo Historical API, anahtarsız, CC BY 4.0, yalnız ticari olmayan kullanım; IP başına günlük sınır var → 429'da kalan aylar sonraki
+    çalıştırmada çekilir, artımlıdır). Santral başına aylık eğik yüzey ışınımı (varsayım 30° eğim, güney; `santral_konumlari.json`'a `egim`/`yon` yazılabilir) ve gündüz sıcaklığı.
+    PR = üretim/(kWp×GTI), sıcaklık düzeltmeli; beklenen PR = santralin ilk 24 ay medyanı (veya sabit PR) × (1−yıllık kayıp)^yıl. Endeks = Σgerçek/Σbeklenen. Başlangıç PR'si 0,65–0,95
+    dışındaysa kurulu güç/yön şüphesi uyarısı çıkar (CBS Excel'i ile panel kW'ları bazı santrallerde farklı). `hava.json` yoksa sayfa Actions'ı çalıştırmayı söyler.
   - **Karbon & İklim** (`karbon.js`, üst modül `#karbon`): kurumsal sera gazı envanteri (Kapsam 1+2, KISMİ kapsam) + yerel iklim eylem planı (SECAP) altlığı.
     Girdi: GES üretimi (`performans.json`, giriş gerekmez → kaçınılan CO₂), elektrik (`elektrik.enc.json`: faturalı − müstecir = bina/tesis, `genel_aydinlatma` = kamu aydınlatması),
     doğalgaz Sm³ ve motorin (`iso50001.enc.json`, yalnız 3 ISO tesisi; ISO elektriği toplam elektriğin içinde olduğundan eklenmez). Envanter fatura esaslıdır;
