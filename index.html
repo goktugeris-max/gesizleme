@@ -6,6 +6,8 @@
   <title>Enerji Yönetim Merkezi | İZBB</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <script>
@@ -64,6 +66,7 @@
         <span class="text-[11px] uppercase tracking-wider text-slate-500 mr-1">GES</span>
         <button id="nav-genel" onclick="Dash.sekme('genel')">Genel Bakış</button>
         <button id="nav-santraller" onclick="Dash.sekme('santraller')">Santraller</button>
+        <button id="nav-harita" onclick="Dash.sekme('harita')">Harita</button>
         <button id="nav-canli" onclick="Dash.sekme('canli')">Canlı Durum</button>
         <button id="nav-ariza" onclick="Dash.sekme('ariza')">Arıza Takip</button>
       </div>
@@ -101,6 +104,22 @@
         </a>
       </section>
       <p class="text-[11px] text-slate-500 text-center">GES canlı veri kaynakları: SMA ennexOS • GoodWe SEMS+ • Huawei FusionSolar (elle) • GDZ Elektrik ARİL OSOS</p>
+    </div>
+
+    <!-- SEKME: HARİTA (CBS) -->
+    <div id="tab-harita" data-tab class="hidden space-y-3">
+      <section class="glass-card rounded-xl overflow-hidden">
+        <div class="p-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-sm font-semibold text-white flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i> GES haritası <span id="haritaOzet" class="text-[11px] font-normal text-slate-500"></span></h2>
+          <div class="flex gap-1 bg-slate-900/80 rounded-lg p-0.5"><span class="px-2 py-1 text-[11px] text-slate-500">Renk:</span>
+            <button data-hmod="verim">Verim</button><button data-hmod="canli">Canlı durum</button></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-4">
+          <div id="haritaKap" class="lg:col-span-3 h-[28rem] lg:h-[40rem] bg-slate-900"></div>
+          <div id="haritaListe" class="max-h-64 lg:max-h-[40rem] overflow-y-auto border-t lg:border-t-0 lg:border-l border-slate-800"></div>
+        </div>
+        <div id="haritaLejant" class="px-4 py-2.5 border-t border-slate-800 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400"></div>
+      </section>
     </div>
 
     <!-- SEKME: GENEL BAKIŞ -->
@@ -725,5 +744,6 @@
   <script src="dashboard.js"></script>
   <script src="elektrik.js"></script>
   <script src="iso.js"></script>
+  <script src="harita.js"></script>
 </body>
 </html>

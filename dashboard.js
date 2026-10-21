@@ -7,9 +7,9 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['ozet', 'genel', 'santraller', 'elektrik', 'iso', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'elektrik', 'iso', 'canli', 'ariza'];
 
-  const GES_ALT = ['genel', 'santraller', 'canli', 'ariza'];
+  const GES_ALT = ['genel', 'santraller', 'harita', 'canli', 'ariza'];
 
   let PERF = null;
   let M = [];            // santral başına hesaplanan göstergeler
@@ -315,6 +315,7 @@
     document.getElementById('liveButtons').classList.toggle('hidden', ad !== 'canli');
     if (ad === 'elektrik' && window.Elek) Elek.ac();
     if (ad === 'iso' && window.Iso) Iso.ac();
+    if (ad === 'harita' && window.Harita) Harita.ac();
     if (history.replaceState) history.replaceState(null, '', '#' + ad);
     // Grafikler gizli sekmede çizilirse boyutları bozulur; görünür olunca yeniden boyutla
     setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);
@@ -323,7 +324,7 @@
 
   function hepsiniCiz() {
     if (!PERF) return;
-    kartlar(); dikkat(); tabloCiz(); arizaCiz(); ozetCiz();
+    kartlar(); dikkat(); tabloCiz(); arizaCiz(); ozetCiz(); if (window.Harita) Harita.yenile();
     if (window.Chart) genelGrafikler();
     lucide.createIcons();
   }
@@ -347,7 +348,8 @@
     sekme: sekmeGoster,
     detay,
     sirala(k) { sirala = { anahtar: k, yon: sirala.anahtar === k ? -sirala.yon : (k === 'ad' ? 1 : -1) }; tabloCiz(); },
-    canliGuncelle() { if (PERF) { kartlar(); dikkat(); tabloCiz(); ozetCiz(); } },
+    canliGuncelle() { if (PERF) { kartlar(); dikkat(); tabloCiz(); ozetCiz(); if (window.Harita) Harita.yenile(); } },
+    veri() { return { PERF, M, canliBul }; },
   };
   window.addEventListener('hashchange', () => sekmeGoster((location.hash || '#ozet').slice(1)));
   yukle();
