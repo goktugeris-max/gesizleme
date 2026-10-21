@@ -58,6 +58,12 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   - **SMA ennexOS**: tarayıcısız OAuth (login.sma.energy, client `SPpbeOS`, PKCE) → `uiapi.sunnyportal.com/api/v1/statuslist/plants`.
     Durum kodu 307=Ok, 303=Kapalı, 35=Arıza, 455=Uyarı; **55 (ibbseyrekges) anlamı henüz bilinmiyor.**
   - **Huawei**: kod var (kiosk: `HUAWEI_KIOSK_URLS`; web girişi: `HUAWEI_USER/PASS`) ama GitHub'dan ÇALIŞMIYOR, aşağıya bak.
+- `collector/alarm.py` — **e-posta alarmı** (Gmail SMTP, `veri-cek.yml`'de toplayıcıdan sonra, `continue-on-error`). Gündüz (`gunduz_mu`) bir invertör
+  (invertörü olmayan santral için santral) "Haberleşme Yok"/"Arızalı" ise ve **art arda 2 turda** öyleyse BİR kez mesaj atar; sürerse tekrar yok
+  (24 saatte bir hatırlatma), düzelince "giderildi" mesajı. Bir portala art arda erişilemezse o da alarm. Portal hatasında o portalın
+  santralleri belirsiz sayılır. Gönderim başarısızsa "bildirildi" işaretlenmez, sonraki turda yeniden denenir. Durum: `data/alarm_durum.json`
+  (bot commit'ler; kimlik bilgisi yok). Secrets: `GMAIL_USER`, `GMAIL_APP_PASS` (Gmail uygulama şifresi), `ALARM_ALICILAR` (virgülle ayrılmış).
+  Alıcılar ve şifre günlüğe yazılmaz (Actions günlükleri herkese açık). Deneme: Actions → GES Veri Çek → Run workflow → `test_mail` işaretli.
 - `.github/workflows/veri-cek.yml` — TR 06:07–20:07 arası saatlik (`7 3-17 * * *` UTC) + elle çalıştırma.
   Secrets: `GOODWE_USER`, `GOODWE_PASS`, `SMA_USER`, `SMA_PASS` (Huawei satırları kapalı/yorumda).
 - `.github/workflows/static.yml` — Pages yayını (tüm depo); `workflow_run` ile veri toplayıcı bitince de tetiklenir.

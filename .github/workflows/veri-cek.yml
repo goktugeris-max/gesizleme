@@ -4,7 +4,12 @@ on:
   schedule:
     # Türkiye saatiyle 06:07 - 20:07 arası her saat (GitHub saatleri UTC'dir)
     - cron: '7 3-17 * * *'
-  workflow_dispatch: {}   # Actions sekmesinden elle çalıştırma butonu
+  workflow_dispatch:       # Actions sekmesinden elle çalıştırma butonu
+    inputs:
+      test_mail:
+        description: 'Yalnızca deneme e-postası gönder (veri çekme ve alarm kontrolü yapılmaz)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -26,7 +31,17 @@ jobs:
       - name: Kütüphaneleri kur
         run: pip install requests
 
+      - name: Deneme e-postası gönder
+        if: ${{ inputs.test_mail }}
+        run: python collector/alarm.py
+        env:
+          ALARM_TEST: 'true'
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
+          ALARM_ALICILAR: ${{ secrets.ALARM_ALICILAR }}
+
       - name: Portallardan veri çek
+        if: ${{ !inputs.test_mail }}
         run: python collector/collect.py
         env:
           GOODWE_USER: ${{ secrets.GOODWE_USER }}
@@ -38,10 +53,22 @@ jobs:
           # ağından çözülemiyor. Açmak için HUAWEI_USER/HUAWEI_PASS/HUAWEI_SUBDOMAIN satırlarını
           # ve "fusion_solar_py[captcha]" kurulumunu ekleyin (kendi barındırdığınız runner'da).
 
+      # Yeni kesinti/arıza varsa e-posta gönderir (gece değerlendirmez). Hata verirse veri kaydı yine de yapılır.
+      - name: Alarm kontrolü (e-posta)
+        if: ${{ !inputs.test_mail }}
+        continue-on-error: true
+        run: python collector/alarm.py
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASS: ${{ secrets.GMAIL_APP_PASS }}
+          ALARM_ALICILAR: ${{ secrets.ALARM_ALICILAR }}
+
       - name: Sonucu kaydet
+        if: ${{ !inputs.test_mail }}
         run: |
           git config user.name "ges-bot"
           git config user.email "ges-bot@users.noreply.github.com"
           git add data/durum.json
+          if [ -f data/alarm_durum.json ]; then git add data/alarm_durum.json; fi
           git diff --staged --quiet || git commit -m "Veri güncellendi"
           git push
