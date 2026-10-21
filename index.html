@@ -60,6 +60,7 @@
       <button id="nav-ges" onclick="Dash.sekme('genel')"><i data-lucide="sun" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Güneş Enerjisi (GES)</button>
       <button id="nav-elektrik" onclick="Dash.sekme('elektrik')"><i data-lucide="plug-zap" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Elektrik</button>
       <button id="nav-iso" onclick="Dash.sekme('iso')"><i data-lucide="award" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>ISO 50001</button>
+      <button id="nav-veri" onclick="Dash.sekme('veri')"><i data-lucide="pen-square" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Veri Girişi</button>
       <button id="nav-karbon" onclick="Dash.sekme('karbon')"><i data-lucide="leaf" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Karbon &amp; İklim</button>
     </nav>
     <nav id="subNav" class="hidden border-t border-slate-800/60 bg-slate-900/40">
@@ -116,6 +117,9 @@
 
     <!-- SEKME: VERİM ANALİZİ (Open-Meteo) -->
     <div id="tab-analiz" data-tab class="hidden"><div id="analizIcerik"></div></div>
+
+    <!-- SEKME: VERİ GİRİŞİ (Supabase) -->
+    <div id="tab-veri" data-tab class="hidden"><div id="veriIcerik"></div></div>
 
     <!-- SEKME: KARBON & İKLİM -->
     <div id="tab-karbon" data-tab class="hidden"><div id="karbonIcerik"></div></div>
@@ -755,11 +759,14 @@
     renderAll();
     loadLive();
   </script>
+  <script src="supabase-ayar.js"></script>
+  <script src="veridb.js"></script>
   <script src="dashboard.js"></script>
   <script src="elektrik.js"></script>
   <script src="iso.js"></script>
   <script src="harita.js"></script>
   <script src="karbon.js"></script>
   <script src="analiz.js"></script>
+  <script src="veri.js"></script>
 </body>
 </html>

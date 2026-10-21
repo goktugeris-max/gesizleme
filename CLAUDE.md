@@ -18,6 +18,11 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
     İlçe sınırları katmanı (açılıp kapanır, ilçedeki kurulu güce göre boyalı): `data/izmir_ilceler.geojson` — İzBB Açık Veri Portalı "İzmir Şehir Haritası"
     (CC BY 4.0, atıf harita altında), `collector/ilce_sinir_to_json.py` ile indirilip sadeleştirilir (~200 KB). Konumlar `data/santral_konumlari.json`
     (`collector/konum_to_json.py "<GES_CBS.xlsx>"`; yalnız lat/lon/ilçe — adres, maliyet, tasarruf yazılmaz). Yeni santral = Excel'e satır + betikteki `ID` eşlemesi.
+  - **Veri Girişi** (`veri.js` + `veridb.js` + `supabase-ayar.js`, `#veri`): Supabase (REST + GoTrue, SDK yok) ile GES aylık üretim (santral × ay, kWh; Excel'den yapıştırma) ve aylık
+    inceleme (arıza takip satırları) girişi, değişiklik geçmişi. Açılışta `veridb.js` `birlestir()` ile DB satırlarını `performans.json`'un üstüne uygular (yıllık toplam yeniden hesaplanır;
+    santrallerin ≥%70'inde verisi olan en son ay `son_donem` olur; o dönemin inceleme satırları Arıza Takip'e gelir). `supabase-ayar.js` boşsa/ulaşılamazsa panel yalnızca Excel'le çalışır.
+    Şema ve RLS: `supabase/kurulum.sql` (rol: okuyucu/girisci/yonetici; anon yalnız okur; yazma `yazabilir()`; her değişiklik `degisiklik_gecmisi`'ne). Kurulum: `supabase/KURULUM.md`.
+    Elektrik/ISO verisi veritabanına KONMAZ (şifreli statik kalır). `service_role` anahtarı asla siteye/depoya yazılmaz. Test: sahte PostgREST/GoTrue sunucusu (yerel) ile yapıldı; gerçek Supabase henüz bağlanmadı.
   - **Verim Analizi** (`analiz.js`, `#analiz`): Open-Meteo ışınımıyla düzeltilmiş performans oranı. Veri `data/hava.json` (`collector/hava_cek.py`, workflow
     `hava-cek.yml`: ayda bir + elle; Open-Meteo Historical API, anahtarsız, CC BY 4.0, yalnız ticari olmayan kullanım; IP başına günlük sınır var → 429'da kalan aylar sonraki
     çalıştırmada çekilir, artımlıdır). Santral başına aylık eğik yüzey ışınımı (varsayım 30° eğim, güney; `santral_konumlari.json`'a `egim`/`yon` yazılabilir) ve gündüz sıcaklığı.

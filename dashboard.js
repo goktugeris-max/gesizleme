@@ -7,7 +7,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'iso', 'karbon', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'iso', 'karbon', 'veri', 'canli', 'ariza'];
 
   const GES_ALT = ['genel', 'santraller', 'harita', 'analiz', 'canli', 'ariza'];
 
@@ -320,6 +320,7 @@
     if (ad === 'harita' && window.Harita) Harita.ac();
     if (ad === 'karbon' && window.Karbon) Karbon.ac();
     if (ad === 'analiz' && window.Analiz) Analiz.ac();
+    if (ad === 'veri' && window.Veri) Veri.ac();
     if (history.replaceState) history.replaceState(null, '', '#' + ad);
     // Grafikler gizli sekmede çizilirse boyutları bozulur; görünür olunca yeniden boyutla
     setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);
@@ -333,16 +334,22 @@
     lucide.createIcons();
   }
 
+  async function veriYukle() {
+    const r = await fetch('data/performans.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    PERF = await r.json();
+    if (window.VeriDB) await VeriDB.birlestir(PERF);   // Veri Girişi'nde girilen aylar Excel verisinin üstüne uygulanır
+    hesapla();
+    hepsiniCiz();
+    const { yil, ay } = PERF.son_donem;
+    document.getElementById('veriKaynak').textContent = `Üretim verisi: ${AY_UZUN[ay - 1]} ${yil} sonuna kadar (${PERF.veritabani_satir ? 'Excel + Veri Girişi' : 'Excel'}). Canlı veri: GoodWe ve SMA santralleri, saatlik.`;
+    ['Harita', 'Analiz', 'Karbon', 'Veri'].forEach((m) => { if (window[m] && window[m].yenile) window[m].yenile(); });
+  }
+
   async function yukle() {
     sekmeGoster((location.hash || '#ozet').slice(1));
     try {
-      const r = await fetch('data/performans.json?t=' + Date.now(), { cache: 'no-store' });
-      if (!r.ok) throw new Error(r.status);
-      PERF = await r.json();
-      hesapla();
-      hepsiniCiz();
-      const { yil, ay } = PERF.son_donem;
-      document.getElementById('veriKaynak').textContent = `Üretim verisi: ${AY_UZUN[ay - 1]} ${yil} sonuna kadar (Excel). Canlı veri: GoodWe ve SMA santralleri, saatlik.`;
+      await veriYukle();
     } catch (e) {
       document.getElementById('genelKartlar').innerHTML = '<p class="col-span-full text-sm text-slate-400">Performans verisi yüklenemedi.</p>';
     }
@@ -350,6 +357,7 @@
 
   window.Dash = {
     sekme: sekmeGoster,
+    yenidenYukle: veriYukle,
     detay,
     sirala(k) { sirala = { anahtar: k, yon: sirala.anahtar === k ? -sirala.yon : (k === 'ad' ? 1 : -1) }; tabloCiz(); },
     canliGuncelle() { if (PERF) { kartlar(); dikkat(); tabloCiz(); ozetCiz(); if (window.Harita) Harita.yenile(); } },
