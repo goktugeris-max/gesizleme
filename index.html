@@ -60,6 +60,8 @@
       <button id="nav-ges" onclick="Dash.sekme('genel')"><i data-lucide="sun" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Güneş Enerjisi (GES)</button>
       <button id="nav-elektrik" onclick="Dash.sekme('elektrik')"><i data-lucide="plug-zap" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Elektrik</button>
       <button id="nav-iso" onclick="Dash.sekme('iso')"><i data-lucide="award" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>ISO 50001</button>
+      <button id="nav-veri" onclick="Dash.sekme('veri')"><i data-lucide="pen-square" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Veri Girişi</button>
+      <button id="nav-karbon" onclick="Dash.sekme('karbon')"><i data-lucide="leaf" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Karbon &amp; İklim</button>
     </nav>
     <nav id="subNav" class="hidden border-t border-slate-800/60 bg-slate-900/40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex flex-wrap items-center gap-1.5">
@@ -67,6 +69,7 @@
         <button id="nav-genel" onclick="Dash.sekme('genel')">Genel Bakış</button>
         <button id="nav-santraller" onclick="Dash.sekme('santraller')">Santraller</button>
         <button id="nav-harita" onclick="Dash.sekme('harita')">Harita</button>
+        <button id="nav-analiz" onclick="Dash.sekme('analiz')">Verim Analizi</button>
         <button id="nav-canli" onclick="Dash.sekme('canli')">Canlı Durum</button>
         <button id="nav-ariza" onclick="Dash.sekme('ariza')">Arıza Takip</button>
       </div>
@@ -83,7 +86,7 @@
         <p class="text-sm text-slate-400 mt-2 max-w-2xl">Belediye çatı GES'lerinin canlı izlenmesi, elektrik tüketimi ve ISO 50001 enerji yönetim sisteminin takibi tek yerde. Bir modül seçin.</p>
         <div id="ozetUyari" class="mt-4 hidden"></div>
       </section>
-      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <a href="#genel" class="glass-card rounded-2xl p-5 hover:border-amber-500/40 transition group block">
           <div class="flex items-center justify-between"><div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center"><i data-lucide="sun" class="w-5 h-5"></i></div><i data-lucide="arrow-right" class="w-4 h-4 text-slate-600 group-hover:text-amber-300 transition"></i></div>
           <h3 class="text-base font-semibold text-white mt-3">Güneş Enerjisi (GES)</h3>
@@ -102,9 +105,24 @@
           <p class="text-xs text-slate-400 mt-1">Enerji referans çizgileri, sapma, eylem planı, risk ve fırsat</p>
           <p class="text-[11px] text-slate-500 mt-4 flex items-center gap-1.5"><i data-lucide="lock" class="w-3 h-3"></i> Yönetici girişi gerekir</p>
         </a>
+        <a href="#karbon" class="glass-card rounded-2xl p-5 hover:border-lime-500/40 transition group block">
+          <div class="flex items-center justify-between"><div class="w-10 h-10 rounded-xl bg-lime-500/10 text-lime-400 flex items-center justify-center"><i data-lucide="leaf" class="w-5 h-5"></i></div><i data-lucide="arrow-right" class="w-4 h-4 text-slate-600 group-hover:text-lime-300 transition"></i></div>
+          <h3 class="text-base font-semibold text-white mt-3">Karbon &amp; İklim</h3>
+          <p class="text-xs text-slate-400 mt-1">Sera gazı envanteri, hedef takibi, yerel iklim eylem planı (SECAP) altlığı</p>
+          <div id="ozetKarbon" class="mt-4 text-xs text-slate-500">Yükleniyor...</div>
+        </a>
       </section>
       <p class="text-[11px] text-slate-500 text-center">GES canlı veri kaynakları: SMA ennexOS • GoodWe SEMS+ • Huawei FusionSolar (elle) • GDZ Elektrik ARİL OSOS</p>
     </div>
+
+    <!-- SEKME: VERİM ANALİZİ (Open-Meteo) -->
+    <div id="tab-analiz" data-tab class="hidden"><div id="analizIcerik"></div></div>
+
+    <!-- SEKME: VERİ GİRİŞİ (Supabase) -->
+    <div id="tab-veri" data-tab class="hidden"><div id="veriIcerik"></div></div>
+
+    <!-- SEKME: KARBON & İKLİM -->
+    <div id="tab-karbon" data-tab class="hidden"><div id="karbonIcerik"></div></div>
 
     <!-- SEKME: HARİTA (CBS) -->
     <div id="tab-harita" data-tab class="hidden space-y-3">
@@ -741,9 +759,14 @@
     renderAll();
     loadLive();
   </script>
+  <script src="supabase-ayar.js"></script>
+  <script src="veridb.js"></script>
   <script src="dashboard.js"></script>
   <script src="elektrik.js"></script>
   <script src="iso.js"></script>
   <script src="harita.js"></script>
+  <script src="karbon.js"></script>
+  <script src="analiz.js"></script>
+  <script src="veri.js"></script>
 </body>
 </html>
