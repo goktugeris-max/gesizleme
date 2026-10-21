@@ -2,7 +2,7 @@
  * Konumlar: data/santral_konumlari.json (collector/konum_to_json.py). Veri ve canlı durum dashboard.js'ten Dash.veri() ile alınır.
  */
 (function () {
-  let sigdi = false, harita = null, konumlar = null, katman = null, mod = 'verim', secili = null;
+  let sigdi = false, ilceVeri = null, ilceKatman = null, ilceAcik = true, harita = null, konumlar = null, katman = null, mod = 'verim', secili = null;
   const isaret = {};   // id -> circleMarker
 
   const tr0 = (n) => n == null || isNaN(n) ? '—' : Math.round(n).toLocaleString('tr-TR');
@@ -42,8 +42,35 @@
       <button onclick="Dash.sekme('santraller');Dash.detay('${m.id}')" style="margin-top:8px;padding:4px 10px;border-radius:6px;background:#0f172a;color:#fff;font-weight:600;font-size:11px">Ayrıntı</button></div>`;
   }
 
+  const buyuk = (a) => String(a || '').toLocaleUpperCase('tr');
+
+  // İlçe sınırları (İzBB Açık Veri, CC BY 4.0): kurulu güce göre boyalı, üzerine gelince ilçe özeti
+  function ilceCiz() {
+    if (ilceKatman) { ilceKatman.remove(); ilceKatman = null; }
+    if (!ilceAcik || !ilceVeri || !harita) return;
+    const ozet = {};
+    satirlar().forEach((r) => {
+      const o = ozet[buyuk(r.k.ilce)] = ozet[buyuk(r.k.ilce)] || { adet: 0, kw: 0 };
+      o.adet += 1; o.kw += r.m.kw || 0;
+    });
+    const kmax = Math.max(1, ...Object.values(ozet).map((o) => o.kw));
+    ilceKatman = L.geoJSON(ilceVeri, {
+      style: (f) => {
+        const o = ozet[f.properties.adi];
+        return { color: '#475569', weight: 1, fillColor: '#f59e0b', fillOpacity: o ? 0.05 + 0.17 * (o.kw / kmax) : 0.0 };
+      },
+      onEachFeature: (f, l) => {
+        const o = ozet[f.properties.adi];
+        const ad = f.properties.adi.charAt(0) + f.properties.adi.slice(1).toLocaleLowerCase('tr');
+        l.bindTooltip(o ? `<b>${ad}</b><br>${o.adet} santral • ${tr0(o.kw)} kW` : `<b>${ad}</b><br>Santral yok`, { sticky: true });
+      },
+    }).addTo(harita);
+    ilceKatman.bringToBack();
+  }
+
   function ciz() {
     if (!harita) return;
+    ilceCiz();
     if (katman) katman.remove();
     katman = L.layerGroup().addTo(harita);
     const rows = satirlar();
@@ -84,7 +111,8 @@
       ? [['#10b981', 'Çalışıyor'], ['#38bdf8', 'Beklemede'], ['#ef4444', 'Arıza / haberleşme yok'], [GRI, 'Canlı bağlantı yok']]
       : [['#10b981', '≥ %95'], ['#fcd34d', '%85–95'], ['#fb923c', '%70–85'], ['#ef4444', '< %70'], [GRI, 'Veri yok']]
     ).map(([c, t]) => `<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:${c}"></span>${t}</span>`).join('') +
-      '<span class="text-slate-500">• daire boyutu = kurulu güç • kırmızı halka = canlı sorun</span>';
+      '<span class="text-slate-500">• daire boyutu = kurulu güç • kırmızı halka = canlı sorun' + (ilceAcik ? ' • ilçe tonu = ilçedeki kurulu güç' : '') + '</span>' +
+      '<span class="basis-full text-[10px] text-slate-600">Harita: © OpenStreetMap katkıcıları, © CARTO, Esri • İlçe sınırları: İzmir Büyükşehir Belediyesi Açık Veri Portalı (CC BY 4.0 kapsamında lisanslanan kamu sektörü bilgilerini içerir)</span>';
   }
 
   function kur() {
@@ -108,10 +136,20 @@
       try { konumlar = await (await fetch('data/santral_konumlari.json?t=' + Date.now(), { cache: 'no-store' })).json(); }
       catch (e) { document.getElementById('haritaKap').innerHTML = '<p class="p-6 text-sm text-slate-400">Konum verisi yüklenemedi.</p>'; return; }
     }
+    if (!ilceVeri) {
+      try { ilceVeri = await (await fetch('data/izmir_ilceler.geojson')).json(); } catch (e) { ilceVeri = null; }
+    }
     const ilk = !harita;
     if (ilk) kur();
     setTimeout(() => { harita.invalidateSize(); ciz(); if (!sigdi) sigdir(); }, 60);
   }
+
+  const ilceDugme = document.getElementById('haritaIlce');
+  if (ilceDugme) ilceDugme.addEventListener('click', () => {
+    ilceAcik = !ilceAcik;
+    ilceDugme.className = 'px-2.5 py-1 rounded-md text-[11px] font-semibold transition ' + (ilceAcik ? 'bg-amber-500/15 text-amber-300' : 'text-slate-400 hover:text-slate-200');
+    ciz();
+  });
 
   document.querySelectorAll('[data-hmod]').forEach((b) => b.addEventListener('click', () => {
     mod = b.dataset.hmod;
