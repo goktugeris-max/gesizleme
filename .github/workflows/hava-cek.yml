@@ -29,8 +29,10 @@ jobs:
       # Open-Meteo ücretsiz API'si; günlük sınıra takılırsa kalan aylar sonraki çalıştırmada çekilir
       - name: Open-Meteo'dan ışınım ve sıcaklık çek
         run: python collector/hava_cek.py
+        timeout-minutes: 45
 
       - name: Sonucu kaydet
+        if: always()          # çekim yarıda kalsa/sınıra takılsa bile o ana kadarki veriyi kaydet
         run: |
           git config user.name "ges-bot"
           git config user.email "ges-bot@users.noreply.github.com"
