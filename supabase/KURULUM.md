@@ -18,6 +18,10 @@ Bu modül GES aylık üretimini ve aylık incelemeyi siteden girmenizi sağlar. 
    **`service_role` anahtarını asla siteye/depoya/sohbete yazmayın.**
 6. Siteyi yenileyin → **Veri Girişi** sekmesi → giriş yapın.
 
+## Ortak eylem takibi (ISO) — ikinci SQL
+`supabase/eylem_takip.sql` dosyasını da SQL Editor'da bir kez çalıştırın. ISO 50001 sekmesinde **Ortak takibe giriş** düğmesiyle aynı hesapla giriş yapınca eylem durumu, ilerleme, sorumlu,
+not ve yorumlar ekiple paylaşılır. Bu tablolar herkese açık değildir (yalnız giriş yapmış kullanıcılar okur, `girisci`/`yonetici` yazar).
+
 ## Güvenlik özeti
 - Tüm tablolarda satır bazlı yetki (RLS) açık. `anon` anahtarı yalnızca üretim ve inceleme verisini **okuyabilir** (zaten `performans.json` ile herkese açık veri).
 - Yazma: yalnızca giriş yapmış ve rolü `girisci`/`yonetici` olanlar. Bu kural sunucuda zorlanır; tarayıcıyı kurcalamak işe yaramaz.
