@@ -44,6 +44,11 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   sayfasından (col0 tarih, col1 CDD, col3 HDD); sayfada olmayan yıllar betikteki `MGM_DERECE_GUN` sözlüğünden (MGM İzmir gün-derece tablosu,
   mgm.gov.tr/Veridegerlendirme/gun-derece.aspx?g=merkez&m=35-00; 2024-2025 Excel değerleriyle birebir doğrulandı). Yeni ay açıklanınca sözlüğe ekle. Veri kesim ayı Ham Veri'den (elektrik) alınır.
   Komut: `... iso50001_to_json.py "<TSE klasörü>" "<risk.xlsx>" "<Verilerim.xlsx>"` (üçü birlikte verilmeli, dosya baştan üretilir).
+  **Sekme arayüzü (`iso.js`):** eylem planı, risk/fırsat, motorin, havuz ve okuma notları açılır-kapanır (`<details data-k>`, durum `acik` kümesinde
+  korunur); eylem ve risk satırları tıklayınca ayrıntı açar. **Eylem ilerleme takibi:** durum Excel'deki termin/açıklamadan `otoDurum()` ile
+  türetilir (iptal > tamamlandı > sürekli > gecikmiş(termin geçmiş) > devam/planlı); satırda elle durum, ilerleme % ve not girilebilir —
+  **yalnızca tarayıcının localStorage'ında** (`iso_eylem_takip_v1`) saklanır, paylaşılmaz; JSON yedekle/yükle düğmeleri var. Ortak takip
+  isteniyorsa durum/gerçekleştirme bilgisi `PLN.06.01` Excel'ine yazılıp betik yeniden çalıştırılmalı.
   Excel'de bilinen hata: Aşevi Mutfak 2024 toplam formülü Aralık'ı dışarıda bırakıyor (`veri_notlari`).
 - `collector/collect.py` — canlı veri toplayıcı. Çıktı: `data/durum.json` (`guncelleme`, `kaynaklar{ad:{ok,adet,hata}}`,
   `santraller[]`). Bir portal hata verirse o portalın eski verisi korunur; hiçbir portal için Secret yoksa hata verip çıkar.
