@@ -57,7 +57,7 @@
     ilceKatman = L.geoJSON(ilceVeri, {
       style: (f) => {
         const o = ozet[f.properties.adi];
-        return { color: '#475569', weight: 1, fillColor: '#f59e0b', fillOpacity: o ? 0.05 + 0.17 * (o.kw / kmax) : 0.0 };
+        return { color: '#94a3b8', weight: 1, opacity: 0.55, fillColor: '#f59e0b', fillOpacity: o ? 0.05 + 0.17 * (o.kw / kmax) : 0.0 };
       },
       onEachFeature: (f, l) => {
         const o = ozet[f.properties.adi];
@@ -112,11 +112,16 @@
       : [['#10b981', '≥ %95'], ['#fcd34d', '%85–95'], ['#fb923c', '%70–85'], ['#ef4444', '< %70'], [GRI, 'Veri yok']]
     ).map(([c, t]) => `<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:${c}"></span>${t}</span>`).join('') +
       '<span class="text-slate-500">• daire boyutu = kurulu güç • kırmızı halka = canlı sorun' + (ilceAcik ? ' • ilçe tonu = ilçedeki kurulu güç' : '') + '</span>' +
-      '<span class="basis-full text-[10px] text-slate-600">Harita: © OpenStreetMap katkıcıları, © CARTO, Esri • İlçe sınırları: İzmir Büyükşehir Belediyesi Açık Veri Portalı (CC BY 4.0 kapsamında lisanslanan kamu sektörü bilgilerini içerir)</span>';
+      '<span class="basis-full text-[10px] text-slate-600">Harita: © OpenStreetMap katkıcıları, Esri • İlçe sınırları: İzmir Büyükşehir Belediyesi Açık Veri Portalı (CC BY 4.0 kapsamında lisanslanan kamu sektörü bilgilerini içerir)</span>';
   }
 
   function kur() {
-    const koyu = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap, © CARTO' });
+    // CARTO artık API anahtarı istediği için koyu zemin Esri Dark Gray (anahtarsız) + etiket katmanı
+    const esri = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+    const koyu = L.layerGroup([
+      L.tileLayer(esri + 'Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, maxNativeZoom: 16, attribution: 'Esri, HERE, Garmin, © OpenStreetMap katkıcıları' }),
+      L.tileLayer(esri + 'Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, maxNativeZoom: 16 }),
+    ]);
     const sokak = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
     const uydu = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics' });
     harita = L.map('haritaKap', { layers: [koyu], zoomControl: true, scrollWheelZoom: true }).setView([38.5, 27.1], 9);
