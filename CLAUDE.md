@@ -14,7 +14,9 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   - **Elektrik** (`elektrik.js`): belediye elektrik tüketimi — kartlar, aylık tüketim, GES katkısı (aylık net üretim ve tüketimdeki
     pay), daire başkanlığı/tarife/tedarikçi kırılımı, yıllık özet. Genel Bakış'ta tek satırlık özet şeridi var.
   - **Harita** (`harita.js`, Leaflet 1.9.4 CDN; karolar CARTO koyu/OSM/Esri uydu): 21 santral işaretçisi, renk = verim ya da canlı durum, boyut = kW,
-    kırmızı halka = canlı sorun; sağda liste, işaretçi kutusundan santral ayrıntısına geçilir. Konumlar `data/santral_konumlari.json`
+    kırmızı halka = canlı sorun; sağda liste, işaretçi kutusundan santral ayrıntısına geçilir.
+    İlçe sınırları katmanı (açılıp kapanır, ilçedeki kurulu güce göre boyalı): `data/izmir_ilceler.geojson` — İzBB Açık Veri Portalı "İzmir Şehir Haritası"
+    (CC BY 4.0, atıf harita altında), `collector/ilce_sinir_to_json.py` ile indirilip sadeleştirilir (~200 KB). Konumlar `data/santral_konumlari.json`
     (`collector/konum_to_json.py "<GES_CBS.xlsx>"`; yalnız lat/lon/ilçe — adres, maliyet, tasarruf yazılmaz). Yeni santral = Excel'e satır + betikteki `ID` eşlemesi.
   - **Canlı Durum**: eski kontrol paneli (portal bağlantıları, santral tablosu; isim/saha notu/kWp/tesisat no elle
     düzenlenir ve localStorage'a kaydedilir; GDZ kopyala-yapıştır, WhatsApp raporu, JSON yedek). `loadLive()`
