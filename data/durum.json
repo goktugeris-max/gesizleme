@@ -1,14 +1,14 @@
 {
-  "guncelleme": "2026-10-22T15:37:06+00:00",
+  "guncelleme": "2026-10-22T16:37:05+00:00",
   "kaynaklar": {
     "GoodWe": {
       "ok": true,
-      "zaman": "2026-10-22T15:37:06+00:00",
+      "zaman": "2026-10-22T16:37:05+00:00",
       "adet": 9
     },
     "SMA": {
       "ok": true,
-      "zaman": "2026-10-22T15:37:06+00:00",
+      "zaman": "2026-10-22T16:37:05+00:00",
       "adet": 2
     }
   },
@@ -30,33 +30,7 @@
           "kod": 2
         }
       ],
-      "zaman": "2026-10-22T15:37:06+00:00"
-    },
-    {
-      "kaynak": "GoodWe",
-      "kaynakId": "b1ffbc3b-fb0f-498d-bdf1-9254d3035823",
-      "ad": "Bornova havuz Ges",
-      "kapasite_kwp": 121.73,
-      "durum": "Beklemede",
-      "anlik_kw": 0.49,
-      "bugun_kwh": 288.7,
-      "invertorler": [
-        {
-          "sn": "9060KMTN215W0012",
-          "ad": "İnvertör 1",
-          "model": null,
-          "durum": "Beklemede",
-          "kod": -1
-        },
-        {
-          "sn": "9060KMTN215W0015",
-          "ad": "İnvertör 2 ",
-          "model": null,
-          "durum": "Çalışıyor",
-          "kod": 1
-        }
-      ],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -79,10 +53,10 @@
           "ad": "inverter",
           "model": null,
           "durum": "Beklemede",
-          "kod": 0
+          "kod": -1
         }
       ],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -105,10 +79,36 @@
           "ad": "ınverter2",
           "model": null,
           "durum": "Beklemede",
-          "kod": 0
+          "kod": -1
         }
       ],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
+    },
+    {
+      "kaynak": "GoodWe",
+      "kaynakId": "b1ffbc3b-fb0f-498d-bdf1-9254d3035823",
+      "ad": "Bornova havuz Ges",
+      "kapasite_kwp": 121.73,
+      "durum": "Beklemede",
+      "anlik_kw": 0.48,
+      "bugun_kwh": 288.8,
+      "invertorler": [
+        {
+          "sn": "9060KMTN215W0012",
+          "ad": "İnvertör 1",
+          "model": null,
+          "durum": "Beklemede",
+          "kod": -1
+        },
+        {
+          "sn": "9060KMTN215W0015",
+          "ad": "İnvertör 2 ",
+          "model": null,
+          "durum": "Çalışıyor",
+          "kod": 1
+        }
+      ],
+      "zaman": "2026-10-22T16:37:05+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -116,7 +116,7 @@
       "ad": "Konak tuneller ges",
       "kapasite_kwp": 76.96,
       "durum": "Çalışıyor",
-      "anlik_kw": 0.01,
+      "anlik_kw": 0.0,
       "bugun_kwh": 230.0,
       "invertorler": [
         {
@@ -134,7 +134,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -153,7 +153,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -179,7 +179,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -198,7 +198,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -217,7 +217,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
     },
     {
       "kaynak": "SMA",
@@ -228,7 +228,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 833.85,
       "invertorler": [],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
     },
     {
       "kaynak": "SMA",
@@ -239,7 +239,7 @@
       "anlik_kw": 0.0,
       "bugun_kwh": 263.31,
       "invertorler": [],
-      "zaman": "2026-10-22T15:37:06+00:00"
+      "zaman": "2026-10-22T16:37:05+00:00"
     }
   ]
 }
