@@ -1,5 +1,5 @@
 {
- "guncelleme": "2026-10-21T13:42:38+00:00",
+ "guncelleme": "2026-10-22T06:41:49+00:00",
  "sorunlar": {
   "inv:GoodWe:b1ffbc3b-fb0f-498d-bdf1-9254d3035823:9060KMTN215W0015": {
    "ilk": "2026-10-21T13:42:38+00:00",
@@ -9,6 +9,15 @@
    "sorun": "Haberleşme Yok",
    "kaynak": "GoodWe",
    "ayrinti": "Santral anlık 14,1 kW, bugün 250,4 kWh"
+  },
+  "portal:GoodWe": {
+   "ilk": "2026-10-22T06:41:49+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "GoodWe portalı",
+   "sorun": "Veri alınamıyor (portal erişim hatası)",
+   "kaynak": "GoodWe",
+   "ayrinti": ""
   }
  }
 }
