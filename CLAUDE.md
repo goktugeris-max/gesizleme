@@ -38,6 +38,11 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
     GES kaçınılan emisyonu ayrı gösterilir, envanterden düşülmez. Faktörler: elektrik 0,479 kg/kWh (ekibin Excel'i), doğalgaz (9,5 kWh/Sm³ × 0,184) ve motorin (2,68 kg/L) IPCC tabanlı
     VARSAYIMDIR → resmî değerle değiştirilmeli. Parametreler, eylem listesi, risk (RVA) tablosu ve veri toplama listesi yalnızca tarayıcı localStorage'ındadır (`karbon_v1_*`), CSV indirilir.
     Envanter bölümü giriş ister (Elektrik/ISO ile aynı parola). Özet sayfasındaki Karbon kartı `Karbon.efElek()` kullanır.
+  - **İzmir SECAP (2025–2050) entegrasyonu (Karbon sekmesi)**: `data/secap_izmir.json` (`collector/secap_izmir_to_json.py "<SECAP raporu.md>"`) — kent envanteri 2018–2024 (Tablo 10-11, sanayi/havacılık hariç ve dahil),
+    hedefler (2018 baz; 2030 −%40, 2050 −%80), BAU/hedef projeksiyonu, ilçe iklim kırılganlık endeksi (Tablo 28), SECAP eylem kataloğu (33 azaltım, 28 uyum, 3 enerji yoksulluğu: kod/ad/sektör/azaltım hedefi;
+    eylem içerikleri ALINMAZ). Karbon sekmesinde "İzmir SECAP referansı" + "SECAP eylem kataloğu" bölümleri (giriş gerekmez), envanter şablonu SECAP sektörleriyle, eylem listesinde "SECAP kodu", RVA tehlikeleri SECAP'ın 4 ana
+    tehlikesiyle hizalı, Harita'da "İklim kırılganlığı" ilçe katmanı. Yayın hakları İBB'ye aittir (kaynak panelde gösterilir). Kurumsal envanterin baz yılı (ilk tam yıl) SECAP'ın 2018'inden farklıdır. Rapor elektrik faktörünün
+    sayısal değerini vermez (ETKB belgesine atıf) → resmî faktör kullanıcıdan alınmalı.
   - **Canlı Durum**: eski kontrol paneli (portal bağlantıları, santral tablosu; isim/saha notu/kWp/tesisat no elle
     düzenlenir ve localStorage'a kaydedilir; GDZ kopyala-yapıştır, WhatsApp raporu, JSON yedek). `loadLive()`
     `data/durum.json`'u okur, `window.CANLI`'ya koyar. Eşleştirme: `portal + kaynakId`, yoksa normalize isim.
