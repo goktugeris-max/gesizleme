@@ -1,14 +1,14 @@
 {
- "guncelleme": "2026-10-23T09:35:22+00:00",
+ "guncelleme": "2026-10-23T10:33:55+00:00",
  "sorunlar": {
-  "inv:GoodWe:78b76ed6-118d-4c56-8f96-94362a57875e:5060KMTO22BW0485": {
-   "ilk": "2026-10-22T07:46:53+00:00",
-   "ardisik": 11,
+  "inv:GoodWe:b1ffbc3b-fb0f-498d-bdf1-9254d3035823:9060KMTN215W0015": {
+   "ilk": "2026-10-23T10:33:55+00:00",
+   "ardisik": 1,
    "bildirildi": false,
-   "ad": "BERGAMA İTFAİYE — INV1",
-   "sorun": "Arızalı",
+   "ad": "Bornova havuz Ges — İnvertör 2",
+   "sorun": "Haberleşme Yok",
    "kaynak": "GoodWe",
-   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+   "ayrinti": "Santral anlık 33,44 kW, bugün 186,8 kWh"
   }
  }
 }
