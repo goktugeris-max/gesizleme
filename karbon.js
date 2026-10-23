@@ -442,6 +442,7 @@
   window.Karbon = {
     ac,
     efElek: () => efElek(new Date().getFullYear()),
+    faktorler() { const p = prm(); return { ef_elek: efElek(new Date().getFullYear()), dg_kwh_sm3: p.dg_kwh_sm3, ef_dg: p.ef_dg }; },
     katalog(t) { katalogTur = t; katalogSektor = 'hepsi'; ciz(); },
     katalogSektor(v) { katalogSektor = v; ciz(); },
     ilgili(v) { sadeceIlgili = v; ciz(); },
