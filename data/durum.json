@@ -1,14 +1,14 @@
 {
-  "guncelleme": "2026-10-23T12:38:35+00:00",
+  "guncelleme": "2026-10-23T13:41:17+00:00",
   "kaynaklar": {
     "GoodWe": {
-      "ok": true,
-      "zaman": "2026-10-23T12:38:35+00:00",
-      "adet": 9
+      "ok": false,
+      "hata": "HTTPSConnectionPool(host='www.semsportal.com', port=443): Read timed out. (read timeout=30)",
+      "zaman": "2026-10-23T12:38:35+00:00"
     },
     "SMA": {
       "ok": true,
-      "zaman": "2026-10-23T12:38:35+00:00",
+      "zaman": "2026-10-23T13:41:17+00:00",
       "adet": 2
     }
   },
@@ -225,10 +225,10 @@
       "ad": "ibbseyrekges",
       "kapasite_kwp": 401.76,
       "durum": "Kontrol Edilmedi",
-      "anlik_kw": 94.76,
-      "bugun_kwh": 786.44,
+      "anlik_kw": 39.7,
+      "bugun_kwh": 864.46,
       "invertorler": [],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T13:41:17+00:00"
     },
     {
       "kaynak": "SMA",
@@ -236,10 +236,10 @@
       "ad": "yesilyurt kultur merkezi",
       "kapasite_kwp": 77.25,
       "durum": "Çalışıyor",
-      "anlik_kw": 32.65,
-      "bugun_kwh": 254.43,
+      "anlik_kw": 15.35,
+      "bugun_kwh": 279.2,
       "invertorler": [],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T13:41:17+00:00"
     }
   ]
 }
