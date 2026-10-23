@@ -1,14 +1,14 @@
 {
- "guncelleme": "2026-10-23T11:35:13+00:00",
+ "guncelleme": "2026-10-23T12:38:53+00:00",
  "sorunlar": {
   "inv:GoodWe:b1ffbc3b-fb0f-498d-bdf1-9254d3035823:9060KMTN215W0015": {
    "ilk": "2026-10-23T10:33:55+00:00",
-   "ardisik": 2,
+   "ardisik": 3,
    "bildirildi": false,
    "ad": "Bornova havuz Ges — İnvertör 2",
    "sorun": "Haberleşme Yok",
    "kaynak": "GoodWe",
-   "ayrinti": "Santral anlık 29,79 kW, bugün 224,6 kWh"
+   "ayrinti": "Santral anlık 24,46 kW, bugün 247,6 kWh"
   }
  }
 }
