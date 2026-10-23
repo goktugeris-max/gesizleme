@@ -7,12 +7,12 @@
  * iso.js `Ikiz.ciz({D, tesis, eylemler, acik})` çağırır. esc() (index.html) ve Karbon.faktorler() (karbon.js) kullanılır.
  */
 (function () {
-  const ANAHTAR = 'iso_ikiz_v1';
+  const ANAHTAR = 'iso_ikiz_v2';   // v2: Buca 735 kW (5 birim), Buz Sporları 990 kWe varsayılanları
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const GES_BIRIM = {
-    // Buca kampüsü: performans.json "planlanan" (Projelendirme aşaması); Buz Sporları için kayıtlı bilgi yok → varsayım
-    buca: [{ ad: 'Huzurevi', kw: 120 }, { ad: 'Aşevi', kw: 225 }, { ad: 'Kapalı Spor Salonu', kw: 240 }],
-    buz: [{ ad: 'Buz Sporları Salonu', kw: 100 }],
+    // Buca kampüsü: performans.json "planlanan" (Projelendirme aşaması; Geriatri ve İdari/Teknik Bina kullanıcı tarafından Buca'da olduğu teyit edildi); Buz Sporları 990 kWe (kullanıcı bilgisi)
+    buca: [{ ad: 'Huzurevi', kw: 120 }, { ad: 'Aşevi', kw: 225 }, { ad: 'Kapalı Spor Salonu', kw: 240 }, { ad: 'Geriatri Merkezi', kw: 100 }, { ad: 'İdari ve Teknik Bina', kw: 50 }],
+    buz: [{ ad: 'Buz Sporları Salonu', kw: 990 }],
     aassm: [{ ad: 'Ana bina', kw: 0 }],
   };
   const grafik = {};
@@ -119,7 +119,10 @@
   const kart = (b, dg, alt, renk) => `<div class="glass-card rounded-xl p-3"><div class="text-[10px] uppercase tracking-wider text-slate-400">${b}</div><div class="text-xl font-bold mt-0.5 ${renk || 'text-white'}">${dg}</div><div class="text-[10px] text-slate-500 mt-0.5">${alt || ''}</div></div>`;
 
   function sema(T, d, S) {
-    const bn = T.binalar, w = 170, bosluk = 18, W = Math.max(520, bn.length * (w + bosluk) + bosluk), H = 300;
+    const bn0 = T.binalar;
+    // tüketim serisi olmayan GES birimleri (ör. Geriatri Merkezi) ek kutu olarak gösterilir
+    const ekler = d.ges.on ? d.ges.birimler.filter((g) => g.kw > 0 && !bn0.some((b) => b.ad === g.ad) && bn0.length > 1).map((g) => ({ ad: g.ad, kwh: 0, sm3: 0, veriYok: true })) : [];
+    const bn = bn0.concat(ekler), w = 170, bosluk = 18, W = Math.max(520, bn.length * (w + bosluk) + bosluk), H = 300;
     const aktif = ['kabuk', 'kazan', 'pompa', 'bms', 'led', 'sogutma'].filter((k) => d[k].on);
     const ad = { kabuk: 'Yalıtım', kazan: 'Kazan/kaskad', pompa: 'Isı pompası', bms: 'Otomasyon', led: 'LED', sogutma: 'Soğutma' };
     const gesKw = (b) => (d.ges.on ? topla(d.ges.birimler.filter((g) => g.ad === b.ad || bn.length === 1).map((g) => g.kw || 0)) : 0);
@@ -130,7 +133,7 @@
       return `${cati}<rect x="${x}" y="70" width="${w}" height="110" rx="6" fill="#0f172a" stroke="#334155"/>
         <text x="${x + w / 2}" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#e2e8f0">${esc2(b.ad.length > 24 ? b.ad.slice(0, 23) + '…' : b.ad)}</text>
         <text x="${x + 10}" y="120" font-size="11" fill="#22d3ee">⚡ ${tr0(b.kwh)} kWh</text><text x="${x + 10}" y="140" font-size="11" fill="#fb923c">🔥 ${tr0(b.sm3)} Sm³</text>
-        <text x="${x + 10}" y="165" font-size="10" fill="#64748b">${b.kwh ? 'şebekeye bağlı' : 'elektrik verisi yok'}</text>
+        <text x="${x + 10}" y="165" font-size="10" fill="#64748b">${b.veriYok ? 'tüketim serisi yok (yalnız GES)' : b.kwh ? 'şebekeye bağlı' : 'elektrik verisi yok'}</text>
         <line x1="${x + w / 2}" y1="180" x2="${x + w / 2}" y2="236" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3"/>`;
     }).join('');
     const sebeke = `<rect x="${W / 2 - 150}" y="236" width="300" height="52" rx="8" fill="#082f49" stroke="#0ea5e9"/>
