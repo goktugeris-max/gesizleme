@@ -43,6 +43,10 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
     eylem içerikleri ALINMAZ). Karbon sekmesinde "İzmir SECAP referansı" + "SECAP eylem kataloğu" bölümleri (giriş gerekmez), envanter şablonu SECAP sektörleriyle, eylem listesinde "SECAP kodu", RVA tehlikeleri SECAP'ın 4 ana
     tehlikesiyle hizalı, Harita'da "İklim kırılganlığı" ilçe katmanı. Yayın hakları İBB'ye aittir (kaynak panelde gösterilir). Kurumsal envanterin baz yılı (ilk tam yıl) SECAP'ın 2018'inden farklıdır. Rapor elektrik faktörünün
     sayısal değerini vermez (ETKB belgesine atıf) → resmî faktör kullanıcıdan alınmalı.
+  - **Dijital ikiz ve yatırım senaryoları** (`ikiz.js`, ISO sekmesinde "Dijital ikiz…" bölümü, seçili tesis için): son tam yılın aylık elektrik/doğalgaz profilinden kurulan sayısal ikiz;
+    kaldıraçlar: çatı GES (Buca: Huzurevi 120 + Aşevi 225 + Kapalı Spor Salonu 240 kW = performans.json "planlanan"; Buz Sporları 100 kW VARSAYIM; verim = panelin 2023-2025 gerçek kWh/kW'ı, aylık mahsuplaşma),
+    yalıtım, kazan/kaskad, ısı pompası, bina otomasyonu, LED, soğutma. Tasarruf oranları tipik değer VARSAYIMIDIR (düzenlenebilir). Fiyat ve yatırım TL alanları yalnız tarayıcıda (`iso_ikiz_v1`), siteye/depoya yazılmaz.
+    Çıktı: tüketim/CO₂ şimdi–senaryo, SVG tesis şeması, aylık grafik, CSV ve yazdırılabilir yönetim özeti; ISO planındaki tamamlanmamış eylemlerin planlanan tasarrufu ayrıca listelenir.
   - **Canlı Durum**: eski kontrol paneli (portal bağlantıları, santral tablosu; isim/saha notu/kWp/tesisat no elle
     düzenlenir ve localStorage'a kaydedilir; GDZ kopyala-yapıştır, WhatsApp raporu, JSON yedek). `loadLive()`
     `data/durum.json`'u okur, `window.CANLI`'ya koyar. Eşleştirme: `portal + kaynakId`, yoksa normalize isim.

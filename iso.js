@@ -349,6 +349,7 @@
       <h2 id="isoBaslik" class="text-lg font-bold text-white"></h2>
       <section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section>
       <section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section>
+      <section id="isoIkiz"></section>
       <section id="isoEylem"></section>
       <section id="isoEk" class="space-y-4"></section>
       <section id="isoRisk" class="hidden"></section>
@@ -361,6 +362,13 @@
     }, true);
   }
 
+  // Dijital ikiz: seçili tesisin tamamlanmamış eylemlerini (planlanan tasarruflarıyla) ikize iletir
+  function ikizBolumu() {
+    if (!window.Ikiz) return;
+    const bitmemis = kayit(tesis).filter((k) => !['tamamlandi', 'iptal', 'surekli'].includes(etkinDurum(k))).map((k) => k.e);
+    Ikiz.ciz({ D, tesis, eylemler: bitmemis, acik: acik.has('ikiz') });
+  }
+
   function ciz() {
     if (!document.getElementById('isoTesisler')) iskelet();
     const t = D.tesisler.find((x) => x.id === tesis);
@@ -369,7 +377,7 @@
     document.getElementById('isoBaslik').textContent = t ? t.ad : '';
     ozetKartlari();
     document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('');
-    seriGrafikleri(); eylemBolumu(); ekBolum(); riskBolumu(); notlar();
+    seriGrafikleri(); ikizBolumu(); eylemBolumu(); ekBolum(); riskBolumu(); notlar();
     if (window.lucide) lucide.createIcons();
   }
 
