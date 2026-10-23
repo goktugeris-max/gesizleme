@@ -1,14 +1,14 @@
 {
-  "guncelleme": "2026-10-23T13:41:17+00:00",
+  "guncelleme": "2026-10-23T14:39:20+00:00",
   "kaynaklar": {
     "GoodWe": {
-      "ok": false,
-      "hata": "HTTPSConnectionPool(host='www.semsportal.com', port=443): Read timed out. (read timeout=30)",
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "ok": true,
+      "zaman": "2026-10-23T14:39:20+00:00",
+      "adet": 9
     },
     "SMA": {
       "ok": true,
-      "zaman": "2026-10-23T13:41:17+00:00",
+      "zaman": "2026-10-23T14:39:20+00:00",
       "adet": 2
     }
   },
@@ -18,26 +18,26 @@
       "kaynakId": "b1ffbc3b-fb0f-498d-bdf1-9254d3035823",
       "ad": "Bornova havuz Ges",
       "kapasite_kwp": 121.73,
-      "durum": "Haberleşme Yok",
-      "anlik_kw": 24.46,
+      "durum": "Beklemede",
+      "anlik_kw": 0.0,
       "bugun_kwh": 247.6,
       "invertorler": [
         {
           "sn": "9060KMTN215W0012",
           "ad": "İnvertör 1",
           "model": null,
-          "durum": "Çalışıyor",
-          "kod": 1
+          "durum": "Beklemede",
+          "kod": -1
         },
         {
           "sn": "9060KMTN215W0015",
           "ad": "İnvertör 2 ",
           "model": null,
-          "durum": "Haberleşme Yok",
+          "durum": "Beklemede",
           "kod": -1
         }
       ],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -45,8 +45,8 @@
       "ad": "Aliağa İtfaiye Merkezi",
       "kapasite_kwp": 68.4,
       "durum": "Çalışıyor",
-      "anlik_kw": 20.09,
-      "bugun_kwh": 158.3,
+      "anlik_kw": 2.53,
+      "bugun_kwh": 179.5,
       "invertorler": [
         {
           "sn": "9020KDTU192R0002",
@@ -63,7 +63,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -71,8 +71,8 @@
       "ad": "BERGAMA İTFAİYE",
       "kapasite_kwp": 60.0,
       "durum": "Çalışıyor",
-      "anlik_kw": 20.45,
-      "bugun_kwh": 64.8,
+      "anlik_kw": 2.22,
+      "bugun_kwh": 86.9,
       "invertorler": [
         {
           "sn": "5060KMTO22BW0485",
@@ -82,7 +82,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -90,8 +90,8 @@
       "ad": "Bergama Mezbahası",
       "kapasite_kwp": 74.1,
       "durum": "Çalışıyor",
-      "anlik_kw": 21.04,
-      "bugun_kwh": 188.3,
+      "anlik_kw": 2.11,
+      "bugun_kwh": 212.5,
       "invertorler": [
         {
           "sn": "9020KDTU192R0013",
@@ -108,7 +108,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -116,8 +116,8 @@
       "ad": "Konak tuneller ges",
       "kapasite_kwp": 76.96,
       "durum": "Çalışıyor",
-      "anlik_kw": 24.77,
-      "bugun_kwh": 219.8,
+      "anlik_kw": 1.38,
+      "bugun_kwh": 242.7,
       "invertorler": [
         {
           "sn": "5036KMTS217W0005",
@@ -134,7 +134,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -142,8 +142,8 @@
       "ad": "SEYREK İTFAİYE",
       "kapasite_kwp": 25.0,
       "durum": "Çalışıyor",
-      "anlik_kw": 11.28,
-      "bugun_kwh": 96.2,
+      "anlik_kw": 1.51,
+      "bugun_kwh": 107.6,
       "invertorler": [
         {
           "sn": "5025KDTT227W0052",
@@ -153,7 +153,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -161,8 +161,8 @@
       "ad": "Uzundere Can Çağnay Çok Amaçlı Spor Salonu",
       "kapasite_kwp": 35.91,
       "durum": "Çalışıyor",
-      "anlik_kw": 1.08,
-      "bugun_kwh": 57.5,
+      "anlik_kw": 0.57,
+      "bugun_kwh": 62.3,
       "invertorler": [
         {
           "sn": "9020KDTU192R0001",
@@ -179,7 +179,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -187,8 +187,8 @@
       "ad": "Çaybaşı İtfaiye",
       "kapasite_kwp": 20.0,
       "durum": "Çalışıyor",
-      "anlik_kw": 6.43,
-      "bugun_kwh": 55.6,
+      "anlik_kw": 0.51,
+      "bugun_kwh": 62.3,
       "invertorler": [
         {
           "sn": "5020KDTT215W0017",
@@ -198,7 +198,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "GoodWe",
@@ -206,8 +206,8 @@
       "ad": "Çeşme İtfaiye Ges",
       "kapasite_kwp": 25.9,
       "durum": "Çalışıyor",
-      "anlik_kw": 6.22,
-      "bugun_kwh": 68.7,
+      "anlik_kw": 1.41,
+      "bugun_kwh": 74.9,
       "invertorler": [
         {
           "sn": "5020KDTT215W0019",
@@ -217,7 +217,7 @@
           "kod": 1
         }
       ],
-      "zaman": "2026-10-23T12:38:35+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "SMA",
@@ -225,10 +225,10 @@
       "ad": "ibbseyrekges",
       "kapasite_kwp": 401.76,
       "durum": "Kontrol Edilmedi",
-      "anlik_kw": 39.7,
-      "bugun_kwh": 864.46,
+      "anlik_kw": 9.6,
+      "bugun_kwh": 890.6,
       "invertorler": [],
-      "zaman": "2026-10-23T13:41:17+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     },
     {
       "kaynak": "SMA",
@@ -236,10 +236,10 @@
       "ad": "yesilyurt kultur merkezi",
       "kapasite_kwp": 77.25,
       "durum": "Çalışıyor",
-      "anlik_kw": 15.35,
-      "bugun_kwh": 279.2,
+      "anlik_kw": 1.73,
+      "bugun_kwh": 282.98,
       "invertorler": [],
-      "zaman": "2026-10-23T13:41:17+00:00"
+      "zaman": "2026-10-23T14:39:20+00:00"
     }
   ]
 }
