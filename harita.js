@@ -56,7 +56,7 @@
     const kmax = Math.max(1, ...Object.values(ozet).map((o) => o.kw));
     const kg = {};
     (kirilgan || []).forEach((x) => { kg[buyuk(x.ilce.trim())] = x; });
-    const kgRenk = { Yüksek: '#ef4444', Orta: '#211950', Düşük: '#34d399' };
+    const kgRenk = { Yüksek: '#ef4444', Orta: TV(), Düşük: '#34d399' };
     ilceKatman = L.geoJSON(ilceVeri, {
       style: (f) => {
         const o = ozet[f.properties.adi];
@@ -133,7 +133,7 @@
     ]);
     const sokak = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
     const uydu = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics' });
-    harita = L.map('haritaKap', { layers: [acik], zoomControl: true, scrollWheelZoom: true }).setView([38.5, 27.1], 9);
+    harita = L.map('haritaKap', { layers: [koyuMu() ? koyu : acik], zoomControl: true, scrollWheelZoom: true }).setView([38.5, 27.1], 9);
     L.control.layers({ 'Açık': acik, 'Koyu': koyu, 'Sokak': sokak, 'Uydu': uydu }, null, { position: 'topright' }).addTo(harita);
   }
 

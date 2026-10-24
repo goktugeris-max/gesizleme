@@ -5,7 +5,7 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
 
 ## Mimari (sunucusuz)
 
-- **Tema:** varsayılan AÇIK kurumsal tema, `tema.css` (Tailwind koyu sınıflarını açık renklere çeviren katman; renkler `:root` değişkenlerinde, kurum rengi `--kurum` = İZBB logosunun laciverti #211950; logolar `logo-yatay.png`, `logo-dik.png` şeffaf PNG, başlıkta ve favicon olarak). İZBB logosu/renk kodu gelince yalnızca bu değişkenler ve başlıktaki simge değişir. `<html class="dark">` eklenirse eski koyu görünüm döner. Grafik renkleri JS dosyalarında (`#211950` kurum laciverti, `#3f8fd2`), harita varsayılanı Esri Light Gray.
+- **Tema:** varsayılan AÇIK kurumsal tema, `tema.css` (Tailwind koyu sınıflarını açık renklere çeviren katman; renkler `:root` değişkenlerinde, kurum rengi `--kurum` = İZBB logosunun laciverti #211950; logolar `logo-yatay.png`, `logo-dik.png` şeffaf PNG, başlıkta ve favicon olarak). İZBB logosu/renk kodu gelince yalnızca bu değişkenler ve başlıktaki simge değişir. Başlıktaki "Koyu tema" düğmesi `<html class="dark">` ekler (seçim localStorage `tema`; sayfa yenilenir). Grafik vurgu rengi `TV()` (açık #211950, koyu #9d95ee), `koyuMu()`; ikisi de index.html başında tanımlı. Grafik renkleri JS dosyalarında (`#211950` kurum laciverti, `#3f8fd2`), harita varsayılanı Esri Light Gray.
 
 - `index.html` + `dashboard.js` + `elektrik.js` + `iso.js` — GitHub Pages'te yayınlanan panel (Tailwind + Lucide + Chart.js, CDN).
   **Gezinme iki katmanlı:** üstte modüller (Özet `#ozet` = açılış, Güneş Enerjisi `#genel`, Elektrik `#elektrik`, ISO 50001 `#iso`);

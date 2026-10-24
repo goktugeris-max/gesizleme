@@ -16,10 +16,17 @@
       theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] } } }
     }
   </script>
+  <script>
+    // Tema: varsayılan açık; seçim tarayıcıda hatırlanır. TV() = temaya göre grafik vurgu rengi.
+    (function () { try { if (localStorage.getItem('tema') === 'koyu') document.documentElement.classList.add('dark'); } catch (e) {} })();
+    window.koyuMu = () => document.documentElement.classList.contains('dark');
+    window.TV = () => (window.koyuMu() ? '#9d95ee' : '#211950');
+    window.temaDegistir = () => { try { localStorage.setItem('tema', window.koyuMu() ? 'acik' : 'koyu'); } catch (e) {} location.reload(); };
+  </script>
   <link rel="stylesheet" href="tema.css" />
   <link rel="icon" href="logo-dik.png" type="image/png" />
   <style>
-    body { background-color: #090d16; color: #f1f5f9; }
+    html.dark body { background-color: #090d16; color: #f1f5f9; }
     .glass-card { background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
     .status-pulse-active { animation: pulse-green 2s infinite; }
     .status-pulse-fault { animation: pulse-red 1.8s infinite; }
@@ -43,6 +50,10 @@
           <p class="text-xs text-slate-400">İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü • Enerji Ekibi</p>
         </div>
       </a>
+
+      <button onclick="temaDegistir()" id="temaBtn" title="Açık / koyu tema" class="order-last sm:order-none px-3 py-2 rounded-lg text-xs font-semibold border border-slate-700 text-slate-300 hover:text-white flex items-center gap-2 transition">
+        <i data-lucide="moon" class="w-4 h-4" id="temaIkon"></i><span id="temaYazi">Koyu tema</span>
+      </button>
 
       <div id="liveButtons" class="hidden flex flex-wrap items-center gap-2.5">
         <button onclick="openModal('gdzModal')" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center gap-2 transition">
@@ -809,5 +820,9 @@
   <script src="karbon.js"></script>
   <script src="analiz.js"></script>
   <script src="veri.js"></script>
+<script>
+  // tema düğmesi etiketi (ikon, lucide çizilmeden önce ayarlanır)
+  (function () { const k = window.koyuMu(); document.getElementById('temaYazi').textContent = k ? 'Açık tema' : 'Koyu tema'; document.getElementById('temaIkon').setAttribute('data-lucide', k ? 'sun' : 'moon'); })();
+</script>
 </body>
 </html>

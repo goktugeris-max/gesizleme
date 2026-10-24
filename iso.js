@@ -7,7 +7,7 @@
  */
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-  const RENK = { Elektrik: '#211950', 'Doğalgaz': '#3f8fd2' };
+  const RENK = { Elektrik: TV(), 'Doğalgaz': '#3f8fd2' };
   let D = null, sifreli = null, tesis = 'aassm', yil = '2024', yuklendi = false, rfTur = 'hepsi';
   const grafik = {};
 
@@ -47,7 +47,7 @@
   const DURUMLAR = {
     tamamlandi: { ad: 'Tamamlandı', sinif: 'bg-emerald-500/15 text-emerald-300', renk: '#10b981' },
     surekli: { ad: 'Sürekli faaliyet', sinif: 'bg-sky-500/15 text-sky-300', renk: '#38bdf8' },
-    devam: { ad: 'Devam ediyor', sinif: 'bg-amber-500/15 text-amber-300', renk: '#211950' },
+    devam: { ad: 'Devam ediyor', sinif: 'bg-amber-500/15 text-amber-300', renk: TV() },
     planli: { ad: 'Planlı', sinif: 'bg-slate-600/40 text-slate-200', renk: '#94a3b8' },
     gecikmis: { ad: 'Gecikmiş', sinif: 'bg-red-500/20 text-red-300', renk: '#f87171' },
     iptal: { ad: 'İptal / yapılmayacak', sinif: 'bg-slate-700 text-slate-400', renk: '#475569' },
@@ -290,7 +290,7 @@
     el.classList.toggle('hidden', !html);
     if (h) cizGrafik('chIsoHavuz', {
       data: { labels: AY, datasets: [
-        { type: 'bar', label: 'Buz pisti (havuz hariç)', data: h.toplam.map((x, i) => (x == null ? null : x - (h.havuz[i] || 0))), backgroundColor: '#211950', stack: 'a', borderRadius: 3 },
+        { type: 'bar', label: 'Buz pisti (havuz hariç)', data: h.toplam.map((x, i) => (x == null ? null : x - (h.havuz[i] || 0))), backgroundColor: TV(), stack: 'a', borderRadius: 3 },
         { type: 'bar', label: 'Havuz', data: h.havuz, backgroundColor: '#3f8fd2', stack: 'a', borderRadius: 3 },
       ] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } } }, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: (x) => (x / 1000).toLocaleString('tr-TR') + ' bin' } } } },

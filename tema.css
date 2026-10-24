@@ -80,3 +80,6 @@ html:not(.dark) .text-lime-400, html:not(.dark) .text-lime-300 { color: #3a7d0a 
 html:not(.dark) .bg-lime-500\/10 { background-color: #eef6e6 !important; }
 html:not(.dark) .from-amber-400\/20 { background-image: none !important; background-color: var(--kurum-acik) !important; border-color: #c9c5e3 !important; }
 html:not(.dark) header .text-amber-400 { color: var(--kurum) !important; }
+/* koyu tema: lacivert logo koyu zeminde okunsun diye beyaza çevrilir */
+html.dark header img[src^="logo"] { filter: brightness(0) invert(1); }
+html.dark #temaBtn { background: rgba(30,41,59,.6); }
