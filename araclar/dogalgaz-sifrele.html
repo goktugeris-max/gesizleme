@@ -38,7 +38,9 @@
     <label for="dosya">Excel dosyası (.xlsx)</label>
     <input id="dosya" type="file" accept=".xlsx" />
     <label for="parola">Parola (en az 12 karakter)</label>
-    <input id="parola" type="password" autocomplete="off" />
+    <input id="parola" type="password" autocomplete="new-password" />
+    <label for="parola2">Parolayı tekrar yazın (yazım hatasını önlemek için)</label>
+    <input id="parola2" type="password" autocomplete="new-password" />
     <button id="git" disabled>Şifrele ve indir</button>
     <button id="acik" disabled style="background:#fff;color:#16212e;border:1px solid #dbe1e8;margin-top:8px">Şifresiz indir (herkese açık) — dogalgaz.json</button>
     <div id="sonuc"></div>
@@ -110,8 +112,14 @@
     return { v: 1, iter: PBKDF2_TUR, salt: b64(salt), iv: b64(iv), data: b64(sifreli) };
   }
 
-  const hazirMi = () => { $('git').disabled = !($('dosya').files.length && $('parola').value.length >= 12); $('acik').disabled = !$('dosya').files.length; };
-  $('dosya').onchange = hazirMi; $('parola').oninput = hazirMi;
+  async function coz(dosya, parola) {
+    const malzeme = await crypto.subtle.importKey('raw', new TextEncoder().encode(parola), 'PBKDF2', false, ['deriveKey']);
+    const ub = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+    const anahtar = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: ub(dosya.salt), iterations: dosya.iter, hash: 'SHA-256' }, malzeme, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ub(dosya.iv) }, anahtar, ub(dosya.data))));
+  }
+  const hazirMi = () => { $('git').disabled = !($('dosya').files.length && $('parola').value.length >= 12 && $('parola').value === $('parola2').value); $('acik').disabled = !$('dosya').files.length; };
+  $('dosya').onchange = hazirMi; $('parola').oninput = hazirMi; $('parola2').oninput = () => { hazirMi(); mesaj($('parola2').value && $('parola').value !== $('parola2').value ? 'Parolalar aynı değil.' : '', 'hata'); };
   $('acik').onclick = async () => {
     if (!confirm('Dosya ŞİFRESİZ olacak: depo herkese açık olduğundan abone adları ve aylık tüketimler internette herkes tarafından görülebilir. Devam edilsin mi?')) return;
     $('acik').disabled = true; mesaj('Okunuyor…');
@@ -129,6 +137,7 @@
     try {
       const veri = await oku(await $('dosya').files[0].arrayBuffer());
       const dosya = await sifrele(veri, $('parola').value);
+      await coz(dosya, $('parola').value);   // öz-sınama: aynı parolayla geri açılabiliyor mu
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([JSON.stringify(dosya)], { type: 'application/json' }));
       a.download = 'dogalgaz.enc.json'; document.body.appendChild(a); a.click(); a.remove();
