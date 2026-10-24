@@ -15,9 +15,9 @@
   const VARSAYILAN = {
     ef_elek: 0.479,      // kg CO2 / kWh (şebeke ortalaması)
     ef_elek_yil: {},     // yıla özel şebeke faktörü (boşsa ef_elek)
-    dg_kwh_sm3: 9.5,     // doğalgaz enerji içeriği, kWh / Sm³
-    ef_dg: 0.184,        // kg CO2 / kWh doğalgaz
-    ef_motorin: 2.68,    // kg CO2 / litre
+    dg_kwh_sm3: 9.78,    // doğalgaz enerji içeriği, kWh / Sm³ (Sürdürülebilirlik Raporu 2025: 52.751 GJ / 1.498.618 Nm³ = 35,2 MJ/Nm³)
+    ef_dg: 0.204,        // kg CO2 / kWh doğalgaz (9,78 × 0,204 ≈ 1,994 kg/m³: kurum emisyon raporundan geri hesaplandı)
+    ef_motorin: 2.69,    // kg CO2 / litre (kurum emisyon raporundan geri hesaplandı)
     baz_yil: 2023, hedef_yil: 2030, hedef_yuzde: 40, hedef_2050: 80,   // İzmir SECAP: 2030 −%40, 2050 −%80 (2018 baz yılına göre; burada kurumsal baz yıl farklıdır)
   };
   const KONTROL = [
@@ -33,7 +33,7 @@
     ['Atık: depolama ve arıtma (metan, atıksu)', 'Çevre koruma ve atık birimleri', 'Yok'],
     ['Yenilenebilir üretim (GES, RES, biyogaz)', 'Enerji ekibi', 'GES var (21 santral)'],
     ['Nüfus (yıllık)', 'TÜİK', 'Yok'],
-    ['Resmî şebeke emisyon faktörü ve yakıt faktörleri', 'ETKB / Çevre, Şehircilik ve İklim Değişikliği Bakanlığı', 'Elektrik 0,479 kullanılıyor; yakıt faktörleri varsayım'],
+    ['Resmî şebeke emisyon faktörü ve yakıt faktörleri', 'ETKB / Çevre, Şehircilik ve İklim Değişikliği Bakanlığı', 'Elektrik 0,479 (ekip Excel'i; kurum emisyon raporu 0,469 kullanmış); doğalgaz/motorin kurum raporlarından geri hesaplandı'],
   ];
   const EYLEM_KONULARI = ['Bina yalıtımı', 'Isıtma-soğutma verimliliği / ısı pompası', 'LED ve aydınlatma otomasyonu', 'Bina otomasyonu / enerji izleme',
     'Çatı GES ve yenilenebilir', 'Elektrikli araç ve şarj altyapısı', 'Toplu taşıma ve bisiklet', 'Atık ve metan yönetimi', 'Su ve atıksu verimliliği', 'Yeşil alan ve ısı adası azaltımı'];
