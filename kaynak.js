@@ -60,7 +60,8 @@
 
   // ---------- sayfa ----------
   function ciz() {
-    const H = hesapla(), su = K.su, ak = K.akaryakit, em = K.emisyon_h1;
+    const H = hesapla(), su = K.su, ak = K.akaryakit, em = K.emisyon_h1, sp = K.surdurulebilirlik_2025;
+    const spYakitGj = sp ? sp.yakitlar.reduce((t, y) => t + y.gj, 0) : 0;
     const suKart = [
       kart(`Su (Oca–${AY[H.n - 1]} ${H.yil})`, `${tr0(H.c)} <span class="text-sm font-medium text-slate-400">m³</span>`, `Geçen yıl aynı dönem ${tr0(H.p)} m³ • <span class="${renkFark(H.p ? H.c / H.p - 1 : null, true)} font-semibold">${fark(H.p ? H.c / H.p - 1 : null)}</span>`),
       kart('Yıl sonu tahmini', `${tr0(H.tahmin)} <span class="text-sm font-medium text-slate-400">m³</span>`, `${H.on} yılı ${tr0(H.onTop)} m³ • dönem oranıyla`, H.tahmin > H.hedefTop ? 'text-red-400' : 'text-emerald-400'),
@@ -100,6 +101,19 @@
 
       <section class="space-y-4"><h2 class="text-base font-semibold text-white flex items-center gap-2"><i data-lucide="zap" class="w-4 h-4 text-emerald-400"></i> Elektrikli araçlar</h2>
         <div class="glass-card rounded-xl p-5 text-sm text-slate-300">${K.elektrikli_arac.veri ? '' : `<div class="flex items-start gap-3"><i data-lucide="info" class="w-4 h-4 mt-0.5 text-sky-400 shrink-0"></i><p>${esc(K.elektrikli_arac.not)} Şarj noktası/araç bazlı aylık kWh çizelgesi paylaşıldığında araç sayısı, şarj tüketimi, km başına enerji ve CO₂ karşılaştırması (dizelle) bu bölüme eklenecek.</p></div>`}</div></section>
+
+      <section class="space-y-4"><h2 class="text-base font-semibold text-white flex items-center gap-2"><i data-lucide="gauge" class="w-4 h-4 text-indigo-400"></i> 2025 kurumsal enerji profili (Sürdürülebilirlik Raporu)</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">${sp ? [
+          kart('Şebeke elektriği', `${(sp.elektrik_sebeke_kwh / 1e6).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} <span class="text-sm font-medium text-slate-400">GWh</span>`, `${tr0(sp.elektrik_sebeke_kwh * 0.0036)} GJ (1 kWh = 3,6 MJ)`),
+          kart('Toplam yakıt enerjisi', `${tr0(spYakitGj)} <span class="text-sm font-medium text-slate-400">GJ</span>`, `Motorin %${Math.round(sp.yakitlar[0].gj / spYakitGj * 100)} • doğalgaz %${Math.round(sp.yakitlar[1].gj / spYakitGj * 100)}`),
+          kart('Kendi elektrik üretimi (GES)', `${tr0(sp.kendi_uretim_kwh['2025'] / 1000)} <span class="text-sm font-medium text-slate-400">MWh</span>`, `2022: ${tr0(sp.kendi_uretim_kwh['2022'] / 1000)} MWh • ${fark(sp.kendi_uretim_kwh['2025'] / sp.kendi_uretim_kwh['2022'] - 1)} • ${tr0(sp.kurum_ici_kullanilan_kwh['2025'] / 1000)} MWh kurum içinde, ${tr0(sp.disari_verilen_kwh['2025'] / 1000)} MWh dışarı`, 'text-emerald-400'),
+          kart('Yenilenebilir enerji payı', `%${(sp.yenilenebilir_pay['2025'] * 100).toLocaleString('tr-TR')}`, `2024: %${(sp.yenilenebilir_pay['2024'] * 100).toLocaleString('tr-TR')} • 2023: %${(sp.yenilenebilir_pay['2023'] * 100).toLocaleString('tr-TR')}`, 'text-emerald-400'),
+        ].join('') : ''}</div>
+        ${sp ? `<div class="glass-card rounded-xl overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs">
+          <thead class="text-[11px] uppercase tracking-wider text-slate-400"><tr><th class="px-3 py-3 text-left">Yakıt</th><th class="px-3 text-right">2025 miktar</th><th class="px-3 text-right">Enerji (GJ)</th></tr></thead>
+          <tbody class="divide-y divide-slate-800/70">${sp.yakitlar.map((y) => `<tr><td class="px-3 py-2 text-slate-100">${esc(y.ad)}</td><td class="px-3 py-2 text-right font-mono">${tr0(y.miktar)} ${esc(y.birim)}</td><td class="px-3 py-2 text-right font-mono">${tr0(y.gj)}</td></tr>`).join('')}</tbody></table></div>
+          <p class="p-4 text-[11px] text-slate-500">Kaynak: ${esc(sp.kaynak)}. Çöp gazı ${tr0(sp.geri_kazanim.cop_gazi_nm3)} Nm³ ve biyogaz (Harmandalı, biyometanizasyon) ayrıca izlenir. ${esc(sp.not)} Panel GES 2025 toplamı (performans verisi) rapordaki öz üretimle aynıdır.</p></div>` : ''}
+      </section>
 
       <section class="space-y-4"><h2 class="text-base font-semibold text-white flex items-center gap-2"><i data-lucide="cloud" class="w-4 h-4 text-slate-300"></i> Kurumsal sera gazı (2026 ilk 6 ay)</h2>
         <div class="glass-card rounded-xl overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-xs">
