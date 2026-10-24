@@ -123,13 +123,13 @@
 
   function genelGrafikler() {
     const { yil, ay } = PERF.son_donem;
-    Chart.defaults.color = '#5b6b7e';
-    Chart.defaults.borderColor = 'rgba(91,107,126,.16)';
+    Chart.defaults.color = koyuMu() ? '#94a3b8' : '#5b6b7e';
+    Chart.defaults.borderColor = koyuMu() ? 'rgba(148,163,184,.12)' : 'rgba(91,107,126,.16)';
     Chart.defaults.font.family = 'Inter, sans-serif';
 
     // 1) Aylık toplam üretim: son 3 yıl + beklenen
     const yillar = [yil - 2, yil - 1, yil];
-    const renk = { [yil - 2]: '#64748b', [yil - 1]: '#3f8fd2', [yil]: '#211950' };
+    const renk = { [yil - 2]: '#64748b', [yil - 1]: '#3f8fd2', [yil]: TV() };
     const aylikToplam = (y) => Array.from({ length: 12 }, (_, i) => {
       const dolu = PERF.santraller.filter((s) => (s.aylik[String(y)] || [])[i] != null);
       return dolu.length ? topla(dolu.map((s) => s.aylik[String(y)][i])) : null;
@@ -148,7 +148,7 @@
     PERF.santraller.forEach((s) => Object.entries(s.yillik || {}).forEach(([y, v]) => { yilToplam[y] = (yilToplam[y] || 0) + v; }));
     const ys = Object.keys(yilToplam).sort();
     grafikOlustur('chYillik', {
-      type: 'bar', data: { labels: ys.map((y) => (Number(y) === yil ? `${y} (Oca–${AY[ay - 1]})` : y)), datasets: [{ label: 'Üretim (kWh)', data: ys.map((y) => yilToplam[y]), backgroundColor: ys.map((y) => (Number(y) === yil ? '#211950' : '#3f8fd2')), borderRadius: 4 }] },
+      type: 'bar', data: { labels: ys.map((y) => (Number(y) === yil ? `${y} (Oca–${AY[ay - 1]})` : y)), datasets: [{ label: 'Üretim (kWh)', data: ys.map((y) => yilToplam[y]), backgroundColor: ys.map((y) => (Number(y) === yil ? TV() : '#3f8fd2')), borderRadius: 4 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${tr0(c.parsed.y)} kWh` } } },
         scales: { y: { ticks: { callback: (v) => (v / 1e6).toLocaleString('tr-TR') + ' GWh' } } } },
     });
@@ -244,7 +244,7 @@
     const c = canliBul(s);
     const ariza = PERF.ariza && PERF.ariza.satirlar.find((r) => r.id === id);
     const yillar = Object.keys(s.aylik).sort().slice(-3);
-    const palet = ['#64748b', '#3f8fd2', '#211950'];
+    const palet = ['#64748b', '#3f8fd2', TV()];
 
     document.getElementById('detayBaslik').textContent = s.ad;
     document.getElementById('detayOzet').innerHTML = [

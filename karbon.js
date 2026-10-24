@@ -390,7 +390,7 @@
     if (!S || !window.Chart || !document.getElementById('chKarbonKent')) return;
     const renk = { 'Sabit Enerji': '#3f8fd2', 'Ulaşım': '#7a5cc7', 'Atık': '#d9822b', 'Tarım ve Hayvancılık': '#84cc16' };
     cizGrafik('chKarbonKent', { type: 'bar', data: { labels: S.yillar, datasets: Object.entries(S.envanter_sanayisiz_t).map(([ad, v]) => ({ label: ad, data: v, backgroundColor: renk[ad] || '#94a3b8', stack: 'k' })) },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'İzmir kent sera gazı envanteri, sanayi ve havacılık hariç (tCO₂e)', color: '#5b6b7e', font: { size: 11, weight: 'normal' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y)} tCO₂e` } } }, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: (v) => (v / 1e6).toLocaleString('tr-TR') + ' Mt' } } } } });
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'İzmir kent sera gazı envanteri, sanayi ve havacılık hariç (tCO₂e)', color: koyuMu() ? '#94a3b8' : '#5b6b7e', font: { size: 11, weight: 'normal' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y)} tCO₂e` } } }, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: (v) => (v / 1e6).toLocaleString('tr-TR') + ' Mt' } } } } });
   }
 
   function grafikler(env, ges) {
@@ -418,7 +418,7 @@
         type: 'line',
         data: { labels: etiket, datasets: [
           { label: 'Hedef yolu (2030 → 2050)', data: etiket.map((y) => Math.round(yol(y))), borderColor: '#10b981', borderDash: [6, 4], pointRadius: 0 },
-          { label: 'Gerçekleşen (tam yıl)', data: etiket.map((y) => (tam.includes(String(y)) ? Math.round(env[y].t_toplam) : null)), borderColor: '#211950', backgroundColor: '#211950', pointRadius: 4, spanGaps: false }] },
+          { label: 'Gerçekleşen (tam yıl)', data: etiket.map((y) => (tam.includes(String(y)) ? Math.round(env[y].t_toplam) : null)), borderColor: TV(), backgroundColor: TV(), pointRadius: 4, spanGaps: false }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { title: { display: true, text: 'tCO₂e' } } } },
       });
     }
