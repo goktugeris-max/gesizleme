@@ -35,7 +35,7 @@ SANTRALLER = {
     "13-": ("aliaga-kultur-merkezi", "Aliağa Kültür Merkezi", ("Huawei", "Aliaga Kultur Merkezi GES"), "Aliağa Kültür Merkezi"),
     "14-": ("seyrek-itfaiye", "Seyrek İtfaiye", ("GoodWe", "SEYREK İTFAİYE"), "Seyrek İtfaiye"),
     "15-": ("bornova-kultur-merkezi", "Bornova Kültür Merkezi", ("Huawei", "Bornova Kultur Merkezi GES"), "Bornova Kültür Merkezi"),
-    "16-": ("cigli-aile-danisma", "Çiğli Aile Danışma Merkezi", ("Huawei", "Çiğli Kadın Sığınma GES"), "Çiğli Aile Danışma Merkezi"),
+    "16-": ("cigli-aile-danisma", "Çiğli Aile Danışma Merkezi", ("Huawei", "Çiğli Sosyal Hizmet Binası GES"), "Çiğli Aile Danışma Merkezi"),
     "17-": ("gumuldur-itfaiye", "Gümüldür İtfaiye", ("Huawei", "Gumuldur Itfaiye GES"), "Gümüldür İtfaiye"),
     "18-": ("selcuk-itfaiye", "Selçuk İtfaiye", ("Huawei", "Selcuk Itfaiye GES"), "Selçuk İtfaiye"),
     "19-": ("cesme-itfaiye", "Çeşme İtfaiye", ("GoodWe", "Çeşme İtfaiye Ges"), "Çeşme İtfaiye"),

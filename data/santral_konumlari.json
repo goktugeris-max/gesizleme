@@ -30,9 +30,10 @@
   "ilce": "Karabağlar"
  },
  "cigli-aile-danisma": {
-  "lat": 38.495299,
-  "lon": 27.082521,
-  "ilce": "Çiğli"
+  "lat": 38.5,
+  "lon": 27.07,
+  "ilce": "Çiğli",
+  "gizli": true
  },
  "yesilyurt-kultur-merkezi": {
   "lat": 38.397785,

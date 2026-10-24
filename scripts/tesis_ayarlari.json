@@ -1,0 +1,38 @@
+{
+  "_aciklama": "Yayinlanan JSON'da tesis adini degistirmek ve konumu gizlemek icin. Anahtar = FusionSolar'daki tesis adi ya da 'sha256:<adin SHA-256'si>' (hassas tesisin gercek adi depoya YAZILMAZ). hideLocation=true ise koordinat ve adres yayimlanmaz. kWp portalda bos ise buradan girilir.",
+  "varsayilan": {
+    "hideAddress": true,
+    "coordDecimals": 3
+  },
+  "tesisler": {
+    "Selcuk Itfaiye GES": {
+      "displayName": "Selçuk İtfaiye GES",
+      "kWp": null
+    },
+    "Gumuldur Itfaiye GES": {
+      "displayName": "Gümüldür İtfaiye GES",
+      "kWp": null
+    },
+    "Bornova Kultur Merkezi GES": {
+      "displayName": "Bornova Kültür Merkezi GES",
+      "kWp": null
+    },
+    "Aliaga Kultur Merkezi GES": {
+      "displayName": "Aliağa Kültür Merkezi GES",
+      "kWp": null
+    },
+    "TR-Buca İtfaiye Ges": {
+      "displayName": "Buca İtfaiye GES",
+      "kWp": null
+    },
+    "TR-Karşıyaka Örnekköy Ges": {
+      "displayName": "Karşıyaka Örnekköy GES",
+      "kWp": null
+    },
+    "sha256:8b30c88ce1e99a3c0aad67cae03138d99ed996c582177fef1a4eb34adb1d7ffb": {
+      "displayName": "Çiğli Sosyal Hizmet Binası GES",
+      "hideLocation": true,
+      "kWp": 50.22
+    }
+  }
+}

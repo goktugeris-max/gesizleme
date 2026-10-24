@@ -112,7 +112,7 @@
           <div id="ozetKarbon" class="mt-4 text-xs text-slate-500">Yükleniyor...</div>
         </a>
       </section>
-      <p class="text-[11px] text-slate-500 text-center">GES canlı veri kaynakları: SMA ennexOS • GoodWe SEMS+ • Huawei FusionSolar (elle) • GDZ Elektrik ARİL OSOS</p>
+      <p class="text-[11px] text-slate-500 text-center">GES canlı veri kaynakları: SMA ennexOS • GoodWe SEMS+ • Huawei FusionSolar (geçici web girişi) • GDZ Elektrik ARİL OSOS</p>
     </div>
 
     <!-- SEKME: VERİM ANALİZİ (Open-Meteo) -->
@@ -435,7 +435,7 @@
     // Tarayıcıda kayıtlı listeye eksik olanlar BİR KEZ eklenir; mevcut düzenlemeler korunur.
     const HUAWEI_PLANTS = [
       'TR-Buca İtfaiye Ges', 'Aliaga Kultur Merkezi GES', 'Bornova Kultur Merkezi GES',
-      'Çiğli Kadın Sığınma GES', 'Gumuldur Itfaiye GES', 'Selcuk Itfaiye GES', 'TR-Karşıyaka Örnekköy'
+      'Çiğli Sosyal Hizmet Binası GES', 'Gumuldur Itfaiye GES', 'Selcuk Itfaiye GES', 'TR-Karşıyaka Örnekköy'
     ];
     function seedHuawei(list) {
       let eklendi = false;
@@ -709,6 +709,37 @@
     function renderAll() { renderSummary(); renderTable(); lucide.createIcons(); }
 
     // ================== OTOMATİK VERİ (GitHub Actions -> data/durum.json) ==================
+    // Huawei verisini durum.json santral biçimine çevirir. Ad, panelde kayıtlı Huawei santral adına eşlenir (Türkçe karakter/TR- ön eki farkı yok sayılır).
+    async function huaweiCanli() {
+      let h;
+      try {
+        const r = await fetch('data/huawei.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) return null;
+        h = await r.json();
+      } catch (e) { return null; }
+      if (!h || !Array.isArray(h.stations)) return null;
+      const kat = s => String(s || '').toLocaleLowerCase('tr').replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u')
+        .replace(/^tr-?/, '').replace(/ges$/, '').replace(/[^a-z0-9]/g, '');
+      const yas = h.fetchedAt ? (Date.now() - new Date(h.fetchedAt).getTime()) / 36e5 : 99;
+      const bayat = yas > 4;   // 4 saatten eski veri canlı sayılmaz (hata ya da devre kesici)
+      const hata = h.lastError ? `son deneme hatası: ${h.lastError.message}` : (bayat ? 'veri 4 saatten eski' : '');
+      const santraller = h.stations.map(st => {
+        const kayitli = plants.find(p => p.portal === 'Huawei' && kat(p.name) === kat(st.name));
+        const kw = st.currentPower_kW;
+        const durum = bayat ? 'Kontrol Edilmedi'
+          : /fault|error/i.test(st.status) ? 'Arızalı'
+          : /disconn|offline/i.test(st.status) ? 'Haberleşme Yok'
+          : (kw > 0 ? 'Çalışıyor' : 'Beklemede');
+        return {
+          kaynak: 'Huawei', kaynakId: 'hw-' + st.id, ad: kayitli ? kayitli.name : st.name,
+          kapasite_kwp: st.kWp, durum, anlik_kw: bayat ? null : kw, bugun_kwh: bayat ? null : st.dailyEnergy_kWh,
+          invertorler: (st.inverters || []).map(i => ({ ad: i.name, durum: durum === 'Çalışıyor' && i.stateCode === 512 ? 'Çalışıyor' : (durum === 'Arızalı' || durum === 'Haberleşme Yok' ? durum : 'Beklemede') })),
+          zaman: h.fetchedAt
+        };
+      });
+      return { zaman: h.fetchedAt, santraller, kaynak: { ok: !hata, adet: santraller.length, hata } };
+    }
+
     async function loadLive() {
       const bar = document.getElementById('liveBar');
       let d;
@@ -716,8 +747,16 @@
         const r = await fetch('data/durum.json?t=' + Date.now(), { cache: 'no-store' });
         if (!r.ok) throw new Error(r.status);
         d = await r.json();
-        window.CANLI = d;
-      } catch (e) {
+      } catch (e) { d = null; }
+      // Huawei FusionSolar (data/huawei.json, workflow "Huawei Veri Çek"): aynı biçime çevrilip CANLI'ya eklenir
+      const hw = await huaweiCanli();
+      if (hw) {
+        d = d || { guncelleme: hw.zaman, kaynaklar: {}, santraller: [] };
+        d.santraller = (d.santraller || []).filter(x => x.kaynak !== 'Huawei').concat(hw.santraller);
+        d.kaynaklar = Object.assign({}, d.kaynaklar, { Huawei: hw.kaynak });
+      }
+      if (d) window.CANLI = d;
+      if (!d) {
         bar.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="cloud-off" class="w-3.5 h-3.5"></i> Otomatik veri henüz yok — tablo elle girilen bilgilerle gösteriliyor.</span>`;
         lucide.createIcons();
         return;

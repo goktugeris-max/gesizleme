@@ -1,0 +1,50 @@
+name: Huawei Veri Çek
+
+on:
+  schedule:
+    # 06:00-20:00 TR saati arasi saatlik (cron UTC'dir; TR = UTC+3). Sik giris denemesi hesabi kilitleyebilir.
+    - cron: '37 3-17 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: huawei-veri
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Playwright kur
+        run: |
+          npm install --no-save playwright@1.47.2
+          npx playwright install --with-deps chromium
+
+      - name: FusionSolar'dan veri cek
+        env:
+          FS_USER: ${{ secrets.FS_USER }}
+          FS_PASS: ${{ secrets.FS_PASS }}
+        run: node scripts/fusionsolar_fetch.mjs
+
+      - name: Degisiklikleri kaydet
+        if: always()
+        run: |
+          git config user.name "gesizleme-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/huawei.json data/huawei-gunluk.csv || true
+          if git diff --cached --quiet; then
+            echo "Degisiklik yok"
+          else
+            git commit -m "Huawei verisi: $(TZ=Europe/Istanbul date '+%Y-%m-%d %H:%M')"
+            git pull --rebase --autostash
+            git push
+          fi
