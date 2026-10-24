@@ -103,8 +103,25 @@
     return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(sifreli.iv) }, anahtar, b64(sifreli.data))));
   }
 
+  // ---------- Özet sayfasına kart + uyarılar ----------
+  function ozetKayit() {
+    if (!window.Dash || !Dash.ozetKaydet || !D) return;
+    const secili = D.seriler.filter((s) => s.yillar[yil]);
+    const liste = secili.map((s) => { const v = s.yillar[yil], c = karsilastir(v); return { s, v, c, sapma: c.r ? c.t / c.r - 1 : null, ay: veriAy(v) }; }).filter((x) => x.sapma != null);
+    const asan = liste.filter((x) => x.sapma > 0);
+    const tesisAd = (id) => ((D.tesisler.find((t) => t.id === id) || {}).ad || id);
+    const uyarilar = liste.filter((x) => x.sapma > 0.05 && x.ay >= 3).map((x) => ({ modul: 'ISO 50001', etiket: 'Referans aşımı', metin: `${tesisAd(x.s.tesis)} / ${x.s.bolum} (${x.s.enerji}, ${yil}): referansın ${(x.sapma * 100).toLocaleString('tr-TR', { maximumFractionDigits: 1 })}% üstünde.`, renk: x.sapma > 0.15 ? 'text-red-400' : 'text-amber-300', href: '#iso', puan: 25 + Math.min(55, x.sapma * 200) }));
+    Dash.ozetKaydet('iso', {
+      kart: `<div class="grid grid-cols-2 gap-3 text-xs text-slate-500">
+        <div><div class="text-[10px] uppercase tracking-wider text-slate-500">${yil} izlenen seri</div><div class="text-lg font-bold text-white">${liste.length}</div></div>
+        <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Referans aşımı</div><div class="text-lg font-bold ${asan.length ? 'text-amber-300' : 'text-emerald-400'}">${asan.length} <span class="text-xs text-slate-400">seri</span></div></div>
+        <div class="col-span-2 text-[11px] text-slate-500">${uyarilar.length ? `%5'in üzerinde aşan ${uyarilar.length} seri var` : 'Referans çizgisine göre belirgin aşım yok'}</div></div>`,
+      uyarilar: uyarilar.sort((a, b) => b.puan - a.puan).slice(0, 4),
+    });
+  }
+
   async function parolaDene(p) {
-    try { D = await coz(p); yuklendi = true; const yl = [...new Set(D.seriler.flatMap((x) => Object.keys(x.yillar)))].sort(); yil = yl.includes('2026') ? '2026' : (yl[yl.length - 1] || yil); return true; } catch (e) { return false; }
+    try { D = await coz(p); yuklendi = true; const yl = [...new Set(D.seriler.flatMap((x) => Object.keys(x.yillar)))].sort(); yil = yl.includes('2026') ? '2026' : (yl[yl.length - 1] || yil); ozetKayit(); return true; } catch (e) { return false; }
   }
 
   function girisFormu(hata) {
@@ -456,5 +473,5 @@
     },
   };
   // Sayfa doğrudan #iso ile açılırsa dashboard.js bu dosyadan önce çalışmış olur
-  if ((location.hash || '').slice(1) === 'iso') window.Iso.ac();
+  if ((location.hash || '').slice(1) === 'iso') window.Iso.ac(); else yukle();   // Özet kartı için şifre oturumda varsa sessizce yükle
 })();

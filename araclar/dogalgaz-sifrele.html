@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Doğalgaz verisini şifrele | Enerji Yönetim Merkezi</title>
+  <link rel="icon" href="../logo-dik.png" type="image/png" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root { --kurum: #211950; --cizgi: #dbe1e8; --yazi: #16212e; --yazi3: #5b6b7e; --sayfa: #f3f5f8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--sayfa); color: var(--yazi); font: 15px/1.5 Inter, system-ui, sans-serif; }
+    main { max-width: 640px; margin: 0 auto; padding: 24px 16px 64px; }
+    img { height: 36px; }
+    .kart { background: #fff; border: 1px solid var(--cizgi); border-radius: 8px; padding: 18px; margin-top: 16px; }
+    h1 { font-size: 20px; margin: 16px 0 4px; }
+    ol { padding-left: 20px; margin: 8px 0 0; } li { margin: 6px 0; }
+    label { display: block; font-size: 13px; color: var(--yazi3); margin: 14px 0 4px; }
+    input[type=password], input[type=file] { width: 100%; padding: 9px 10px; border: 1px solid var(--cizgi); border-radius: 6px; font-size: 14px; background: #fff; }
+    button { margin-top: 16px; width: 100%; padding: 11px; border: 0; border-radius: 6px; background: var(--kurum); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: default; }
+    #sonuc { margin-top: 14px; font-size: 14px; white-space: pre-line; }
+    .hata { color: #b42318; } .ok { color: #067647; } small { color: var(--yazi3); }
+  </style>
+</head>
+<body>
+<main>
+  <a href="../index.html"><img src="../logo-yatay.png" alt="İzmir Büyükşehir Belediyesi" /></a>
+  <h1>Doğalgaz verisini şifreleyip hazırla</h1>
+  <small>Excel dosyanız bu sayfadan dışarı <b>gönderilmez</b>; her şey tarayıcınızda yapılır. Parola yalnızca şifrelemede kullanılır, kaydedilmez.</small>
+  <div class="kart">
+    <ol>
+      <li>Doğalgaz tüketim çizelgesini (Excel) seçin.</li>
+      <li>Panelde Elektrik/ISO için kullandığınız <b>aynı parolayı</b> yazın.</li>
+      <li>"Şifrele ve indir"e basın; <code>dogalgaz.enc.json</code> inecek.</li>
+      <li>GitHub'da depoya girin → <b>data</b> klasörü → <b>Add file → Upload files</b> ile bu dosyayı yükleyip <b>Commit</b> deyin (aynı adlıysa üzerine yazılır).</li>
+    </ol>
+    <label for="dosya">Excel dosyası (.xlsx)</label>
+    <input id="dosya" type="file" accept=".xlsx" />
+    <label for="parola">Parola (en az 12 karakter)</label>
+    <input id="parola" type="password" autocomplete="off" />
+    <button id="git" disabled>Şifrele ve indir</button>
+    <div id="sonuc"></div>
+  </div>
+  <p><small>Şifreli dosyada hesap numarası, adres, mahalle, sokak ve TL tutarları <b>bulunmaz</b>; yalnızca bina adı, ilçe, iç kapı kodu ve aylık m³ değerleri vardır. Aynı işi bilgisayarda <code>collector/dogalgaz_to_json.py</code> da yapar.</small></p>
+</main>
+<script>
+(function () {
+  const PBKDF2_TUR = 600000;
+  const GENEL_AD = /^(T\.?C\.?\s*)?İZMİR\s*(B\.|BÜYÜK\s*)?\s*ŞEHİR\s*BEL(EDİYE(Sİ)?|\.)?(\s*BAŞKANLIĞI)?\.?$/i;
+  const $ = (id) => document.getElementById(id);
+  const temiz = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  const sayi = (x) => (typeof x === 'number' && isFinite(x) ? x : null);   // '-', boş, metin: veri yok
+  const b64 = (u8) => { let s = ''; u8.forEach((b) => { s += String.fromCharCode(b); }); return btoa(s); };
+  const mesaj = (t, sinif) => { $('sonuc').className = sinif || ''; $('sonuc').textContent = t; };
+  const ilceBicim = (s) => temiz(s).toLocaleLowerCase('tr').replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toLocaleUpperCase('tr'));
+
+  async function ozet8(metin) {
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(metin));
+    return Array.from(new Uint8Array(h)).map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 8);
+  }
+
+  async function oku(buf) {
+    const wb = XLSX.read(buf, { type: 'array' });
+    const aboneler = {}, m3 = {}, notlar = [];
+    for (const ad of wb.SheetNames) {
+      if (!/^\d+$/.test(ad.trim())) continue;
+      const yil = ad.trim();
+      m3[yil] = {};
+      const sayfa = wb.Sheets[ad], ilkSatir = XLSX.utils.decode_range(sayfa['!ref']).s.r;   // 0 tabanlı ilk dolu satır (Excel'de tablo 3. satırdan başlıyor)
+      const satirlar = XLSX.utils.sheet_to_json(sayfa, { header: 1, raw: true, defval: null });
+      for (let i = Math.max(0, 5 - ilkSatir); i < satirlar.length; i++) {   // Excel'in 6. satırından itibaren
+        const r = satirlar[i];
+        if (!r || r[2] == null || r[2] === '') continue;
+        const kimlik = await ozet8(String(r[2]).trim());
+        const adi = temiz(r[1]), ic = temiz(r[7]);
+        aboneler[kimlik] = { id: kimlik, no: r[0], ad: adi, ilce: ilceBicim(r[3]), ic: ic === '-' ? '' : ic, genel: GENEL_AD.test(adi) };
+        let aylar = Array.from({ length: 12 }, (_, k) => sayi(r[8 + 2 * k]));
+        if (m3[yil][kimlik]) {
+          notlar.push(`${yil}: aynı hesap iki satırda (No ${r[0]}); değerler toplandı`);
+          aylar = aylar.map((v, k) => { const e = m3[yil][kimlik][k]; return v == null && e == null ? null : (v || 0) + (e || 0); });
+        }
+        aylar = aylar.map((v, k) => { if (v != null && v < 0) { notlar.push(`${yil}-${String(k + 1).padStart(2, '0')}: negatif m3 (${v}) abone ${kimlik} → 0 alındı`); return 0; } return v; });
+        m3[yil][kimlik] = aylar;
+      }
+    }
+    const yillar = Object.keys(m3).sort();
+    if (!yillar.length) throw new Error('Yıl sayfaları (2022, 2023 …) bulunamadı. Doğru dosyayı seçtiniz mi?');
+    const sonYil = yillar[yillar.length - 1];
+    const aktif = Object.keys(m3[sonYil]).filter((k) => m3[sonYil][k].some((x) => x));
+    let sonAy = 0;
+    for (let i = 0; i < 12; i++) {
+      const d = aktif.filter((k) => m3[sonYil][k][i] != null).length;
+      if (aktif.length && d >= 0.5 * aktif.length) sonAy = i + 1;
+    }
+    return {
+      olusturma: new Date().toISOString().slice(0, 10), son_donem: { yil: +sonYil, ay: sonAy }, yillar: yillar.map(Number),
+      aboneler: Object.values(aboneler).sort((a, b) => (a.no == null) - (b.no == null) || a.no - b.no), m3, veri_notlari: notlar,
+    };
+  }
+
+  async function sifrele(veri, parola) {
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    const malzeme = await crypto.subtle.importKey('raw', new TextEncoder().encode(parola), 'PBKDF2', false, ['deriveKey']);
+    const anahtar = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt, iterations: PBKDF2_TUR, hash: 'SHA-256' }, malzeme, { name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+    const sifreli = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, anahtar, new TextEncoder().encode(JSON.stringify(veri))));
+    return { v: 1, iter: PBKDF2_TUR, salt: b64(salt), iv: b64(iv), data: b64(sifreli) };
+  }
+
+  const hazirMi = () => { $('git').disabled = !($('dosya').files.length && $('parola').value.length >= 12); };
+  $('dosya').onchange = hazirMi; $('parola').oninput = hazirMi;
+  $('git').onclick = async () => {
+    $('git').disabled = true; mesaj('Okunuyor ve şifreleniyor… (birkaç saniye sürebilir)');
+    try {
+      const veri = await oku(await $('dosya').files[0].arrayBuffer());
+      const dosya = await sifrele(veri, $('parola').value);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(dosya)], { type: 'application/json' }));
+      a.download = 'dogalgaz.enc.json'; document.body.appendChild(a); a.click(); a.remove();
+      const yt = (y) => Object.values(veri.m3[y]).reduce((t, v) => t + v.reduce((x, n) => x + (n || 0), 0), 0);
+      mesaj(`Hazır ✔  ${veri.aboneler.length} abone • yıllar ${veri.yillar.join(', ')} • son dönem ${veri.son_donem.yil}-${String(veri.son_donem.ay).padStart(2, '0')}\n${veri.son_donem.yil} toplamı: ${Math.round(yt(String(veri.son_donem.yil))).toLocaleString('tr-TR')} m³ (kontrol için kurum raporundakiyle karşılaştırabilirsiniz).${veri.veri_notlari.length ? '\nNotlar: ' + veri.veri_notlari.slice(0, 5).join(' • ') : ''}`, 'ok');
+    } catch (e) { mesaj('Hata: ' + e.message, 'hata'); }
+    hazirMi();
+  };
+})();
+</script>
+</body>
+</html>

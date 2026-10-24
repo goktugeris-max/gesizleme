@@ -255,6 +255,35 @@
     if (window.lucide) lucide.createIcons();
   }
 
+  // ---------- Özet sayfasına kart + uyarılar ----------
+  // Hedef: kurum yıllık değerlendirme raporuna göre 2026 elektrik tüketimini 2025'e göre en az %5 azaltmak.
+  const HEDEF = { 2026: -0.05 };
+  function ozetKayit() {
+    if (!window.Dash || !Dash.ozetKaydet || !E) return;
+    const { yil, ay } = E.son_donem, A = E.aylik[String(yil)], O = E.aylik[String(yil - 1)];
+    if (!A || !O) return;
+    const ger = topla(A.gercek, ay), oger = topla(O.gercek, ay), otop = topla(O.gercek, 12);
+    const d = oger ? ger / oger - 1 : null, tahmin = oger ? (ger / oger) * otop : null, hedef = HEDEF[yil];
+    const renk = d == null ? 'text-slate-300' : d > 0 ? 'text-red-400' : 'text-emerald-400';
+    const hedefSatir = hedef != null && d != null ? `<div class="text-[11px] ${d <= hedef ? 'text-emerald-400' : 'text-amber-300'} mt-1">Hedef %${Math.abs(hedef * 100)} azaltım: ${d <= hedef ? 'tutturuluyor' : 'şu an ' + fark(d - hedef).replace('+', '') + ' geride'}</div>` : '';
+    const uyarilar = [];
+    if (A.gercek[ay - 1] != null && O.gercek[ay - 1]) {
+      const f = A.gercek[ay - 1] / O.gercek[ay - 1] - 1;
+      if (f >= 0.08) uyarilar.push({ modul: 'Elektrik', etiket: 'Son ay artışı', metin: `${AY[ay - 1]} ${yil} gerçek tüketimi geçen yılın aynı ayına göre ${fark(f)} (${gwh(A.gercek[ay - 1])} GWh).`, renk: 'text-red-400', href: '#elektrik', puan: 40 + Math.min(40, f * 200) });
+    }
+    Object.entries(E.db).forEach(([ad, v]) => {
+      const c = topla(v[String(yil)], ay), p = topla(v[String(yil - 1)], ay);
+      if (p > 0 && c - p >= 150000 && c / p - 1 >= 0.15) uyarilar.push({ modul: 'Elektrik', etiket: 'Dönem artışı', metin: `${ad}: Oca–${AY[ay - 1]} ${fark(c / p - 1)} (+${tr0((c - p) / 1000)} MWh).`, renk: 'text-amber-300', href: '#elektrik', puan: 30 + Math.min(45, (c - p) / 40000) });
+    });
+    Dash.ozetKaydet('elektrik', {
+      kart: `<div class="grid grid-cols-2 gap-3 text-xs text-slate-500">
+        <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Oca–${AY[ay - 1]} ${yil}</div><div class="text-lg font-bold text-white">${gwh(ger)} <span class="text-xs text-slate-400">GWh</span></div></div>
+        <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Geçen yıla göre</div><div class="text-lg font-bold ${renk}">${fark(d)}</div></div>
+        <div class="col-span-2"><div class="text-[10px] uppercase tracking-wider text-slate-500">Yıl sonu tahmini</div><div class="text-sm font-semibold text-slate-200">${gwh(tahmin)} GWh <span class="text-xs text-slate-500">(${yil - 1}: ${gwh(otop)} GWh)</span></div>${hedefSatir}</div></div>`,
+      uyarilar: uyarilar.sort((a, b) => b.puan - a.puan).slice(0, 5),
+    });
+  }
+
   // ---- Şifreli veri: data/elektrik.enc.json (AES-GCM + PBKDF2), parola yalnızca tarayıcıda kullanılır ----
   let sifreli = null;
   const b64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
@@ -286,7 +315,7 @@
   }
 
   async function ac_dene(parola) {
-    try { E = await coz(parola); yuklendi = true; ozetSerit(); return true; } catch (e) { return false; }
+    try { E = await coz(parola); yuklendi = true; ozetSerit(); ozetKayit(); return true; } catch (e) { return false; }
   }
 
   async function yukle() {
