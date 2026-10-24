@@ -1,9 +1,10 @@
 name: Huawei Veri Çek
 
 on:
-  schedule:
-    # 06:00-20:00 TR saati arasi saatlik (cron UTC'dir; TR = UTC+3). Sik giris denemesi hesabi kilitleyebilir.
-    - cron: '37 3-17 * * *'
+  # ZAMANLAYICI KAPALI: intl.fusionsolar.huawei.com GitHub sunucularindan cozulemiyor (ERR_NAME_NOT_RESOLVED, 24.10.2026).
+  # Turkiye'den cikan self-hosted runner kurulunca asagidaki satirlari acin (06:00-20:00 TR saati arasi saatlik, cron UTC'dir):
+  # schedule:
+  #   - cron: '37 3-17 * * *'
   workflow_dispatch: {}
 
 permissions:
@@ -40,7 +41,8 @@ jobs:
         run: |
           git config user.name "gesizleme-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/huawei.json data/huawei-gunluk.csv || true
+          git add data/huawei.json || true
+          git add data/huawei-gunluk.csv || true
           if git diff --cached --quiet; then
             echo "Degisiklik yok"
           else

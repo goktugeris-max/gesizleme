@@ -5,6 +5,8 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
 
 ## Mimari (sunucusuz)
 
+- **Tema:** varsayılan AÇIK kurumsal tema, `tema.css` (Tailwind koyu sınıflarını açık renklere çeviren katman; renkler `:root` değişkenlerinde, kurum rengi `--kurum`). İZBB logosu/renk kodu gelince yalnızca bu değişkenler ve başlıktaki simge değişir. `<html class="dark">` eklenirse eski koyu görünüm döner. Grafik renkleri JS dosyalarında (`#0b4f8a` kurum mavisi, `#3f8fd2`), harita varsayılanı Esri Light Gray.
+
 - `index.html` + `dashboard.js` + `elektrik.js` + `iso.js` — GitHub Pages'te yayınlanan panel (Tailwind + Lucide + Chart.js, CDN).
   **Gezinme iki katmanlı:** üstte modüller (Özet `#ozet` = açılış, Güneş Enerjisi `#genel`, Elektrik `#elektrik`, ISO 50001 `#iso`);
   GES seçilince altta alt sekmeler (Genel Bakış, Santraller, Canlı Durum `#canli`, Arıza Takip `#ariza`). Özet'teki modül kartları
@@ -98,7 +100,7 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
     `intl.fusionsolar.huawei.com`'a Secrets `FS_USER`/`FS_PASS` ile girer (salt-okur kullanıcı önerilir), `scripts/fusionsolar_collect.js` portal içinde okur, temizlenmiş sonucu `data/huawei.json`
     (+ `data/huawei-gunluk.csv` günlük arşiv) yazar. `loadLive()` (`index.html`) `huaweiCanli()` ile bunu durum.json biçimine çevirip `window.CANLI`'ya ekler (kaynak "Huawei"; ad, panelde kayıtlı Huawei adına
     Türkçe karakter/`TR-` farkı yok sayılarak eşlenir; veri 4 saatten eskiyse ya da `lastError` varsa "Kontrol Edilmedi" + kaynak çubuğunda hata). **Devre kesici:** art arda 3 hatadan sonra otomatik çalışma girişi
-    denemez (hesap kilitlenmesin); Actions'tan elle çalıştırınca yeniden dener. Captcha çıkarsa AŞILMAZ, hata yazılır. Önceki sürümde "GitHub'dan çalışmıyor" denmişti (DNS); bu yol denenmemiştir → ilk çalışma sonucu `huawei.json.lastError`'da.
+    denemez (hesap kilitlenmesin); Actions'tan elle çalıştırınca yeniden dener. Captcha çıkarsa AŞILMAZ, hata yazılır. **DENENDİ (24.10.2026): GitHub runner'ında `intl.fusionsolar.huawei.com` çözülemedi (ERR_NAME_NOT_RESOLVED) → GitHub-hosted çalışmaz; zamanlayıcı kapatıldı.** Giriş denemesine hiç ulaşılmadığı için hesap riski yok. Çalışması için Türkiye'den çıkan self-hosted runner gerekir (`runs-on: self-hosted`, cron satırlarını aç).
     **Hassas tesis:** Çiğli Sosyal Hizmet Binası (kadın sığınağı) — gerçek FusionSolar adı depoya YAZILMAZ (`scripts/tesis_ayarlari.json` anahtarı SHA-256), takma adla görünür, koordinat/adres yayımlanmaz
     (`santral_konumlari.json`'da `gizli: true`, ilçe merkezi; Harita'da işaretçi çizilmez). Ayarda olmayan, adında "sığınma/konukevi" geçen yeni tesis de otomatik gizlenir. Eski git geçmişinde ad/koordinat hâlâ görünür (commit 0f6b302, b58ec96).
     Paket belgeleri: `docs/HUAWEI_KURULUM_PAKETI.md`, `docs/fusionsolar_web_sinyal_eslemesi.csv`. E-posta alarmı (`alarm.py`) henüz Huawei'yi kapsamaz.
@@ -119,7 +121,7 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
 - **Gece/gündüz kuralı:** SEMS geceleri santrale ve invertörlere -1 (çevrimdışı) verir. `gunduz_mu()` İzmir güneş
   doğuş/batışına (1 saat pay) göre hesaplar; -1 yalnızca gündüz "Haberleşme Yok" sayılır, geceleri "Beklemede".
 - SEMS invertör kodları: 1=Çalışıyor, 0=Beklemede, -1=Haberleşme Yok, 2=Arızalı.
-- Panelde 7 Huawei santrali var (artık `huawei.json` ile otomatik; çalışmazsa elle takip): Buca Toros, Aliağa KM, Bornova KM, Çiğli Aile Danışma, Gümüldür, Selçuk İtfaiye, Örnekköy.
+- Panelde 7 Huawei santrali var (`huawei.json` altyapısı hazır ama GitHub'dan çalışmıyor → elle takip): Buca Toros, Aliağa KM, Bornova KM, Çiğli Aile Danışma, Gümüldür, Selçuk İtfaiye, Örnekköy.
 - Canlı bağlantısı olmayan santraller: Ekrem Akurgal (Kaco), Selçuk Transfer (Fronius), Akkaya DGES (Deye/Solarman) + 7 Huawei.
 
 ## Huawei neden çalışmıyor (denendi, tekrar deneme)

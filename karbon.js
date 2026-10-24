@@ -388,9 +388,9 @@
 
   function kentGrafigi() {
     if (!S || !window.Chart || !document.getElementById('chKarbonKent')) return;
-    const renk = { 'Sabit Enerji': '#22d3ee', 'Ulaşım': '#a78bfa', 'Atık': '#fb923c', 'Tarım ve Hayvancılık': '#84cc16' };
+    const renk = { 'Sabit Enerji': '#3f8fd2', 'Ulaşım': '#7a5cc7', 'Atık': '#d9822b', 'Tarım ve Hayvancılık': '#84cc16' };
     cizGrafik('chKarbonKent', { type: 'bar', data: { labels: S.yillar, datasets: Object.entries(S.envanter_sanayisiz_t).map(([ad, v]) => ({ label: ad, data: v, backgroundColor: renk[ad] || '#94a3b8', stack: 'k' })) },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'İzmir kent sera gazı envanteri, sanayi ve havacılık hariç (tCO₂e)', color: '#94a3b8', font: { size: 11, weight: 'normal' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y)} tCO₂e` } } }, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: (v) => (v / 1e6).toLocaleString('tr-TR') + ' Mt' } } } } });
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'İzmir kent sera gazı envanteri, sanayi ve havacılık hariç (tCO₂e)', color: '#5b6b7e', font: { size: 11, weight: 'normal' } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${fmt(c.parsed.y)} tCO₂e` } } }, scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: (v) => (v / 1e6).toLocaleString('tr-TR') + ' Mt' } } } } });
   }
 
   function grafikler(env, ges) {
@@ -401,7 +401,7 @@
       type: 'bar',
       data: {
         labels: yillar.map((y) => (tamYil(y, env) ? y : y + ' (kısmi)')),
-        datasets: [set('Bina/tesis elektriği', 't_elek', '#22d3ee'), set('Kamu aydınlatması', 't_aydinlatma', '#a78bfa'), set('Doğalgaz', 't_dg', '#fb923c'), set('Motorin', 't_motorin', '#94a3b8'),
+        datasets: [set('Bina/tesis elektriği', 't_elek', '#3f8fd2'), set('Kamu aydınlatması', 't_aydinlatma', '#7a5cc7'), set('Doğalgaz', 't_dg', '#d9822b'), set('Motorin', 't_motorin', '#94a3b8'),
           ...(ges ? [{ label: 'GES ile kaçınılan', data: yillar.map((y) => (ges.kwh[y] ? -Math.round((ges.kwh[y] * efElek(y)) / 1000) : null)), backgroundColor: '#10b981', stack: 'g' }] : [])],
       },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${tr0(Math.abs(c.parsed.y))} tCO₂e` } } }, scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'tCO₂e' } } } },
@@ -418,7 +418,7 @@
         type: 'line',
         data: { labels: etiket, datasets: [
           { label: 'Hedef yolu (2030 → 2050)', data: etiket.map((y) => Math.round(yol(y))), borderColor: '#10b981', borderDash: [6, 4], pointRadius: 0 },
-          { label: 'Gerçekleşen (tam yıl)', data: etiket.map((y) => (tam.includes(String(y)) ? Math.round(env[y].t_toplam) : null)), borderColor: '#fbbf24', backgroundColor: '#fbbf24', pointRadius: 4, spanGaps: false }] },
+          { label: 'Gerçekleşen (tam yıl)', data: etiket.map((y) => (tam.includes(String(y)) ? Math.round(env[y].t_toplam) : null)), borderColor: '#0b4f8a', backgroundColor: '#0b4f8a', pointRadius: 4, spanGaps: false }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { title: { display: true, text: 'tCO₂e' } } } },
       });
     }

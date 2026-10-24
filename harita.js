@@ -14,7 +14,7 @@
     if (v == null) return GRI;
     if (v >= 0.95) return '#10b981';
     if (v >= 0.85) return '#fcd34d';
-    if (v >= 0.70) return '#fb923c';
+    if (v >= 0.70) return '#d9822b';
     return '#ef4444';
   }
   function durumRenk(c) {
@@ -56,7 +56,7 @@
     const kmax = Math.max(1, ...Object.values(ozet).map((o) => o.kw));
     const kg = {};
     (kirilgan || []).forEach((x) => { kg[buyuk(x.ilce.trim())] = x; });
-    const kgRenk = { Yüksek: '#ef4444', Orta: '#fbbf24', Düşük: '#34d399' };
+    const kgRenk = { Yüksek: '#ef4444', Orta: '#0b4f8a', Düşük: '#34d399' };
     ilceKatman = L.geoJSON(ilceVeri, {
       style: (f) => {
         const o = ozet[f.properties.adi];
@@ -114,7 +114,7 @@
     document.getElementById('haritaOzet').textContent = `${adet} santral • ${tr0(rows.reduce((t, r) => t + (r.m.kw || 0), 0))} kW`;
     document.getElementById('haritaLejant').innerHTML = (mod === 'canli'
       ? [['#10b981', 'Çalışıyor'], ['#38bdf8', 'Beklemede'], ['#ef4444', 'Arıza / haberleşme yok'], [GRI, 'Canlı bağlantı yok']]
-      : [['#10b981', '≥ %95'], ['#fcd34d', '%85–95'], ['#fb923c', '%70–85'], ['#ef4444', '< %70'], [GRI, 'Veri yok']]
+      : [['#10b981', '≥ %95'], ['#fcd34d', '%85–95'], ['#d9822b', '%70–85'], ['#ef4444', '< %70'], [GRI, 'Veri yok']]
     ).map(([c, t]) => `<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:${c}"></span>${t}</span>`).join('') +
       '<span class="text-slate-500">• daire boyutu = kurulu güç • kırmızı halka = canlı sorun' + (ilceAcik ? (ilceMod === 'kirilgan' ? ' • ilçe rengi = iklim kırılganlığı (kırmızı yüksek, sarı orta, yeşil düşük; İzmir SECAP)' : ' • ilçe tonu = ilçedeki kurulu güç') : '') + '</span>' +
       '<span class="basis-full text-[10px] text-slate-600">Harita: © OpenStreetMap katkıcıları, Esri • İlçe sınırları: İzmir Büyükşehir Belediyesi Açık Veri Portalı (CC BY 4.0 kapsamında lisanslanan kamu sektörü bilgilerini içerir)</span>';
@@ -127,10 +127,14 @@
       L.tileLayer(esri + 'Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, maxNativeZoom: 16, attribution: 'Esri, HERE, Garmin, © OpenStreetMap katkıcıları' }),
       L.tileLayer(esri + 'Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, maxNativeZoom: 16 }),
     ]);
+    const acik = L.layerGroup([
+      L.tileLayer(esri + 'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, maxNativeZoom: 16, attribution: 'Esri, HERE, Garmin, © OpenStreetMap katkıcıları' }),
+      L.tileLayer(esri + 'Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, maxNativeZoom: 16 }),
+    ]);
     const sokak = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
     const uydu = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri, Maxar, Earthstar Geographics' });
-    harita = L.map('haritaKap', { layers: [koyu], zoomControl: true, scrollWheelZoom: true }).setView([38.5, 27.1], 9);
-    L.control.layers({ 'Koyu': koyu, 'Sokak': sokak, 'Uydu': uydu }, null, { position: 'topright' }).addTo(harita);
+    harita = L.map('haritaKap', { layers: [acik], zoomControl: true, scrollWheelZoom: true }).setView([38.5, 27.1], 9);
+    L.control.layers({ 'Açık': acik, 'Koyu': koyu, 'Sokak': sokak, 'Uydu': uydu }, null, { position: 'topright' }).addTo(harita);
   }
 
   function sigdir() {
