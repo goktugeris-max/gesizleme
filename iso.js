@@ -104,7 +104,7 @@
   }
 
   async function parolaDene(p) {
-    try { D = await coz(p); yuklendi = true; return true; } catch (e) { return false; }
+    try { D = await coz(p); yuklendi = true; const yl = [...new Set(D.seriler.flatMap((x) => Object.keys(x.yillar)))].sort(); yil = yl.includes('2026') ? '2026' : (yl[yl.length - 1] || yil); return true; } catch (e) { return false; }
   }
 
   function girisFormu(hata) {
