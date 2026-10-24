@@ -9,7 +9,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const YIL_RENK = { 2023: '#64748b', 2024: '#a78bfa', 2025: '#22d3ee', 2026: '#fbbf24' };
+  const YIL_RENK = { 2023: '#64748b', 2024: '#7a5cc7', 2025: '#3f8fd2', 2026: '#0b4f8a' };
 
   let E = null, yuklendi = false, cizildi = false, secim = 'gercek';
   const grafik = {};
@@ -79,7 +79,7 @@
     });
     cizGrafik('chElGes', {
       data: { labels: etiket, datasets: [
-        { type: 'bar', label: 'GES net üretim (kWh)', data: ges, backgroundColor: '#fbbf24', borderRadius: 3, yAxisID: 'y', order: 2 },
+        { type: 'bar', label: 'GES net üretim (kWh)', data: ges, backgroundColor: '#0b4f8a', borderRadius: 3, yAxisID: 'y', order: 2 },
         { type: 'line', label: 'Tüketimdeki pay (%)', data: pay, borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, tension: 0.3, pointRadius: 0, yAxisID: 'y1', order: 1 },
       ] },
       options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
@@ -100,8 +100,8 @@
     const ilk = satirlar.slice(0, 15);
     cizGrafik('chElDb', {
       type: 'bar', data: { labels: ilk.map((r) => (r.ad.length > 30 ? r.ad.slice(0, 29) + '…' : r.ad)), datasets: [
-        { label: `${yil} Oca–${AY[ay - 1]}`, data: ilk.map((r) => r.simdi), backgroundColor: '#fbbf24', borderRadius: 3 },
-        { label: `${yil - 1} aynı dönem`, data: ilk.map((r) => r.onceki), backgroundColor: '#22d3ee66', borderRadius: 3 },
+        { label: `${yil} Oca–${AY[ay - 1]}`, data: ilk.map((r) => r.simdi), backgroundColor: '#0b4f8a', borderRadius: 3 },
+        { label: `${yil - 1} aynı dönem`, data: ilk.map((r) => r.onceki), backgroundColor: '#3f8fd266', borderRadius: 3 },
       ] },
       options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${tr0(c.parsed.x)} kWh` } } },
         scales: { x: { ticks: { callback: (v) => (v / 1e6).toLocaleString('tr-TR') + ' GWh' } } } },
@@ -119,7 +119,7 @@
   function dagilim(id, veri, baslik) {
     const { yil, ay } = E.son_donem;
     const satir = Object.entries(veri).map(([ad, y]) => [ad, topla(y[String(yil)], ay)]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
-    const renk = ['#fbbf24', '#22d3ee', '#a78bfa', '#10b981', '#fb923c', '#94a3b8'];
+    const renk = ['#0b4f8a', '#3f8fd2', '#7a5cc7', '#10b981', '#d9822b', '#94a3b8'];
     cizGrafik(id, {
       type: 'doughnut', data: { labels: satir.map(([a]) => a), datasets: [{ data: satir.map(([, v]) => v), backgroundColor: satir.map((_, i) => renk[i % renk.length]), borderWidth: 0 }] },
       options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom' },

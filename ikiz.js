@@ -128,11 +128,11 @@
     const gesKw = (b) => (d.ges.on ? topla(d.ges.birimler.filter((g) => g.ad === b.ad || bn.length === 1).map((g) => g.kw || 0)) : 0);
     const kutular = bn.map((b, i) => {
       const x = bosluk + i * (w + bosluk), kw = gesKw(b), cati = kw > 0
-        ? `<polygon points="${x + 20},70 ${x + w - 20},70 ${x + w - 35},48 ${x + 35},48" fill="#fbbf24" fill-opacity="0.85" stroke="#92400e"/><text x="${x + w / 2}" y="62" text-anchor="middle" font-size="11" font-weight="700" fill="#451a03">${tr0(kw)} kW GES</text>`
+        ? `<polygon points="${x + 20},70 ${x + w - 20},70 ${x + w - 35},48 ${x + 35},48" fill="#0b4f8a" fill-opacity="0.85" stroke="#92400e"/><text x="${x + w / 2}" y="62" text-anchor="middle" font-size="11" font-weight="700" fill="#451a03">${tr0(kw)} kW GES</text>`
         : `<line x1="${x + 10}" y1="70" x2="${x + w - 10}" y2="70" stroke="#475569" stroke-width="2"/>`;
       return `${cati}<rect x="${x}" y="70" width="${w}" height="110" rx="6" fill="#0f172a" stroke="#334155"/>
         <text x="${x + w / 2}" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#e2e8f0">${esc2(b.ad.length > 24 ? b.ad.slice(0, 23) + '…' : b.ad)}</text>
-        <text x="${x + 10}" y="120" font-size="11" fill="#22d3ee">⚡ ${tr0(b.kwh)} kWh</text><text x="${x + 10}" y="140" font-size="11" fill="#fb923c">🔥 ${tr0(b.sm3)} Sm³</text>
+        <text x="${x + 10}" y="120" font-size="11" fill="#3f8fd2">⚡ ${tr0(b.kwh)} kWh</text><text x="${x + 10}" y="140" font-size="11" fill="#d9822b">🔥 ${tr0(b.sm3)} Sm³</text>
         <text x="${x + 10}" y="165" font-size="10" fill="#64748b">${b.veriYok ? 'tüketim serisi yok (yalnız GES)' : b.kwh ? 'şebekeye bağlı' : 'elektrik verisi yok'}</text>
         <line x1="${x + w / 2}" y1="180" x2="${x + w / 2}" y2="236" stroke="#475569" stroke-width="1.5" stroke-dasharray="4 3"/>`;
     }).join('');
@@ -220,9 +220,9 @@
     if (grafik.ikiz) grafik.ikiz.destroy();
     grafik.ikiz = new Chart(document.getElementById('chIkiz'), { type: 'bar', data: { labels: AY, datasets: [
       { label: 'Şimdi (kWh)', data: T.E.map(Math.round), backgroundColor: '#475569' },
-      { label: 'Senaryo net şebeke çekişi (kWh)', data: S.E.map(Math.round), backgroundColor: '#22d3ee' },
-      ...(S.ges.aylikMahsup ? [{ type: 'line', label: 'GES mahsup (kWh)', data: S.ges.aylikMahsup.map(Math.round), borderColor: '#fbbf24', backgroundColor: '#fbbf24', pointRadius: 3, tension: 0.3 }] : [])] },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Aylık elektrik: şimdi ve senaryo', color: '#94a3b8', font: { size: 11, weight: 'normal' } } } } });
+      { label: 'Senaryo net şebeke çekişi (kWh)', data: S.E.map(Math.round), backgroundColor: '#3f8fd2' },
+      ...(S.ges.aylikMahsup ? [{ type: 'line', label: 'GES mahsup (kWh)', data: S.ges.aylikMahsup.map(Math.round), borderColor: '#0b4f8a', backgroundColor: '#0b4f8a', pointRadius: 3, tension: 0.3 }] : [])] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Aylık elektrik: şimdi ve senaryo', color: '#5b6b7e', font: { size: 11, weight: 'normal' } } } } });
   }
 
   function yol(o, p, v) { const a = p.split('.'); let x = o; for (let i = 0; i < a.length - 1; i++) x = x[a[i]]; x[a[a.length - 1]] = v; }
