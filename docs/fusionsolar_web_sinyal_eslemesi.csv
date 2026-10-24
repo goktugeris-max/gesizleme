@@ -1,0 +1,24 @@
+sinyal_adi,modbus_register,fusionsolar_canli_signalId,fusionsolar_gecmis_signalId,birim,ornek_deger_Selcuk_24.10.2026,not
+Inverter durumu,32089,10025,,enum,512,"512 = 0x0200 = On-grid (sun2000_modbus_v3 enum ile ayni)"
+Aktif guc (AC),32080,10018,30014,kW,6.319,Gecmis: 5 dk cozunurluk
+Giris gucu (DC),32064,,30017,kW,,Gecmis: 5 dk cozunurluk
+Reaktif guc,32082,10019,,kvar,-0.004,
+Guc faktoru,32084,10020,,,1.000,
+Sebeke frekansi,32085,10021,,Hz,50.01,
+Faz A gerilimi (Ua),32069,10011,,V,230.0,
+Faz B gerilimi (Ub),32070,10012,,V,231.8,
+Faz C gerilimi (Uc),32071,10013,,V,228.8,
+Faz A akimi (Ia),32072,10014,,A,9.149,
+Faz B akimi (Ib),32074,10015,,A,9.168,
+Faz C akimi (Ic),32076,10016,,A,9.159,
+Gunluk enerji,32114,10032,,kWh,82.07,
+Toplam enerji (omur),32106,10029,,kWh,98288.09,
+Inverter nominal gucu,,10006,,kW,30.000,"Portalda kurulu guc 0 girilen tesislerde kapasite kaynagi olarak kullanilabilir"
+Baslatma zamani,32091,10027,,,2026-10-24 07:33:36,
+Kapatma zamani,32093,10028,,,2026-10-23 18:26,
+PV1 gerilimi,32016,11001,11001,V,573.3,"PVn gerilimi = 11001 + 3*(n-1)"
+PV1 akimi,32017,11002,11002,A,2.68,"PVn akimi = 11002 + 3*(n-1)"
+PV2 gerilimi,32018,11004,,V,573.3,
+PV2 akimi,32019,11005,,A,0.00,"PV1 ile ayni MPPT (ayni gerilim); sifir akim buyuk olasilikla bos giris demek, dizi semasiyla teyit edilmeli"
+PV3 gerilimi,32020,11007,,V,590.2,
+PV3 akimi,32021,11008,,A,2.79,

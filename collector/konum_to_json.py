@@ -18,6 +18,8 @@ ID = {
     17: 'selcuk-itfaiye', 18: 'gumuldur-itfaiye', 19: 'bornova-kultur-merkezi', 20: 'aliaga-kultur-merkezi',
     21: 'akkaya-dges',
 }
+# Konumu GİZLİ tutulacak tesisler (hassas tesis): gerçek koordinat yazılmaz, ilçe merkezi (2 hane) + gizli=True yazılır, haritada işaretçi çizilmez
+GIZLI = {'cigli-aile-danisma': (38.50, 27.07)}
 # Adres sütunu boş/koordinat olan satırlar için ilçe elle
 ILCE_ELLE = {21: 'Menderes'}
 
@@ -34,6 +36,9 @@ def main(yol):
             sys.exit(f'{no}. satır İzmir dışında görünüyor: {lat}, {lon}')
         m = re.search(r'([^/,\s]+)\s*/\s*[İi]zmir', str(r[3]), re.I)
         ilce = ILCE_ELLE.get(no) or (m.group(1) if m else None)
+        if ID[no] in GIZLI:
+            cikti[ID[no]] = {'lat': GIZLI[ID[no]][0], 'lon': GIZLI[ID[no]][1], 'ilce': ilce, 'gizli': True}
+            continue
         cikti[ID[no]] = {'lat': round(lat, 6), 'lon': round(lon, 6), 'ilce': ilce}
     with open('data/santral_konumlari.json', 'w', encoding='utf-8') as f:
         json.dump(cikti, f, ensure_ascii=False, indent=1)

@@ -80,7 +80,7 @@
     katman = L.layerGroup().addTo(harita);
     const rows = satirlar();
     const kmax = Math.max(1, ...rows.map((r) => r.m.kw || 0));
-    rows.forEach((r) => {
+    rows.filter((r) => !r.k.gizli).forEach((r) => {   // konumu gizli tesis için işaretçi çizilmez
       const yaricap = 7 + 13 * Math.sqrt((r.m.kw || 0) / kmax);
       const sorun = r.c && (r.c.durum === 'Arızalı' || r.c.durum === 'Haberleşme Yok');
       const mk = L.circleMarker([r.k.lat, r.k.lon], {
@@ -99,7 +99,7 @@
     el.innerHTML = rows.map((r) => `
       <button data-id="${r.m.id}" class="w-full text-left px-3 py-2 flex items-center gap-2.5 border-b border-slate-800/70 hover:bg-slate-800/60 transition ${secili === r.m.id ? 'bg-slate-800/80' : ''}">
         <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${renk(r.m, r.c)}"></span>
-        <span class="min-w-0 flex-1"><span class="block text-xs text-slate-200 truncate">${esc(r.m.ad)}</span><span class="block text-[10px] text-slate-500">${esc(r.k.ilce || '')} • ${tr0(r.m.kw)} kW</span></span>
+        <span class="min-w-0 flex-1"><span class="block text-xs text-slate-200 truncate">${esc(r.m.ad)}</span><span class="block text-[10px] text-slate-500">${esc(r.k.ilce || '')} • ${tr0(r.m.kw)} kW${r.k.gizli ? ' • konum gizli' : ''}</span></span>
         <span class="text-[11px] font-mono text-slate-400">${yuzde(r.m.verim)}</span>
       </button>`).join('');
     el.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
@@ -137,7 +137,7 @@
     const rows = satirlar();
     if (!rows.length) return;
     sigdi = true;
-    harita.fitBounds(L.latLngBounds(rows.map((r) => [r.k.lat, r.k.lon])), { padding: [40, 40], maxZoom: 11 });
+    harita.fitBounds(L.latLngBounds(rows.filter((r) => !r.k.gizli).map((r) => [r.k.lat, r.k.lon])), { padding: [40, 40], maxZoom: 11 });
   }
 
   async function ac() {

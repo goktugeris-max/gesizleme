@@ -94,7 +94,14 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
     Eski `v2/PowerStation/GetMonitorDetailByPowerstationId` bu hesapta BOŞ döner.
   - **SMA ennexOS**: tarayıcısız OAuth (login.sma.energy, client `SPpbeOS`, PKCE) → `uiapi.sunnyportal.com/api/v1/statuslist/plants`.
     Durum kodu 307=Ok, 303=Kapalı, 35=Arıza, 455=Uyarı; **55 (ibbseyrekges) anlamı henüz bilinmiyor.**
-  - **Huawei**: kod var (kiosk: `HUAWEI_KIOSK_URLS`; web girişi: `HUAWEI_USER/PASS`) ama GitHub'dan ÇALIŞMIYOR, aşağıya bak.
+  - **Huawei FusionSolar (geçici web girişi, `.github/workflows/huawei-veri.yml` = "Huawei Veri Çek", saatlik 06:37–20:37 TR + elle)**: `scripts/fusionsolar_fetch.mjs` Playwright ile
+    `intl.fusionsolar.huawei.com`'a Secrets `FS_USER`/`FS_PASS` ile girer (salt-okur kullanıcı önerilir), `scripts/fusionsolar_collect.js` portal içinde okur, temizlenmiş sonucu `data/huawei.json`
+    (+ `data/huawei-gunluk.csv` günlük arşiv) yazar. `loadLive()` (`index.html`) `huaweiCanli()` ile bunu durum.json biçimine çevirip `window.CANLI`'ya ekler (kaynak "Huawei"; ad, panelde kayıtlı Huawei adına
+    Türkçe karakter/`TR-` farkı yok sayılarak eşlenir; veri 4 saatten eskiyse ya da `lastError` varsa "Kontrol Edilmedi" + kaynak çubuğunda hata). **Devre kesici:** art arda 3 hatadan sonra otomatik çalışma girişi
+    denemez (hesap kilitlenmesin); Actions'tan elle çalıştırınca yeniden dener. Captcha çıkarsa AŞILMAZ, hata yazılır. Önceki sürümde "GitHub'dan çalışmıyor" denmişti (DNS); bu yol denenmemiştir → ilk çalışma sonucu `huawei.json.lastError`'da.
+    **Hassas tesis:** Çiğli Sosyal Hizmet Binası (kadın sığınağı) — gerçek FusionSolar adı depoya YAZILMAZ (`scripts/tesis_ayarlari.json` anahtarı SHA-256), takma adla görünür, koordinat/adres yayımlanmaz
+    (`santral_konumlari.json`'da `gizli: true`, ilçe merkezi; Harita'da işaretçi çizilmez). Ayarda olmayan, adında "sığınma/konukevi" geçen yeni tesis de otomatik gizlenir. Eski git geçmişinde ad/koordinat hâlâ görünür (commit 0f6b302, b58ec96).
+    Paket belgeleri: `docs/HUAWEI_KURULUM_PAKETI.md`, `docs/fusionsolar_web_sinyal_eslemesi.csv`. E-posta alarmı (`alarm.py`) henüz Huawei'yi kapsamaz.
 - `collector/alarm.py` — **e-posta alarmı** (Gmail SMTP, `veri-cek.yml`'de toplayıcıdan sonra, `continue-on-error`). Gündüz (`gunduz_mu`) bir invertör
   (invertörü olmayan santral için santral) "Haberleşme Yok"/"Arızalı" ise ve **art arda 2 turda** öyleyse BİR kez mesaj atar; sürerse tekrar yok
   (24 saatte bir hatırlatma), düzelince "giderildi" mesajı. Bir portala art arda erişilemezse o da alarm. Portal hatasında o portalın
@@ -102,7 +109,7 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   (bot commit'ler; kimlik bilgisi yok). Secrets: `GMAIL_USER`, `GMAIL_APP_PASS` (Gmail uygulama şifresi), `ALARM_ALICILAR` (virgülle ayrılmış).
   Alıcılar ve şifre günlüğe yazılmaz (Actions günlükleri herkese açık). Deneme: Actions → GES Veri Çek → Run workflow → `test_mail` işaretli.
 - `.github/workflows/veri-cek.yml` — TR 06:07–20:07 arası saatlik (`7 3-17 * * *` UTC) + elle çalıştırma.
-  Secrets: `GOODWE_USER`, `GOODWE_PASS`, `SMA_USER`, `SMA_PASS` (Huawei satırları kapalı/yorumda).
+  Secrets: `GOODWE_USER`, `GOODWE_PASS`, `SMA_USER`, `SMA_PASS`. Huawei için ayrı workflow ve `FS_USER`, `FS_PASS` (yukarıda).
 - `.github/workflows/static.yml` — Pages yayını (tüm depo); `workflow_run` ile veri toplayıcı bitince de tetiklenir.
   Not: yeni bir workflow dosyası `main`'de olmadan elle başlatılamaz; denemeler için `veri-cek.yml`'e geçici adım eklenip dalda çalıştırıldı.
 
@@ -112,7 +119,7 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
 - **Gece/gündüz kuralı:** SEMS geceleri santrale ve invertörlere -1 (çevrimdışı) verir. `gunduz_mu()` İzmir güneş
   doğuş/batışına (1 saat pay) göre hesaplar; -1 yalnızca gündüz "Haberleşme Yok" sayılır, geceleri "Beklemede".
 - SEMS invertör kodları: 1=Çalışıyor, 0=Beklemede, -1=Haberleşme Yok, 2=Arızalı.
-- Panelde 7 Huawei santrali var (elle takip): Buca Toros, Aliağa KM, Bornova KM, Çiğli Aile Danışma, Gümüldür, Selçuk İtfaiye, Örnekköy.
+- Panelde 7 Huawei santrali var (artık `huawei.json` ile otomatik; çalışmazsa elle takip): Buca Toros, Aliağa KM, Bornova KM, Çiğli Aile Danışma, Gümüldür, Selçuk İtfaiye, Örnekköy.
 - Canlı bağlantısı olmayan santraller: Ekrem Akurgal (Kaco), Selçuk Transfer (Fronius), Akkaya DGES (Deye/Solarman) + 7 Huawei.
 
 ## Huawei neden çalışmıyor (denendi, tekrar deneme)
