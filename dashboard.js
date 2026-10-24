@@ -307,6 +307,10 @@
       document.getElementById('tab-' + t).classList.toggle('hidden', t !== ad);
       const b = document.getElementById('nav-' + t);
       if (!b) return;
+      if (t === 'veri') {   // Veri Girişi ana menüde değil, sağ üstte (tema düğmesinin yanında)
+        b.className = 'px-3 py-2 rounded-lg text-xs font-semibold border transition flex items-center ' + (t === ad ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'border-slate-700 text-slate-300 hover:text-white');
+        return;
+      }
       const alt = GES_ALT.includes(t);
       b.className = (alt ? 'px-3 py-1.5 rounded-md text-xs font-medium transition ' : 'px-3.5 py-2 rounded-lg text-xs font-semibold transition ') +
         (t === ad ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200 border border-transparent');
