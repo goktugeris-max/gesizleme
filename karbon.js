@@ -418,7 +418,7 @@
         type: 'line',
         data: { labels: etiket, datasets: [
           { label: 'Hedef yolu (2030 → 2050)', data: etiket.map((y) => Math.round(yol(y))), borderColor: '#10b981', borderDash: [6, 4], pointRadius: 0 },
-          { label: 'Gerçekleşen (tam yıl)', data: etiket.map((y) => (tam.includes(String(y)) ? Math.round(env[y].t_toplam) : null)), borderColor: '#0b4f8a', backgroundColor: '#0b4f8a', pointRadius: 4, spanGaps: false }] },
+          { label: 'Gerçekleşen (tam yıl)', data: etiket.map((y) => (tam.includes(String(y)) ? Math.round(env[y].t_toplam) : null)), borderColor: '#211950', backgroundColor: '#211950', pointRadius: 4, spanGaps: false }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { title: { display: true, text: 'tCO₂e' } } } },
       });
     }

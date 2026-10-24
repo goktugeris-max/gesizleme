@@ -5,7 +5,7 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
 
 ## Mimari (sunucusuz)
 
-- **Tema:** varsayılan AÇIK kurumsal tema, `tema.css` (Tailwind koyu sınıflarını açık renklere çeviren katman; renkler `:root` değişkenlerinde, kurum rengi `--kurum`). İZBB logosu/renk kodu gelince yalnızca bu değişkenler ve başlıktaki simge değişir. `<html class="dark">` eklenirse eski koyu görünüm döner. Grafik renkleri JS dosyalarında (`#0b4f8a` kurum mavisi, `#3f8fd2`), harita varsayılanı Esri Light Gray.
+- **Tema:** varsayılan AÇIK kurumsal tema, `tema.css` (Tailwind koyu sınıflarını açık renklere çeviren katman; renkler `:root` değişkenlerinde, kurum rengi `--kurum` = İZBB logosunun laciverti #211950; logolar `logo-yatay.png`, `logo-dik.png` şeffaf PNG, başlıkta ve favicon olarak). İZBB logosu/renk kodu gelince yalnızca bu değişkenler ve başlıktaki simge değişir. `<html class="dark">` eklenirse eski koyu görünüm döner. Grafik renkleri JS dosyalarında (`#211950` kurum laciverti, `#3f8fd2`), harita varsayılanı Esri Light Gray.
 
 - `index.html` + `dashboard.js` + `elektrik.js` + `iso.js` — GitHub Pages'te yayınlanan panel (Tailwind + Lucide + Chart.js, CDN).
   **Gezinme iki katmanlı:** üstte modüller (Özet `#ozet` = açılış, Güneş Enerjisi `#genel`, Elektrik `#elektrik`, ISO 50001 `#iso`);

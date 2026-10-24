@@ -56,7 +56,7 @@
     const kmax = Math.max(1, ...Object.values(ozet).map((o) => o.kw));
     const kg = {};
     (kirilgan || []).forEach((x) => { kg[buyuk(x.ilce.trim())] = x; });
-    const kgRenk = { Yüksek: '#ef4444', Orta: '#0b4f8a', Düşük: '#34d399' };
+    const kgRenk = { Yüksek: '#ef4444', Orta: '#211950', Düşük: '#34d399' };
     ilceKatman = L.geoJSON(ilceVeri, {
       style: (f) => {
         const o = ozet[f.properties.adi];
