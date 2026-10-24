@@ -1,0 +1,42 @@
+{
+  "kaynak": "İzBB 2026 Yılı Kurumsal Su ve Enerji Kaynakları Yönetimi Raporu ile Kurumsal Sera Gazı Emisyonu Raporu (2026 ilk 6 ay)",
+  "not": "Yalnızca kurum geneli toplamlar (abone/araç ayrıntısı yok). Raporla birlikte güncellenir; ayrıntılı abone verisi gelince şifreli modüle taşınır.",
+  "son_ay": 6,
+  "su": {
+    "birim": "m³",
+    "hedef": { "yil": 2026, "azaltim": 0.10, "metin": "2026 toplam su tüketimini 2025'e göre %10 azaltmak" },
+    "aylik": {
+      "2024": [275038, 208318, 272066, 473609, 728442, 968961, 1195373, 1230593, 930177, 666212, 448164, 403899],
+      "2025": [198250, 133868, 194834, 286641, 527775, 765767, 856600, 642209, 594888, 271188, 147493, 107290],
+      "2026": [85276, 73643, 110005, 127512, 228783, 631958, null, null, null, null, null, null]
+    },
+    "notlar": [
+      "Park ve Bahçeler ve Mezarlıklar Daire Başkanlıklarıyla her ayın ilk haftası önceki ayın sonuçları değerlendiriliyor; yüksek tüketimli abonelerde saha çalışması yapılıyor.",
+      "2026 ilk 6 ayda 2025'e göre yaklaşık 850 bin m³ tasarruf, yaklaşık 34 bin hanenin bir aylık tüketimine eşdeğer (TÜİK).",
+      "Tasarrufun kendi tüketimleri üzerinden dağılımı: Park ve Bahçeler %52, idari binalar-işletmeler %37, Mezarlıklar %25."
+    ]
+  },
+  "akaryakit": {
+    "motorin_lt": { "2024": 8773569, "2025": 10939088, "h1_2025": 4979708, "h1_2026": 5961071 },
+    "arac_sayisi": { "2024": 1804, "2025": 1987, "2026": 2023 },
+    "dokme_orani": { "2024": 0.334, "2025": 0.547, "h1_2026": 0.65 },
+    "benzin_lt": { "2024": 106537, "2025": 62830, "h1_2026": 12310 },
+    "fuel_oil_kg": { "2024": 70210, "2025": 61620, "h1_2026": 25960 },
+    "notlar": [
+      "2025'te araç ve iş makinesi sayısı 1.804'ten 1.987'ye çıktı; evsel atık taşıma operasyonundaki lojistik şartlar motorin tüketimini artırdı.",
+      "Dökme (tanker) dağıtım payı arttıkça araç bazlı kayıt ve verimlilik analizi zorlaşıyor."
+    ]
+  },
+  "elektrikli_arac": { "veri": false, "not": "Elektrikli araçların şarj tüketimi raporda ayrı bir sayıyla verilmemiş; veri geldiğinde buraya eklenecek." },
+  "emisyon_h1": {
+    "birim": "tCO₂e",
+    "yontem": "T.C. ETKB (Aralık 2025) yayımlı 2023 emisyon faktörleri; GES üretimi için 2023 Birleşik Şarj Emisyon Faktörü",
+    "kalemler": {
+      "Elektrik": { "2025": 10517, "2026": 10301, "pay_2026": 0.364 },
+      "Doğalgaz": { "2025": 1986, "2026": 1970, "pay_2026": 0.07 },
+      "Akaryakıt (motorin %99)": { "2025": 13517, "2026": 16014, "pay_2026": 0.57 }
+    },
+    "tuketim_h1": { "elektrik_kwh": { "2025": 22423473, "2026": 21963369 }, "dogalgaz_m3": { "2025": 995958, "2026": 987899 } },
+    "ges": { "2024": 1267, "2025": 1255 }
+  }
+}

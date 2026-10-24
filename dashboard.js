@@ -7,7 +7,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'dogalgaz', 'iso', 'karbon', 'veri', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'karbon', 'veri', 'canli', 'ariza'];
 
   const GES_ALT = ['genel', 'santraller', 'harita', 'analiz', 'canli', 'ariza'];
 
@@ -95,7 +95,7 @@
   const ozetModul = {};
   function ozetKaydet(ad, d) { ozetModul[ad] = d; ozetModulCiz(); }
   function ozetModulCiz() {
-    ['elektrik', 'dogalgaz', 'iso'].forEach((ad) => { const el = document.getElementById('ozet-' + ad); if (el && ozetModul[ad] && ozetModul[ad].kart) el.innerHTML = ozetModul[ad].kart; });
+    ['elektrik', 'dogalgaz', 'kaynak', 'iso'].forEach((ad) => { const el = document.getElementById('ozet-' + ad); if (el && ozetModul[ad] && ozetModul[ad].kart) el.innerHTML = ozetModul[ad].kart; });
     const kutu = document.getElementById('ozetDikkat'); if (!kutu) return;
     const hepsi = Object.values(ozetModul).flatMap((m) => m.uyarilar || []).sort((a, b) => b.puan - a.puan);
     kutu.innerHTML = hepsi.length ? hepsi.slice(0, 12).map((o) => `
@@ -336,6 +336,7 @@
     document.getElementById('liveButtons').classList.toggle('hidden', ad !== 'canli');
     if (ad === 'elektrik' && window.Elek) Elek.ac();
     if (ad === 'dogalgaz' && window.Dogalgaz) Dogalgaz.ac();
+    if (ad === 'kaynak' && window.Kaynak) Kaynak.ac();
     if (ad === 'iso' && window.Iso) Iso.ac();
     if (ad === 'harita' && window.Harita) Harita.ac();
     if (ad === 'karbon' && window.Karbon) Karbon.ac();
