@@ -1,6 +1,6 @@
 /* Doğalgaz sekmesi: kurumsal doğalgaz abonelerinin aylık tüketimi (m³).
  *
- * Veri: data/dogalgaz.enc.json — ŞİFRELİ (Elektrik/ISO ile aynı parola). Üretim: collector/dogalgaz_to_json.py "<Excel>".
+ * Veri: data/dogalgaz.json (ŞİFRESİZ, herkese açık; varsa kullanılır) ya da data/dogalgaz.enc.json (şifreli). Üretim: collector/dogalgaz_to_json.py "<Excel>" [--acik] ya da araclar/dogalgaz-sifrele.html.
  * Abone/adres/hesap no/TL tutarları dosyaya yazılmaz; abone kimliği hesap no'nun özetidir.
  * Abone adları (özellikle "T.C. İZMİR BÜYÜKŞEHİR BELEDİYESİ" gibi genel adlı olanlar) bu tarayıcıda yeniden adlandırılabilir.
  * Uyarı kuralları (uyarilariHesapla): dönem artışı, son ay sıçraması, geçmiş yıllara göre aykırı ay, yaz tabanı, tüketim görünmüyor.
@@ -47,6 +47,11 @@
   }
   async function yukle() {
     try {
+      // Önce şifresiz data/dogalgaz.json (varsa parola gerekmez), yoksa şifreli data/dogalgaz.enc.json
+      if (!G && !sifreli) {
+        const ra = await fetch('data/dogalgaz.json?t=' + Date.now(), { cache: 'no-store' });
+        if (ra.ok) { G = await ra.json(); yuklendi = true; hazirla(); ozetKayit(); return; }
+      }
       if (!sifreli) {
         const r = await fetch('data/dogalgaz.enc.json?t=' + Date.now(), { cache: 'no-store' });
         if (!r.ok) throw new Error(r.status);

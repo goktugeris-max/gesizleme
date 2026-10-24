@@ -3,6 +3,7 @@
 
 Kullanım:
   ELEKTRIK_PAROLA="..." python3 collector/dogalgaz_to_json.py "<Dogalgaz_Tuketim_Cizelgesi.xlsx>"   (parola Elektrik/ISO ile aynı, ≥12 karakter)
+  python3 collector/dogalgaz_to_json.py "<xlsx>" --acik               (ŞİFRESİZ data/dogalgaz.json; HERKESE AÇIK depoda herkes görür)
   python3 collector/dogalgaz_to_json.py "<xlsx>" --kontrol            (şifrelemeden yalnızca okur, özet yazar; dosya üretmez)
   python3 collector/dogalgaz_to_json.py "<xlsx>" --duz <yol.json>     (TEST: düz metin JSON; depo DIŞINA yazın)
 
@@ -24,6 +25,7 @@ import openpyxl
 
 OUT_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "dogalgaz.enc.json")
 PBKDF2_TUR = 600000
+HASSAS = re.compile(r"sığınma|siginma|konukevi|kadın konuk|sığınak", re.I)   # hassas tesis adları herkese açık dosyada gizlenir
 GENEL_AD = re.compile(r"^(T\.?C\.?\s*)?İZMİR\s*(B\.|BÜYÜK\s*)?\s*ŞEHİR\s*BEL(EDİYE(Sİ)?|\.)?(\s*BAŞKANLIĞI)?\.?$", re.I)
 
 
@@ -61,8 +63,10 @@ def oku(yol):
             if not r or r[2] in (None, ""):
                 continue
             hesap = str(r[2]).strip()
-            kimlik = hashlib.sha256(hesap.encode()).hexdigest()[:8]
+            kimlik = hashlib.sha256(("izbb-dg1|" + hesap).encode()).hexdigest()[:8]
             ad, ilce, ic = temiz(r[1]), temiz(r[3]), temiz(r[7])
+            if HASSAS.search(ad):
+                ad, ic = "Gizli tesis", ""
             ilce = ilce.replace("I", "ı").replace("İ", "i").lower().replace("i̇", "i").title() if ilce else ""
             aboneler[kimlik] = {"id": kimlik, "no": r[0], "ad": ad, "ilce": ilce, "ic": "" if ic == "-" else ic, "genel": bool(GENEL_AD.match(ad))}
             aylar = [sayi(r[8 + 2 * i]) if len(r) > 8 + 2 * i else None for i in range(12)]
@@ -112,6 +116,12 @@ def main():
     c = oku(args[0])
     ozet(c)
     if "--kontrol" in sys.argv:
+        return 0
+    if "--acik" in sys.argv:
+        yol = os.path.join(os.path.dirname(OUT_PATH), "dogalgaz.json")
+        with open(yol, "w", encoding="utf-8") as f:
+            json.dump(c, f, ensure_ascii=False, separators=(",", ":"))
+        print("ŞİFRESİZ yazıldı (herkese açık):", os.path.abspath(yol))
         return 0
     if "--duz" in sys.argv:
         yol = sys.argv[sys.argv.index("--duz") + 1]

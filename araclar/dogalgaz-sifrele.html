@@ -40,6 +40,7 @@
     <label for="parola">Parola (en az 12 karakter)</label>
     <input id="parola" type="password" autocomplete="off" />
     <button id="git" disabled>Şifrele ve indir</button>
+    <button id="acik" disabled style="background:#fff;color:#16212e;border:1px solid #dbe1e8;margin-top:8px">Şifresiz indir (herkese açık) — dogalgaz.json</button>
     <div id="sonuc"></div>
   </div>
   <p><small>Şifreli dosyada hesap numarası, adres, mahalle, sokak ve TL tutarları <b>bulunmaz</b>; yalnızca bina adı, ilçe, iç kapı kodu ve aylık m³ değerleri vardır. Aynı işi bilgisayarda <code>collector/dogalgaz_to_json.py</code> da yapar.</small></p>
@@ -47,6 +48,7 @@
 <script>
 (function () {
   const PBKDF2_TUR = 600000;
+  const HASSAS = /sığınma|siginma|konukevi|kadın konuk|sığınak/i;   // hassas tesis adları gizlenir
   const GENEL_AD = /^(T\.?C\.?\s*)?İZMİR\s*(B\.|BÜYÜK\s*)?\s*ŞEHİR\s*BEL(EDİYE(Sİ)?|\.)?(\s*BAŞKANLIĞI)?\.?$/i;
   const $ = (id) => document.getElementById(id);
   const temiz = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
@@ -72,8 +74,9 @@
       for (let i = Math.max(0, 5 - ilkSatir); i < satirlar.length; i++) {   // Excel'in 6. satırından itibaren
         const r = satirlar[i];
         if (!r || r[2] == null || r[2] === '') continue;
-        const kimlik = await ozet8(String(r[2]).trim());
-        const adi = temiz(r[1]), ic = temiz(r[7]);
+        const kimlik = await ozet8('izbb-dg1|' + String(r[2]).trim());
+        let adi = temiz(r[1]), ic = temiz(r[7]);
+        if (HASSAS.test(adi)) { adi = 'Gizli tesis'; ic = ''; }
         aboneler[kimlik] = { id: kimlik, no: r[0], ad: adi, ilce: ilceBicim(r[3]), ic: ic === '-' ? '' : ic, genel: GENEL_AD.test(adi) };
         let aylar = Array.from({ length: 12 }, (_, k) => sayi(r[8 + 2 * k]));
         if (m3[yil][kimlik]) {
@@ -107,8 +110,20 @@
     return { v: 1, iter: PBKDF2_TUR, salt: b64(salt), iv: b64(iv), data: b64(sifreli) };
   }
 
-  const hazirMi = () => { $('git').disabled = !($('dosya').files.length && $('parola').value.length >= 12); };
+  const hazirMi = () => { $('git').disabled = !($('dosya').files.length && $('parola').value.length >= 12); $('acik').disabled = !$('dosya').files.length; };
   $('dosya').onchange = hazirMi; $('parola').oninput = hazirMi;
+  $('acik').onclick = async () => {
+    if (!confirm('Dosya ŞİFRESİZ olacak: depo herkese açık olduğundan abone adları ve aylık tüketimler internette herkes tarafından görülebilir. Devam edilsin mi?')) return;
+    $('acik').disabled = true; mesaj('Okunuyor…');
+    try {
+      const veri = await oku(await $('dosya').files[0].arrayBuffer());
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(veri)], { type: 'application/json' }));
+      a.download = 'dogalgaz.json'; document.body.appendChild(a); a.click(); a.remove();
+      mesaj(`Hazır ✔ (şifresiz)  ${veri.aboneler.length} abone • son dönem ${veri.son_donem.yil}-${String(veri.son_donem.ay).padStart(2, '0')}. Dosyayı GitHub'da data klasörüne yükleyin.`, 'ok');
+    } catch (e) { mesaj('Hata: ' + e.message, 'hata'); }
+    hazirMi();
+  };
   $('git').onclick = async () => {
     $('git').disabled = true; mesaj('Okunuyor ve şifreleniyor… (birkaç saniye sürebilir)');
     try {
