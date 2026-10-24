@@ -35,6 +35,11 @@
     [contenteditable]:focus { outline: 1px solid rgba(34,211,238,.6); border-radius: 4px; background: rgba(34,211,238,.06); }
     [contenteditable]:hover { background: rgba(255,255,255,.04); border-radius: 4px; }
     .modal-bg { background: rgba(2,6,23,.75); backdrop-filter: blur(4px); }
+    /* sekmeler sayfa genişliğine yayılır */
+    #anaNav > button, #altNav > button { flex: 1 1 auto; text-align: center; white-space: nowrap; }
+    #anaNav > button { font-size: 14px !important; padding: 11px 16px !important; }
+    #altNav > button { font-size: 13.5px !important; padding: 9px 14px !important; }
+    #anaNav > button svg, #anaNav > button i { width: 17px; height: 17px; }
   </style>
 </head>
 <body class="min-h-screen font-sans antialiased pb-14">
@@ -43,11 +48,11 @@
   <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-[#090d16]/90 backdrop-blur-md">
     <div class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
       <a href="#ozet" class="flex items-center gap-4">
-        <img src="logo-yatay.png" alt="İzmir Büyükşehir Belediyesi" class="h-8 sm:h-10 w-auto" />
-        <span class="hidden sm:block w-px h-9 bg-slate-700"></span>
+        <img src="logo-yatay.png" alt="İzmir Büyükşehir Belediyesi" class="h-10 sm:h-14 w-auto" />
+        <span class="hidden sm:block w-px h-12 bg-slate-700"></span>
         <div>
-          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white leading-tight">Enerji Yönetim Merkezi</h1>
-          <p class="text-xs text-slate-400">İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü • Enerji Ekibi</p>
+          <h1 class="text-xl sm:text-3xl font-bold tracking-tight text-white leading-tight">Enerji Yönetim Merkezi</h1>
+          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü • Enerji Ekibi</p>
         </div>
       </a>
 
@@ -70,7 +75,7 @@
         </button>
       </div>
     </div>
-    <nav class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 pb-3 flex flex-wrap items-center gap-1.5">
+    <nav id="anaNav" class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 pb-3 flex flex-wrap items-stretch gap-2">
       <button id="nav-ozet" onclick="Dash.sekme('ozet')"><i data-lucide="layout-dashboard" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Özet</button>
       <button id="nav-ges" onclick="Dash.sekme('genel')"><i data-lucide="sun" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Güneş Enerjisi (GES)</button>
       <button id="nav-elektrik" onclick="Dash.sekme('elektrik')"><i data-lucide="plug-zap" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Elektrik</button>
@@ -80,8 +85,8 @@
       <button id="nav-karbon" onclick="Dash.sekme('karbon')"><i data-lucide="leaf" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Karbon &amp; İklim</button>
     </nav>
     <nav id="subNav" class="hidden border-t border-slate-800/60 bg-slate-900/40">
-      <div class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 py-2 flex flex-wrap items-center gap-1.5">
-        <span class="text-[11px] uppercase tracking-wider text-slate-500 mr-1">GES</span>
+      <div id="altNav" class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 py-2.5 flex flex-wrap items-stretch gap-2">
+        <span class="text-xs uppercase tracking-wider text-slate-500 mr-1 self-center">GES</span>
         <button id="nav-genel" onclick="Dash.sekme('genel')">Genel Bakış</button>
         <button id="nav-santraller" onclick="Dash.sekme('santraller')">Santraller</button>
         <button id="nav-harita" onclick="Dash.sekme('harita')">Harita</button>
@@ -836,6 +841,7 @@
   <script src="veridb.js"></script>
   <script src="dashboard.js"></script>
   <script src="elektrik.js"></script>
+  <script src="topharita.js"></script>
   <script src="dogalgaz.js"></script>
   <script src="kaynak.js"></script>
   <script src="ikiz.js"></script>

@@ -260,6 +260,11 @@
         <div class="glass-card rounded-xl p-4"><h3 class="text-sm font-semibold text-white mb-3">En yüksek 10 abone (dönem)</h3><div class="h-80"><canvas id="chDgTop"></canvas></div></div>
         <div class="glass-card rounded-xl p-4"><h3 class="text-sm font-semibold text-white mb-3">İlçelere göre (dönem)</h3><div class="h-80"><canvas id="chDgIlce"></canvas></div></div>
       </div>
+      <div class="glass-card rounded-xl p-4 mb-6">
+        <h3 class="text-sm font-semibold text-white mb-1 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-orange-400"></i> En yüksek tüketimli 20 abone — harita</h3>
+        <p class="text-[11px] text-slate-500 mb-3">Dönem tüketimine göre ilk 20. Adres tutulmadığı için işaretçiler <b>ilçe merkezine yakın, yaklaşık</b> konumdadır; numara sıralamayı, daire boyutu m³'ü gösterir. Gizli tesisler haritaya konmaz.</p>
+        <div id="dgHarita" class="h-[480px] rounded-lg overflow-hidden border border-slate-800"></div>
+      </div>
       <div class="glass-card rounded-xl overflow-hidden">
         <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-800">
           <h3 class="text-sm font-semibold text-white">Abone tablosu</h3>
@@ -275,7 +280,13 @@
         ${(G.veri_notlari || []).length ? `<p class="text-amber-300">Veri notları: ${G.veri_notlari.map(esc).join(' • ')}</p>` : ''}</div></details>`;
   }
 
-  function ciz() { iskelet(); kartlar(); grafikler(); uyariListesi(); tablo(); if (window.lucide) lucide.createIcons(); cizildi = true; }
+  function harita() {
+    if (!window.TopHarita) return;
+    TopHarita.ciz('dgHarita', S.satirlar.filter((s) => s.donem > 0 && !/^gizli/i.test(adGoster(s.a))).map((s) => ({
+      ad: adGoster(s.a), ilce: s.a.ilce, deger: s.donem, etiket: `${tr0(s.donem)} m³ (Oca–${AY[S.ay - 1]} ${S.yil})`, alt: `Geçen yıl aynı dönem ${tr0(s.onDonem)} m³ • ${fark(s.fark)}` })), { renk: '#e0662c' });
+  }
+
+  function ciz() { iskelet(); kartlar(); grafikler(); uyariListesi(); tablo(); harita(); if (window.lucide) lucide.createIcons(); cizildi = true; }
 
   window.Dogalgaz = {
     async ac() {
