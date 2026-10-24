@@ -1,9 +1,9 @@
 /* Kurumsal açık tema. Varsayılan AÇIK; <html class="dark"> ise eski koyu görünüm.
    Renkleri değiştirmek için yalnızca aşağıdaki :root değişkenlerini düzenleyin (kurum rengi: --kurum). */
 :root {
-  --kurum: #0b4f8a;        /* ana kurumsal renk (logo/renk kodu gelince değiştirilecek) */
-  --kurum-koyu: #083b69;
-  --kurum-acik: #e6eef7;
+  --kurum: #211950;        /* ana kurumsal renk (İZBB logosunun lacivert tonu) */
+  --kurum-koyu: #140f35;
+  --kurum-acik: #ebeaf5;
   --sayfa: #f3f5f8;
   --yuzey: #ffffff;
   --yuzey-2: #f8fafc;
@@ -50,7 +50,7 @@ html:not(.dark) .bg-amber-500 *, html:not(.dark) .bg-cyan-600 *, html:not(.dark)
 html:not(.dark) .hover\:bg-amber-400:hover, html:not(.dark) .hover\:bg-cyan-500:hover, html:not(.dark) .hover\:bg-emerald-500:hover { background-color: var(--kurum-koyu) !important; }
 html:not(.dark) .text-slate-900 { color: #fff !important; }
 html:not(.dark) [class*="bg-amber-500/"], html:not(.dark) [class*="bg-cyan-500/"] { background-color: var(--kurum-acik) !important; }
-html:not(.dark) [class*="border-amber-500/"], html:not(.dark) .border-amber-400 { border-color: #b9cde3 !important; }
+html:not(.dark) [class*="border-amber-500/"], html:not(.dark) .border-amber-400 { border-color: #c9c5e3 !important; }
 html:not(.dark) [class*="bg-emerald-500/"] { background-color: #e7f6ee !important; }
 html:not(.dark) [class*="bg-red-500/"], html:not(.dark) [class*="bg-rose-500/"] { background-color: #fdecea !important; }
 html:not(.dark) [class*="bg-sky-500/"] { background-color: #e5f2f9 !important; }
@@ -74,9 +74,9 @@ html:not(.dark) .rounded-xl, html:not(.dark) .rounded-2xl { border-radius: .5rem
 html:not(.dark) .from-slate-900 { background-image: linear-gradient(135deg, var(--kurum-koyu), var(--kurum)) !important; border-color: var(--kurum-koyu) !important; }
 html:not(.dark) .from-slate-900 *, html:not(.dark) .from-slate-900 { --band: 1; }
 html:not(.dark) .from-slate-900 h2, html:not(.dark) .from-slate-900 .text-white { color: #fff !important; }
-html:not(.dark) .from-slate-900 p, html:not(.dark) .from-slate-900 .text-slate-300, html:not(.dark) .from-slate-900 .text-slate-400 { color: #dbe7f3 !important; }
-html:not(.dark) .from-slate-900 .text-cyan-300, html:not(.dark) .from-slate-900 .text-cyan-400, html:not(.dark) .from-slate-900 .text-amber-300, html:not(.dark) .from-slate-900 .text-amber-400 { color: #a9c8e8 !important; }
+html:not(.dark) .from-slate-900 p, html:not(.dark) .from-slate-900 .text-slate-300, html:not(.dark) .from-slate-900 .text-slate-400 { color: #dcd9f0 !important; }
+html:not(.dark) .from-slate-900 .text-cyan-300, html:not(.dark) .from-slate-900 .text-cyan-400, html:not(.dark) .from-slate-900 .text-amber-300, html:not(.dark) .from-slate-900 .text-amber-400 { color: #bdb8e6 !important; }
 html:not(.dark) .text-lime-400, html:not(.dark) .text-lime-300 { color: #3a7d0a !important; }
 html:not(.dark) .bg-lime-500\/10 { background-color: #eef6e6 !important; }
-html:not(.dark) .from-amber-400\/20 { background-image: none !important; background-color: var(--kurum-acik) !important; border-color: #b9cde3 !important; }
+html:not(.dark) .from-amber-400\/20 { background-image: none !important; background-color: var(--kurum-acik) !important; border-color: #c9c5e3 !important; }
 html:not(.dark) header .text-amber-400 { color: var(--kurum) !important; }

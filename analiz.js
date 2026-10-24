@@ -114,11 +114,11 @@
     document.getElementById('analizDetayBaslik').textContent = `${a.s.ad} — son ${k.length} ay`;
     const yap = (idn, y) => { if (grafik[idn]) grafik[idn].destroy(); grafik[idn] = new Chart(document.getElementById(idn), y); };
     yap('chAnalizUretim', { type: 'bar', data: { labels: etiket, datasets: [
-      { label: 'Gerçek (kWh)', data: k.map((x) => Math.round(x.u)), backgroundColor: '#0b4f8a' },
+      { label: 'Gerçek (kWh)', data: k.map((x) => Math.round(x.u)), backgroundColor: '#211950' },
       { type: 'line', label: 'Beklenen (kWh)', data: k.map((x) => Math.round(x.beklenen)), borderColor: '#10b981', borderDash: [5, 4], pointRadius: 0, tension: 0.3 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
     yap('chAnalizPr', { type: 'line', data: { labels: etiket, datasets: [
-      { label: 'Gerçek PR (sıcaklık düz.)', data: k.map((x) => +(x.prc * 100).toFixed(1)), borderColor: '#0b4f8a', backgroundColor: '#0b4f8a', pointRadius: 3, tension: 0.2 },
+      { label: 'Gerçek PR (sıcaklık düz.)', data: k.map((x) => +(x.prc * 100).toFixed(1)), borderColor: '#211950', backgroundColor: '#211950', pointRadius: 3, tension: 0.2 },
       { label: 'Beklenen PR', data: k.map((x) => +(x.prcB * 100).toFixed(1)), borderColor: '#10b981', borderDash: [5, 4], pointRadius: 0 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { title: { display: true, text: 'PR (%)' } } } } });
   }
