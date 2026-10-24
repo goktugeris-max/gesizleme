@@ -381,6 +381,17 @@
     yenidenYukle: veriYukle,
     detay,
     ozetKaydet,
+    // Aylık yönetim raporu: Özet sayfası açık temayla yazdırılır (PDF olarak kaydedilebilir)
+    raporYazdir() {
+      sekmeGoster('ozet');
+      const t = document.getElementById('raporTarih');
+      if (t) t.textContent = 'Rapor tarihi: ' + new Date().toLocaleDateString('tr-TR') + (PERF ? ` • GES verisi: ${AY_UZUN[PERF.son_donem.ay - 1]} ${PERF.son_donem.yil}` : '') + ' • Şifreli modüller (Elektrik, ISO) giriş yapıldıysa dahil edilir.';
+      const koyu = document.documentElement.classList.contains('dark');
+      if (koyu) document.documentElement.classList.remove('dark');
+      const geri = () => { if (koyu) document.documentElement.classList.add('dark'); window.removeEventListener('afterprint', geri); };
+      window.addEventListener('afterprint', geri);
+      setTimeout(() => { Object.values(grafik).forEach((g) => g && g.resize()); window.print(); }, 300);
+    },
     sirala(k) { sirala = { anahtar: k, yon: sirala.anahtar === k ? -sirala.yon : (k === 'ad' ? 1 : -1) }; tabloCiz(); },
     canliGuncelle() { if (PERF) { kartlar(); dikkat(); tabloCiz(); ozetCiz(); if (window.Harita) Harita.yenile(); } },
     veri() { return { PERF, M, canliBul }; },
