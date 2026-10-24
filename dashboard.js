@@ -7,7 +7,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'iso', 'karbon', 'veri', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'dogalgaz', 'iso', 'karbon', 'veri', 'canli', 'ariza'];
 
   const GES_ALT = ['genel', 'santraller', 'harita', 'analiz', 'canli', 'ariza'];
 
@@ -89,6 +89,20 @@
       kart(`${AY_UZUN[ay - 1]} ayı`, mwh(sonU), `Verim ${yuzde(sonB ? sonU / sonB : null)} • geçen yıl ${fark(onceki ? sonU / onceki - 1 : null)}`, verimSinifi(sonB ? sonU / sonB : null).yazi) +
       kart('Canlı (şu an)', tr1(anlik) + ' <span class="text-sm font-medium text-slate-400">kW</span>',
         canli.length ? `Bugün ${tr0(bugun)} kWh • ${calisan} çalışıyor${sorunlu ? ` • <span class="text-red-400">${sorunlu} sorunlu</span>` : ''} • ${canli.length}/${M.length} santral canlı` : 'Canlı veri henüz yok');
+  }
+
+  // ---------- Özet: modüllerden gelen kart + uyarı kayıtları ----------
+  const ozetModul = {};
+  function ozetKaydet(ad, d) { ozetModul[ad] = d; ozetModulCiz(); }
+  function ozetModulCiz() {
+    ['elektrik', 'dogalgaz', 'iso'].forEach((ad) => { const el = document.getElementById('ozet-' + ad); if (el && ozetModul[ad] && ozetModul[ad].kart) el.innerHTML = ozetModul[ad].kart; });
+    const kutu = document.getElementById('ozetDikkat'); if (!kutu) return;
+    const hepsi = Object.values(ozetModul).flatMap((m) => m.uyarilar || []).sort((a, b) => b.puan - a.puan);
+    kutu.innerHTML = hepsi.length ? hepsi.slice(0, 12).map((o) => `
+      <a href="${o.href}" class="flex items-start gap-3 px-2 py-2 rounded-lg hover:bg-slate-800/70 transition">
+        <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 w-16 shrink-0 mt-0.5">${esc(o.modul)}</span>
+        <span class="text-[11px] font-semibold ${o.renk} whitespace-nowrap mt-0.5 w-36 shrink-0">${esc(o.etiket)}</span>
+        <span class="text-xs text-slate-300 min-w-0">${esc(o.metin)}</span></a>`).join('') : '<p class="px-2 py-4 text-center text-slate-500 text-sm">Şu an dikkat gerektiren bir durum yok.</p>';
   }
 
   // ---------- Özet (modül kartları) ----------
@@ -178,6 +192,7 @@
       }
     });
     oge.sort((a, b) => b.puan - a.puan);
+    ozetKaydet('ges', { uyarilar: oge.slice(0, 6).map((o) => ({ modul: 'GES', etiket: o.etiket, metin: `${o.m.ad} — ${o.metin}`, renk: o.renk, href: '#genel', puan: o.puan })) });
     const kutu = document.getElementById('dikkatListe');
     kutu.innerHTML = oge.length ? oge.slice(0, 10).map((o) => `
       <button onclick="Dash.detay('${o.m.id}')" class="w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800/70 transition">
@@ -320,6 +335,7 @@
     document.getElementById('subNav').classList.toggle('hidden', !ges);
     document.getElementById('liveButtons').classList.toggle('hidden', ad !== 'canli');
     if (ad === 'elektrik' && window.Elek) Elek.ac();
+    if (ad === 'dogalgaz' && window.Dogalgaz) Dogalgaz.ac();
     if (ad === 'iso' && window.Iso) Iso.ac();
     if (ad === 'harita' && window.Harita) Harita.ac();
     if (ad === 'karbon' && window.Karbon) Karbon.ac();
@@ -363,6 +379,7 @@
     sekme: sekmeGoster,
     yenidenYukle: veriYukle,
     detay,
+    ozetKaydet,
     sirala(k) { sirala = { anahtar: k, yon: sirala.anahtar === k ? -sirala.yon : (k === 'ad' ? 1 : -1) }; tabloCiz(); },
     canliGuncelle() { if (PERF) { kartlar(); dikkat(); tabloCiz(); ozetCiz(); if (window.Harita) Harita.yenile(); } },
     veri() { return { PERF, M, canliBul }; },
