@@ -351,7 +351,7 @@
 
   function hepsiniCiz() {
     if (!PERF) return;
-    kartlar(); dikkat(); tabloCiz(); arizaCiz(); ozetCiz(); if (window.Harita) Harita.yenile();
+    kartlar(); dikkat(); tabloCiz(); arizaCiz(); ozetCiz(); if (window.Harita) Harita.yenile(); if (window.Ptf) Ptf.ciz();
     if (window.Chart) genelGrafikler();
     lucide.createIcons();
   }
