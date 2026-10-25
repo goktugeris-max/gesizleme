@@ -33,7 +33,7 @@
     ['Atık: depolama ve arıtma (metan, atıksu)', 'Çevre koruma ve atık birimleri', 'Yok'],
     ['Yenilenebilir üretim (GES, RES, biyogaz)', 'Enerji ekibi', 'GES var (21 santral)'],
     ['Nüfus (yıllık)', 'TÜİK', 'Yok'],
-    ['Resmî şebeke emisyon faktörü ve yakıt faktörleri', 'ETKB / Çevre, Şehircilik ve İklim Değişikliği Bakanlığı', 'Elektrik 0,479 (ekip Excel'i; kurum emisyon raporu 0,469 kullanmış); doğalgaz/motorin kurum raporlarından geri hesaplandı'],
+    ['Resmî şebeke emisyon faktörü ve yakıt faktörleri', 'ETKB / Çevre, Şehircilik ve İklim Değişikliği Bakanlığı', 'Elektrik 0,479 (ekip Excel dosyası; kurum emisyon raporu 0,469 kullanmış); doğalgaz/motorin kurum raporlarından geri hesaplandı'],
   ];
   const EYLEM_KONULARI = ['Bina yalıtımı', 'Isıtma-soğutma verimliliği / ısı pompası', 'LED ve aydınlatma otomasyonu', 'Bina otomasyonu / enerji izleme',
     'Çatı GES ve yenilenebilir', 'Elektrikli araç ve şarj altyapısı', 'Toplu taşıma ve bisiklet', 'Atık ve metan yönetimi', 'Su ve atıksu verimliliği', 'Yeşil alan ve ısı adası azaltımı'];
@@ -116,13 +116,13 @@
   const tamYil = (y, env) => env[y] && env[y].elek_ay === 12;
 
   // ---------- görünüm yardımcıları ----------
-  const kart = (b, d, alt, renk) => `<div class="glass-card rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400">${b}</div><div class="text-2xl font-bold mt-1 ${renk || 'text-white'}">${d}</div><div class="text-[11px] text-slate-500 mt-1">${alt}</div></div>`;
+  const kart = (b, d, alt, renk) => `<div class="glass-card rounded-xl p-4 min-w-0"><div class="text-[11px] uppercase tracking-wider text-slate-400">${b}</div><div class="text-xl sm:text-2xl font-bold mt-1 break-words ${renk || 'text-white'}">${d}</div><div class="text-[11px] text-slate-500 mt-1">${alt}</div></div>`;
   const acikK = new Set(['env']);   // açık bölümler yeniden çizimlerde korunur
   const bolum = (k, baslik, aciklama, govde) => `<details data-k="${k}" ${acikK.has(k) ? 'open' : ''} class="group glass-card rounded-xl overflow-hidden">
     <summary class="cursor-pointer select-none p-4 flex flex-wrap items-center gap-x-3 gap-y-1 hover:bg-slate-800/40" style="list-style:none">
       <span class="text-slate-400 inline-block transition-transform group-open:rotate-90">▸</span>
       <h2 class="text-sm font-semibold text-white">${baslik}</h2><span class="text-[11px] text-slate-500">${aciklama || ''}</span>
-    </summary><div class="border-t border-slate-800 p-4">${govde}</div></details>`;
+    </summary><div class="border-t border-slate-800 p-4 overflow-x-auto">${govde}</div></details>`;
   const girdi = 'bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-xs text-slate-200 w-full';
 
   function cizGrafik(id, yapi) {
@@ -144,7 +144,7 @@
     const yillar = [2023, 2024, 2025, 2026];
     const alan = (ad, baslik, birim, adim) => `<label class="block"><span class="text-[11px] text-slate-400">${baslik} <span class="text-slate-600">(${birim})</span></span>
       <input type="number" step="${adim}" value="${p[ad]}" onchange="Karbon.param('${ad}', this.value)" class="${girdi} mt-1"></label>`;
-    return `<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    return `<div class="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
       ${alan('ef_elek', 'Şebeke elektriği', 'kg CO₂/kWh', 0.001)}${alan('ef_dg', 'Doğalgaz', 'kg CO₂/kWh', 0.001)}
       ${alan('dg_kwh_sm3', 'Doğalgaz enerji içeriği', 'kWh/Sm³', 0.1)}${alan('ef_motorin', 'Motorin', 'kg CO₂/litre', 0.01)}</div>
       <div class="mt-3"><div class="text-[11px] text-slate-400 mb-1">Yıla özel şebeke faktörü (boşsa yukarıdaki değer kullanılır)</div>
@@ -164,7 +164,7 @@
       <label><span class="text-[11px] text-slate-400">Azaltım hedefi (%)</span><input type="number" value="${p.hedef_yuzde}" onchange="Karbon.param('hedef_yuzde', this.value)" class="${girdi} mt-1"></label>
       <label><span class="text-[11px] text-slate-400">2050 hedefi (%)</span><input type="number" value="${p.hedef_2050}" onchange="Karbon.param('hedef_2050', this.value)" class="${girdi} mt-1"></label></div>
       <p class="text-[11px] text-slate-500 mt-2">${baz != null ? `Baz yıl emisyonu <b class="text-slate-300">${tr0(baz)} tCO₂e</b> → ${p.hedef_yil} hedefi <b class="text-slate-300">${tr0(hedefDeger)} tCO₂e</b>.` : 'Baz yıl için tam yıl verisi yok.'} İzmir SECAP (2025–2050) kent geneli hedefi 2018 baz yılına göre 2030'da −%40, 2050'de −%80 (iklim nötr perspektifi); buradaki kurumsal takip <b class="text-slate-300">farklı bir baz yıla</b> (ilk tam yıl) göre işler, kurumsal 2018 verisi eklenirse SECAP bazıyla birebir karşılaştırılabilir.</p>
-      <div class="h-64 mt-3"><canvas id="chKarbonHedef"></canvas></div>`;
+      <div class="h-64 mt-3 relative min-w-0 overflow-hidden"><canvas id="chKarbonHedef"></canvas></div>`;
   }
 
   function envanterTablosu(env, ges) {
@@ -218,7 +218,7 @@
       const ticari = S.envanter_alt_t['Ticari ve kurumsal binalar'].deger[n];
       if (tam) pay = `<p class="text-[11px] text-slate-400 mt-3">Belediyenin kendi bina/tesis (kısmi) envanteri ${tam}: <b class="text-slate-200">${fmt(env[tam].t_toplam)} tCO₂e</b>; kentin SECAP envanterinde “Ticari ve kurumsal binalar” ${S.yillar[n]}: ${fmt(ticari)} tCO₂e. Kurumsal envanter bu sektörün yaklaşık <b class="text-slate-200">%${((env[tam].t_toplam / ticari) * 100).toFixed(1).replace('.', ',')}</b>'i kadardır (kapsamlar farklı olduğundan yalnızca büyüklük sırası içindir).</p>`;
     }
-    return `<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+    return `<div class="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         ${kart(`Kent envanteri ${S.yillar[0]} (baz yıl)`, fmt(baz) + ' <span class="text-sm font-medium text-slate-400">tCO₂e</span>', 'sanayi ve havacılık hariç')}
         ${kart(`Kent envanteri ${S.yillar[n]}`, fmt(top[n]) + ' <span class="text-sm font-medium text-slate-400">tCO₂e</span>', `baza göre ${((top[n] / baz - 1) * 100).toFixed(1).replace('.', ',')}%`, top[n] > baz ? 'text-red-300' : 'text-emerald-300')}
         ${kart('2030 hedef senaryosu', fmt(S.projeksiyon_t.hedef['2030']) + ' <span class="text-sm font-medium text-slate-400">tCO₂e</span>', `BAU ${fmt(S.projeksiyon_t.bau['2030'])} • hedef −%${S.hedef['2030_azaltim_yuzde']}`)}
@@ -344,7 +344,7 @@
     let ust = '';
     if (ges) {
       const k = (ges.kwh[yil] * ee) / 1000, tum = Object.entries(ges.kwh).reduce((t, [y, v]) => t + (v * efElek(y)) / 1000, 0);
-      ust = `<section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      ust = `<section class="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-4">
         ${kart(`GES ile kaçınılan CO₂ (${yil}, Oca–${AY[ges.son.ay - 1]})`, tr0(k) + ' <span class="text-sm font-medium text-slate-400">t</span>', `${tr0(ges.kwh[yil] / 1000)} MWh × ${tr1(ee * 1000).replace(',0', '')} g/kWh`, 'text-emerald-400')}
         ${kart('GES kurulumundan bu yana', tr0(tum) + ' <span class="text-sm font-medium text-slate-400">t</span>', 'tüm yıllar toplamı', 'text-emerald-300')}
         ${kart('Şebeke emisyon faktörü', tr0(ee * 1000) + ' <span class="text-sm font-medium text-slate-400">g/kWh</span>', 'parametrelerden değiştirilir')}

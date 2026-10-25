@@ -15,8 +15,7 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   - **Santraller**: performans tablosu (verim, geçen yıl farkı, son ay, kWh/kW, canlı durum) + santral detay penceresi.
   - **Elektrik** (`elektrik.js`): belediye elektrik tüketimi — kartlar, aylık tüketim, GES katkısı (aylık net üretim ve tüketimdeki
     pay), daire başkanlığı/tarife/tedarikçi kırılımı, yıllık özet. Genel Bakış'ta tek satırlık özet şeridi var.
-  - **Harita** (`harita.js`, Leaflet 1.9.4 CDN; karolar Esri Dark Gray (koyu, anahtarsız; CARTO anahtar istediği için bırakıldı)/OSM sokak/Esri uydu): 21 santral işaretçisi, renk = verim ya da canlı durum, boyut = kW,
-    kırmızı halka = canlı sorun; sağda liste, işaretçi kutusundan santral ayrıntısına geçilir.
+  - **Harita panosu** (`harita.js`, Leaflet 1.9.4 CDN; `#harita`; sekme içeriği `#haritaPano` içine JS ile kurulur): süzgeç çubuğu (arama, durum, verim aralığı, inverter markası, en az kW) → harita işaretçileri, KPI kartları (santral, kurulu güç, üretim, ağırlıklı verim, anlık/bugün, sorunlu ya da kaçınılan CO₂), liste ve 3 grafik birlikte güncellenir; ilçe çubuğuna/ilçe sınırına ve verim çubuğuna tıklamak da süzgeç ekler (rozetle kaldırılır). İşaretçi/liste seçimi sağ panelde santral ayrıntısını (verim/durum çipleri, aylık üretim grafiği, "Santral ayrıntısı", "Yakınlaştır") açar. Renk modu: verim / canlı durum / özgül üretim (kWh/kW çeyrekleri); "Seçime sığdır", "Tam ekran". Karolar Esri Gray (anahtarsız)/OSM/uydu. 21 santral, renk/boyut = verim/kW, kırmızı halka = canlı sorun.
     İlçe sınırları katmanı (açılıp kapanır, ilçedeki kurulu güce göre boyalı): `data/izmir_ilceler.geojson` — İzBB Açık Veri Portalı "İzmir Şehir Haritası"
     (CC BY 4.0, atıf harita altında), `collector/ilce_sinir_to_json.py` ile indirilip sadeleştirilir (~200 KB). Konumlar `data/santral_konumlari.json`
     (`collector/konum_to_json.py "<GES_CBS.xlsx>"`; yalnız lat/lon/ilçe — adres, maliyet, tasarruf yazılmaz). Yeni santral = Excel'e satır + betikteki `ID` eşlemesi.
@@ -158,6 +157,8 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
 5. Excel'deki tutarsızlıklar (`performans.json` → `veri_notlari`): kullanıcıya bildirildi.
 
 ## Dikkat
+
+- **Her commit'ten önce tüm JS dosyaları sözdizimi için denenmeli:** `for f in *.js; do node --check $f; done` (tek tırnaklı metinde kesme işareti — ör. `Excel'i` — karbon.js'yi bozup sekmeyi boş bıraktı). Mobil/UI denetimi: 320, 375, 768, 1024, 1440 px; yana taşma ve sıkışan sütunlara bak.
 
 - Depo **public**. Şifre/kullanıcı adı/token kesinlikle koda, günlüğe veya `durum.json`'a yazılmamalı; Secrets kullanılmalı.
   GitHub Actions günlükleri de herkese açık: IP, kiosk anahtarı, token yazdırma. Eski şifreler git geçmişinde kalır;

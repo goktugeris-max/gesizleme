@@ -48,6 +48,10 @@
       #altNav { padding-top: 6px !important; padding-bottom: 6px !important; }
       #anaNav > button svg, #anaNav > button i { width: 15px; height: 15px; }
     }
+    /* tablolarda ilk (ad) ve uzun açıklama sütunları ezilmesin; tablo kendi kutusunda yana kayar */
+    #perfTablo th:first-child, #perfTablo td:first-child { min-width: 10.5rem; }
+    #tab-ariza td:first-child { min-width: 9rem; }
+    #tab-ariza td:last-child { min-width: 15rem; }
     /* yönetim raporu: yalnız Özet sayfası, sade ve açık renkli */
     #raporBaslik { display: none; }
     @media print {
@@ -67,8 +71,8 @@
 
   <!-- ÜST BİLGİ ÇUBUĞU -->
   <header class="sm:sticky top-0 z-30 border-b border-slate-800/80 bg-[#090d16]/90 backdrop-blur-md">
-    <div class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 py-2.5 sm:py-3.5 flex flex-nowrap sm:flex-wrap items-center justify-between gap-3 sm:gap-4">
-      <a href="#ozet" class="flex items-center gap-2.5 sm:gap-4 min-w-0">
+    <div class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 py-2.5 sm:py-3.5 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+      <a href="#ozet" class="flex items-center gap-2.5 sm:gap-4 min-w-0 flex-1 sm:flex-none">
         <img src="logo-yatay.png" alt="İzmir Büyükşehir Belediyesi" class="h-7 sm:h-14 w-auto shrink-0 max-w-[38vw] object-contain" />
         <span class="hidden sm:block w-px h-12 bg-slate-700"></span>
         <div>
@@ -84,7 +88,7 @@
       </button>
       </div>
 
-      <div id="liveButtons" class="hidden flex flex-wrap items-center gap-2.5">
+      <div id="liveButtons" class="hidden w-full sm:w-auto flex flex-wrap items-center gap-2 sm:gap-2.5">
         <button onclick="openModal('gdzModal')" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 flex items-center gap-2 transition">
           <i data-lucide="zap" class="w-4 h-4"></i> GDZ ARİL Veri Aktar
         </button>
@@ -187,20 +191,7 @@
     <div id="tab-karbon" data-tab class="hidden"><div id="karbonIcerik"></div></div>
 
     <!-- SEKME: HARİTA (CBS) -->
-    <div id="tab-harita" data-tab class="hidden space-y-3">
-      <section class="glass-card rounded-xl overflow-hidden">
-        <div class="p-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-sm font-semibold text-white flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-amber-400"></i> GES haritası <span id="haritaOzet" class="text-[11px] font-normal text-slate-500"></span></h2>
-          <div class="flex gap-1 bg-slate-900/80 rounded-lg p-0.5"><span class="px-2 py-1 text-[11px] text-slate-500">Renk:</span>
-            <button data-hmod="verim">Verim</button><button data-hmod="canli">Canlı durum</button><span class="w-px bg-slate-700 mx-1"></span><button id="haritaIlce" class="px-2.5 py-1 rounded-md text-[11px] font-semibold transition bg-amber-500/15 text-amber-300">İlçe sınırları</button><button id="haritaKirilgan" class="px-2.5 py-1 rounded-md text-[11px] font-semibold transition text-slate-400 hover:text-slate-200" title="İzmir SECAP iklim kırılganlık endeksi">İklim kırılganlığı</button></div>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-4">
-          <div id="haritaKap" class="lg:col-span-3 h-[28rem] lg:h-[40rem] bg-slate-900"></div>
-          <div id="haritaListe" class="max-h-64 lg:max-h-[40rem] overflow-y-auto border-t lg:border-t-0 lg:border-l border-slate-800"></div>
-        </div>
-        <div id="haritaLejant" class="px-4 py-2.5 border-t border-slate-800 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400"></div>
-      </section>
-    </div>
+    <div id="tab-harita" data-tab class="hidden space-y-3"><div id="haritaPano" class="space-y-3"></div></div>
 
     <!-- SEKME: GENEL BAKIŞ -->
     <div id="tab-genel" data-tab class="hidden space-y-6">
@@ -280,7 +271,7 @@
       <section id="elRaporlar" class="glass-card rounded-xl overflow-hidden">
         <div class="p-4 border-b border-slate-800 flex flex-wrap items-end gap-3">
           <h2 class="text-sm font-semibold text-white flex items-center gap-2 mr-auto"><i data-lucide="file-bar-chart" class="w-4 h-4 text-amber-400"></i> Raporlar</h2>
-          <label class="text-[11px] text-slate-400">Rapor<br><select id="elRaporSec" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 min-w-[16rem]"></select></label>
+          <label class="text-[11px] text-slate-400 w-full sm:w-auto">Rapor<br><select id="elRaporSec" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100 w-full sm:w-auto sm:min-w-[16rem]"></select></label>
           <label class="text-[11px] text-slate-400">Yıl<br><select id="elRaporYil" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100"></select></label>
           <label class="text-[11px] text-slate-400">Başlangıç<br><select id="elRaporBas" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100"></select></label>
           <label class="text-[11px] text-slate-400">Bitiş<br><select id="elRaporBit" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100"></select></label>
