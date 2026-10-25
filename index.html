@@ -40,6 +40,14 @@
     #anaNav > button { font-size: 14px !important; padding: 11px 16px !important; }
     #altNav > button { font-size: 13.5px !important; padding: 9px 14px !important; }
     #anaNav > button svg, #anaNav > button i { width: 17px; height: 17px; }
+    /* telefon: kompakt üst bar, sekmeler tek satırda yana kaydırılır */
+    @media (max-width: 639px) {
+      #anaNav, #altNav { flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 8px !important; }
+      #anaNav::-webkit-scrollbar, #altNav::-webkit-scrollbar { display: none; }
+      #anaNav > button, #altNav > button { flex: 0 0 auto !important; font-size: 13px !important; padding: 7px 12px !important; }
+      #altNav { padding-top: 6px !important; padding-bottom: 6px !important; }
+      #anaNav > button svg, #anaNav > button i { width: 15px; height: 15px; }
+    }
     /* yönetim raporu: yalnız Özet sayfası, sade ve açık renkli */
     #raporBaslik { display: none; }
     @media print {
@@ -58,21 +66,21 @@
 <body class="min-h-screen font-sans antialiased pb-14">
 
   <!-- ÜST BİLGİ ÇUBUĞU -->
-  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-[#090d16]/90 backdrop-blur-md">
-    <div class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4">
-      <a href="#ozet" class="flex items-center gap-4">
-        <img src="logo-yatay.png" alt="İzmir Büyükşehir Belediyesi" class="h-10 sm:h-14 w-auto" />
+  <header class="sm:sticky top-0 z-30 border-b border-slate-800/80 bg-[#090d16]/90 backdrop-blur-md">
+    <div class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 py-2.5 sm:py-3.5 flex flex-nowrap sm:flex-wrap items-center justify-between gap-3 sm:gap-4">
+      <a href="#ozet" class="flex items-center gap-2.5 sm:gap-4 min-w-0">
+        <img src="logo-yatay.png" alt="İzmir Büyükşehir Belediyesi" class="h-7 sm:h-14 w-auto shrink-0 max-w-[38vw] object-contain" />
         <span class="hidden sm:block w-px h-12 bg-slate-700"></span>
         <div>
-          <h1 class="text-xl sm:text-3xl font-bold tracking-tight text-white leading-tight">Enerji Yönetim Merkezi</h1>
-          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü • Enerji Ekibi</p>
+          <h1 class="text-[13px] sm:text-3xl font-bold tracking-tight text-white leading-tight">Enerji Yönetim Merkezi</h1>
+          <p class="hidden sm:block text-xs sm:text-sm text-slate-400 mt-0.5">İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü • Enerji Ekibi</p>
         </div>
       </a>
 
-      <div class="order-last sm:order-none flex items-center gap-2 ml-auto">
-        <button id="nav-veri" onclick="Dash.sekme('veri')"><i data-lucide="pen-square" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Veri Girişi</button>
+      <div class="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
+        <button id="nav-veri" onclick="Dash.sekme('veri')"><i data-lucide="pen-square" class="w-3.5 h-3.5 inline -mt-0.5 sm:mr-1"></i><span class="hidden sm:inline">Veri Girişi</span></button>
       <button onclick="temaDegistir()" id="temaBtn" title="Açık / koyu tema" class="px-3 py-2 rounded-lg text-xs font-semibold border border-slate-700 text-slate-300 hover:text-white flex items-center gap-2 transition">
-        <i data-lucide="moon" class="w-4 h-4" id="temaIkon"></i><span id="temaYazi">Koyu tema</span>
+        <i data-lucide="moon" class="w-4 h-4" id="temaIkon"></i><span id="temaYazi" class="hidden sm:inline">Koyu tema</span>
       </button>
       </div>
 
