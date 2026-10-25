@@ -208,8 +208,8 @@
   function uyariListesi() {
     const u = uyarilariHesapla();
     document.getElementById('dgUyari').innerHTML = u.length ? u.slice(0, 15).map((x) => `
-      <button onclick="Dogalgaz.git('${x.id}')" class="w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800/70 transition">
-        <span class="text-[11px] font-semibold ${x.renk} whitespace-nowrap mt-0.5 w-40 shrink-0">${esc(x.tur)}</span>
+      <button onclick="Dogalgaz.git('${x.id}')" class="w-full text-left flex flex-col gap-0.5 px-3 py-2.5 rounded-lg hover:bg-slate-800/70 transition">
+        <span class="text-[11px] font-semibold ${x.renk} ">${esc(x.tur)}</span>
         <span class="min-w-0"><span class="text-sm text-slate-100">${esc(x.ad)}</span><span class="block text-[11px] text-slate-500">${esc(x.metin)}</span></span>
       </button>`).join('') + (u.length > 15 ? `<p class="text-[11px] text-slate-500 px-3 pt-2">+${u.length - 15} uyarı daha (abone tablosunda ilgili satırlar işaretli).</p>` : '')
       : '<p class="text-sm text-slate-500 px-3 py-6 text-center">Uyarı yok.</p>';

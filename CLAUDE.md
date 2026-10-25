@@ -159,6 +159,8 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
 
 ## Dikkat
 
+- **Her commit'ten önce tüm JS dosyaları sözdizimi için denenmeli:** `for f in *.js; do node --check $f; done` (tek tırnaklı metinde kesme işareti — ör. `Excel'i` — karbon.js'yi bozup sekmeyi boş bıraktı). Mobil/UI denetimi: 320, 375, 768, 1024, 1440 px; yana taşma ve sıkışan sütunlara bak.
+
 - Depo **public**. Şifre/kullanıcı adı/token kesinlikle koda, günlüğe veya `durum.json`'a yazılmamalı; Secrets kullanılmalı.
   GitHub Actions günlükleri de herkese açık: IP, kiosk anahtarı, token yazdırma. Eski şifreler git geçmişinde kalır;
   sohbette paylaşılan şifrelerin değiştirilmesi önerildi (değişince Secrets güncellenmeli).

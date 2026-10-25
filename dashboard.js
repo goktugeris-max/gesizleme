@@ -99,10 +99,11 @@
     const kutu = document.getElementById('ozetDikkat'); if (!kutu) return;
     const hepsi = Object.values(ozetModul).flatMap((m) => m.uyarilar || []).sort((a, b) => b.puan - a.puan);
     kutu.innerHTML = hepsi.length ? hepsi.slice(0, 12).map((o) => `
-      <a href="${o.href}" class="flex items-start gap-3 px-2 py-2 rounded-lg hover:bg-slate-800/70 transition">
-        <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 w-16 shrink-0 mt-0.5">${esc(o.modul)}</span>
-        <span class="text-[11px] font-semibold ${o.renk} whitespace-nowrap mt-0.5 w-36 shrink-0">${esc(o.etiket)}</span>
-        <span class="text-xs text-slate-300 min-w-0">${esc(o.metin)}</span></a>`).join('') : '<p class="px-2 py-4 text-center text-slate-500 text-sm">Şu an dikkat gerektiren bir durum yok.</p>';
+      <a href="${o.href}" class="flex flex-col sm:flex-row sm:items-start gap-0.5 sm:gap-3 px-2 py-2 rounded-lg hover:bg-slate-800/70 transition">
+        <span class="flex items-baseline gap-2 sm:contents">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:w-16 sm:shrink-0 sm:mt-0.5">${esc(o.modul)}</span>
+          <span class="text-[11px] font-semibold ${o.renk} sm:whitespace-nowrap sm:mt-0.5 sm:w-36 sm:shrink-0">${esc(o.etiket)}</span></span>
+        <span class="text-xs text-slate-300 min-w-0 break-words">${esc(o.metin)}</span></a>`).join('') : '<p class="px-2 py-4 text-center text-slate-500 text-sm">Şu an dikkat gerektiren bir durum yok.</p>';
   }
 
   // ---------- Özet (modül kartları) ----------
