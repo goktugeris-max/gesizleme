@@ -38,7 +38,7 @@ def fiyatlar(tgt, bas, bit):
             break
         if r.status_code in (401, 403):
             sys.exit(f"EPİAŞ API yetki hatası (HTTP {r.status_code}); hesapta Şeffaflık API erişimi açık mı?")
-        time.sleep(3 * (deneme + 1))
+        time.sleep((20 if r.status_code == 429 else 3) * (deneme + 1))   # 429 = istek sınırı: uzun bekle
     else:
         raise RuntimeError(f"EPİAŞ API yanıt vermedi (HTTP {r.status_code})")
     cikti = {}
@@ -61,13 +61,20 @@ def main():
     bugun = dt.datetime.now(TZ).date()
     bit = bugun + dt.timedelta(days=1)                      # yarının fiyatı ~13:00-14:00'te açıklanır
     bas = BASLANGIC
+    yeni_esik = BASLANGIC                                   # bu günden sonrası her çalıştırmada yenilenir
     if veri["gunluk"]:
-        bas = max(BASLANGIC, dt.date.fromisoformat(max(veri["gunluk"])) - dt.timedelta(days=3))
+        yeni_esik = max(BASLANGIC, dt.date.fromisoformat(max(veri["gunluk"])) - dt.timedelta(days=3))
     tgt = bilet()
     sayac = 0
     gun = bas
     while gun <= bit:
         pencere_bit = min(bit, gun + dt.timedelta(days=29))
+        # Dolu ve eski bir pencereyi yeniden çekme; eksik gün içeren pencereleri (önceki başarısız istekler) tamamla
+        gunler = [(gun + dt.timedelta(days=i)).isoformat() for i in range((pencere_bit - gun).days + 1)]
+        if pencere_bit < yeni_esik and all(g in veri["gunluk"] for g in gunler):
+            gun = pencere_bit + dt.timedelta(days=1)
+            continue
+        time.sleep(1)
         try:
             gelen = fiyatlar(tgt, gun, pencere_bit)
         except Exception as e:
