@@ -335,6 +335,11 @@
     document.getElementById('nav-ges').className = 'px-3.5 py-2 rounded-lg text-xs font-semibold transition ' + (ges ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'text-slate-400 hover:text-slate-200 border border-transparent');
     document.getElementById('subNav').classList.toggle('hidden', !ges);
     document.getElementById('liveButtons').classList.toggle('hidden', ad !== 'canli');
+    const anaBtn = document.getElementById(ges ? 'nav-ges' : 'nav-' + ad);
+    if (anaBtn && anaBtn.parentElement && anaBtn.parentElement.id === 'anaNav') {
+      const nv = anaBtn.parentElement;
+      nv.scrollTo({ left: Math.max(0, anaBtn.offsetLeft - (nv.clientWidth - anaBtn.offsetWidth) / 2), behavior: 'smooth' });
+    }
     if (ad === 'elektrik' && window.Elek) Elek.ac();
     if (ad === 'dogalgaz' && window.Dogalgaz) Dogalgaz.ac();
     if (ad === 'kaynak' && window.Kaynak) Kaynak.ac();
@@ -397,6 +402,42 @@
     canliGuncelle() { if (PERF) { kartlar(); dikkat(); tabloCiz(); ozetCiz(); if (window.Harita) Harita.yenile(); } },
     veri() { return { PERF, M, canliBul }; },
   };
+  // ---------- kaydırma (swipe) ile ana sekmeler arasında geçiş ----------
+  // Sola kaydır = sonraki ana sekme, sağa kaydır = önceki. GES alt sekmeleri (Genel Bakış hariç), harita, tablo/grafik gibi
+  // kendi kaydırması olan alanlar ve pencereler etkilenmez.
+  const ANA_SIRA = ['ozet', 'genel', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'karbon'];
+  function anaIndeks(ad) { return GES_ALT.includes(ad) ? 1 : ANA_SIRA.indexOf(ad); }
+  function kaydirmaEngelli(el) {
+    if (!el || !el.closest) return true;
+    if (el.closest('.leaflet-container, input, textarea, select, canvas, [data-noswipe], [id$="Modal"], nav, dialog, details[open] table')) return true;
+    for (let n = el; n && n !== document.body; n = n.parentElement) {   // yatay kaydırılabilen kutular (tablolar vb.)
+      if (n.scrollWidth > n.clientWidth + 4) {
+        const ox = getComputedStyle(n).overflowX;
+        if (ox === 'auto' || ox === 'scroll') return true;
+      }
+    }
+    return false;
+  }
+  let dokunma = null;
+  document.addEventListener('touchstart', (e) => {
+    dokunma = null;
+    if (e.touches.length !== 1 || kaydirmaEngelli(e.target)) return;
+    const t = e.touches[0];
+    dokunma = { x: t.clientX, y: t.clientY, z: Date.now() };
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    const d = dokunma; dokunma = null;
+    if (!d || !e.changedTouches.length) return;
+    const t = e.changedTouches[0], dx = t.clientX - d.x, dy = t.clientY - d.y;
+    if (Date.now() - d.z > 700 || Math.abs(dx) < 80 || Math.abs(dx) < Math.abs(dy) * 2) return;
+    if (String(window.getSelection && window.getSelection()).length) return;   // metin seçiliyorsa karışma
+    const ad = (location.hash || '#ozet').slice(1), i = anaIndeks(ad);
+    if (i < 0 || (GES_ALT.includes(ad) && ad !== 'genel')) return;   // GES alt sekmelerinde (harita, tablo…) kaydırma kapalı; alt sekme çubuğu kullanılır
+    const j = i + (dx < 0 ? 1 : -1);
+    if (j < 0 || j >= ANA_SIRA.length) return;
+    sekmeGoster(ANA_SIRA[j]);
+  }, { passive: true });
+
   window.addEventListener('hashchange', () => sekmeGoster((location.hash || '#ozet').slice(1)));
   yukle();
 })();

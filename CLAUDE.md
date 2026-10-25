@@ -11,6 +11,7 @@ durumunu ve performansını tek ekranda gösteren panel. Kullanıcı yazılımc�
   **Gezinme iki katmanlı:** üstte modüller (Özet `#ozet` = açılış, Güneş Enerjisi `#genel`, Elektrik `#elektrik`, ISO 50001 `#iso`);
   GES seçilince altta alt sekmeler (Genel Bakış, Santraller, Canlı Durum `#canli`, Arıza Takip `#ariza`). Özet'teki modül kartları
   `ozetCiz()` ile GES göstergelerini doldurur; yeni modül = yeni üst düğme + `tab-<ad>` + `SEKMELER`'e ekleme. Sekmeler:
+  - **Kaydırma ile gezinme** (`dashboard.js`, dokunmatik): sola kaydır = sonraki, sağa = önceki ana sekme (Özet → GES → Elektrik → Doğalgaz → Su & Akaryakıt → ISO → Karbon). Harita, tablo/yatay kaydırılan kutular, form alanları, pencereler, GES alt sekmeleri (Genel Bakış hariç) ve Veri Girişi/Canlı Durum'da kapalı; eşik ≥80 px ve yatay ≥2× dikey; `overscroll-behavior-x: none` tarayıcı 'geri' hareketini engeller.
   - **Genel Bakış**: kurulu güç, yıllık üretim, beklenene göre verim, aylık/yıllık grafikler, "dikkat gerektirenler".
   - **Santraller**: performans tablosu (verim, geçen yıl farkı, son ay, kWh/kW, canlı durum) + santral detay penceresi.
   - **Elektrik** (`elektrik.js`): belediye elektrik tüketimi — kartlar, aylık tüketim, GES katkısı (aylık net üretim ve tüketimdeki
