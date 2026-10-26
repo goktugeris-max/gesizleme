@@ -29,6 +29,67 @@
   <link rel="apple-touch-icon" href="icon-192.png" />
   <meta name="theme-color" content="#211950" />
   <style>
+    /* ---- Özet açılışı: Eski Akıl, Yeni Enerji (kendi renkleri; temadan bağımsız) ---- */
+    .hk-hero { background: #14305c; color: #eaf1fa; border-radius: 1.25rem; padding: 1.25rem; font-family: inherit; overflow: hidden; }
+    @media (min-width: 640px) { .hk-hero { padding: 1.75rem 2rem 1.5rem; } }
+    .hk-ust { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 1rem; }
+    .hk-etiket { font: 600 10px/1.4 ui-monospace, Menlo, monospace; letter-spacing: .16em; color: #e9cf94; }
+    .hk-hero h2 { font-size: clamp(1.9rem, 5vw, 3.4rem); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; color: #fff; margin: .35rem 0 0; }
+    .hk-alt { color: #b9c9e0; font-size: 1.05rem; margin-top: .3rem; }
+    .hk-giris { max-width: 28rem; color: #c5d3e8; font-size: .85rem; line-height: 1.5; margin: 0; }
+    .hk-eylem { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; }
+    .hk-btn { background: rgba(255,255,255,.08); color: #eaf1fa; border: 1px solid rgba(255,255,255,.22); border-radius: .6rem; padding: .45rem .8rem; font-size: .75rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: background .2s; }
+    .hk-btn:hover { background: rgba(255,255,255,.18); }
+    .hk-btn1 { background: #e9cf94; color: #14305c; border-color: #e9cf94; }
+    .hk-btn1:hover { background: #f3dfaa; }
+    .hk-lej { margin-left: auto; font-size: 10px; color: #b9c9e0; display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+    .hk-lej i { width: 9px; height: 9px; border-radius: 99px; display: inline-block; margin-left: .45rem; }
+    .hk-lej i:first-child { margin-left: 0; }
+    .hk-lej .e { background: #e9cf94; } .hk-lej .y { background: #9bd0ee; } .hk-lej .o { background: #f2ece0; width: 16px; }
+    .hk-bas { display: grid; gap: .75rem; margin: 1.25rem 0 1rem; grid-template-columns: 1fr; }
+    @media (min-width: 700px) { .hk-bas { grid-template-columns: 1fr 1fr; } }
+    .hk-kutu { background: rgba(255,255,255,.06); border-radius: .9rem; padding: .85rem 1rem; display: flex; flex-direction: column; gap: .15rem; }
+    .hk-kutu small { font: 600 10px/1.4 ui-monospace, Menlo, monospace; letter-spacing: .16em; color: #e9cf94; }
+    .hk-kutu b { font-size: 2rem; line-height: 1.1; color: #fff; font-weight: 800; }
+    .hk-kutu span { font-size: .85rem; color: #dbe6f5; }
+    .hk-kutu em { font-style: normal; font-size: 11px; color: #9fb4d0; }
+    .hk-zaman { display: block; position: relative; }
+    .hk-col { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.1rem; padding-left: .9rem; border-left: 2px solid rgba(233,207,148,.45); }
+    .hk-dalga { display: none; }
+    .hk-eski, .hk-yeni { border-radius: .8rem; padding: .8rem .9rem; }
+    .hk-eski { background: #1f4278; color: #eaf1fa; }
+    .hk-yeni { background: #dcedf6; color: #14305c; }
+    .hk-z { font: 600 10px/1.4 ui-monospace, Menlo, monospace; letter-spacing: .14em; }
+    .hk-eski .hk-z { color: #e9cf94; } .hk-yeni .hk-z { color: #2b6a99; }
+    .hk-eski h4, .hk-yeni h4 { font-size: 1.1rem; line-height: 1.15; font-weight: 800; margin: .2rem 0 .3rem; letter-spacing: -.01em; }
+    .hk-eski h4 { color: #fff; }
+    .hk-eski p, .hk-yeni p { font-size: .78rem; line-height: 1.4; margin: 0; }
+    .hk-eski p { color: #cfdcef; }
+    .hk-ders { align-self: flex-start; background: #f2ece0; color: #14305c; border-radius: .7rem; padding: .4rem .7rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+    .hk-ders b { display: block; font-size: .85rem; } .hk-ders span { font-size: 10px; color: #3d557a; }
+    .hk-kaynak { font-size: 10px; color: #9fb4d0; text-align: right; margin: .6rem 0 0; }
+    @media (min-width: 1024px) {
+      .hk-zaman { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); grid-template-rows: auto 150px auto; column-gap: .7rem; }
+      .hk-col { display: contents; }
+      .hk-col > * { grid-column: calc(var(--i) + 1); }
+      .hk-eski { grid-row: 1; align-self: end; } .hk-yeni { grid-row: 3; align-self: start; }
+      .hk-ders { grid-row: 2; align-self: center; justify-self: center; z-index: 2; }
+      .hk-dalga { display: block; grid-row: 2; grid-column: 1 / -1; position: relative; margin: 0 -.35rem; }
+      .hk-dalga svg { width: 100%; height: 100%; display: block; }
+      .hk-nokta { position: absolute; width: 11px; height: 11px; border-radius: 99px; transform: translate(-50%, -50%); }
+      .hk-nokta.e { top: 12.9%; background: #e9cf94; } .hk-nokta.y { top: 87.1%; background: #9bd0ee; }
+      .hk-eski { margin-bottom: .2rem; } .hk-yeni { margin-top: .2rem; }
+    }
+    .hk-rev { opacity: 0; transform: translateY(14px); transition: opacity .55s ease, transform .55s ease; transition-delay: calc(var(--i, 0) * 60ms); }
+    .hk-col .hk-rev { transition-delay: calc(var(--i) * 70ms); }
+    .hk-rev.hk-var { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) { .hk-rev { opacity: 1; transform: none; transition: none; } }
+    .hk-lb { position: fixed; inset: 0; z-index: 80; background: rgba(5,12,28,.92); display: flex; align-items: center; justify-content: center; padding: 1rem; cursor: zoom-out; }
+    .hk-lb.hidden { display: none; }
+    .hk-lb img { max-width: 100%; max-height: 100%; border-radius: .5rem; background: #14305c; }
+    .hk-lb button { position: absolute; top: .6rem; right: .9rem; font-size: 2rem; line-height: 1; color: #fff; background: none; border: 0; cursor: pointer; }
+    @media print { #hikaye { display: none !important; } }
+
     /* Kaydırmayla sekme değişimi için tarayıcının 'geri' hareketini kapat */
     html, body { overscroll-behavior-x: none; }
     html.dark body { background-color: #090d16; color: #f1f5f9; }
@@ -132,6 +193,7 @@
     <!-- SEKME: ÖZET (modül kartları) -->
     <div id="tab-ozet" data-tab class="hidden space-y-6">
       <div id="raporBaslik" class="mb-3 pb-2 border-b border-slate-300"><div class="text-lg font-bold">İZBB İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü — Aylık Enerji Yönetim Raporu</div><div id="raporTarih" class="text-xs"></div></div>
+      <section id="hikaye" class="no-print-hikaye"></section>
       <section class="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-[#0b1220] to-slate-900 p-6 sm:p-8">
         <div class="flex items-start justify-between gap-3">
         <p class="text-[11px] uppercase tracking-widest text-cyan-400 font-semibold">Hoş geldiniz</p>
@@ -868,6 +930,7 @@
   <script src="kaynak.js"></script>
   <script src="izmir.js"></script>
   <script src="ptf.js"></script>
+  <script src="hikaye.js"></script>
   <script src="ikiz.js"></script>
   <script src="iso.js"></script>
   <script src="harita.js"></script>
