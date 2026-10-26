@@ -1,14 +1,14 @@
 {
-  "guncelleme": "2026-10-25T17:36:26+00:00",
+  "guncelleme": "2026-10-26T08:47:08+00:00",
   "kaynaklar": {
     "GoodWe": {
-      "ok": true,
-      "zaman": "2026-10-25T17:36:26+00:00",
-      "adet": 9
+      "ok": false,
+      "hata": "502 Server Error: Bad Gateway for url: https://www.semsportal.com/api/v2/Common/CrossLogin",
+      "zaman": "2026-10-25T17:36:26+00:00"
     },
     "SMA": {
       "ok": true,
-      "zaman": "2026-10-25T17:36:26+00:00",
+      "zaman": "2026-10-26T08:47:08+00:00",
       "adet": 2
     }
   },
@@ -225,10 +225,10 @@
       "ad": "ibbseyrekges",
       "kapasite_kwp": 401.76,
       "durum": "Kontrol Edilmedi",
-      "anlik_kw": 0.0,
-      "bugun_kwh": 718.14,
+      "anlik_kw": 56.28,
+      "bugun_kwh": 114.14,
       "invertorler": [],
-      "zaman": "2026-10-25T17:36:26+00:00"
+      "zaman": "2026-10-26T08:47:08+00:00"
     },
     {
       "kaynak": "SMA",
@@ -236,10 +236,10 @@
       "ad": "yesilyurt kultur merkezi",
       "kapasite_kwp": 77.25,
       "durum": "Çalışıyor",
-      "anlik_kw": 0.0,
-      "bugun_kwh": 224.77,
+      "anlik_kw": 5.16,
+      "bugun_kwh": 22.47,
       "invertorler": [],
-      "zaman": "2026-10-25T17:36:26+00:00"
+      "zaman": "2026-10-26T08:47:08+00:00"
     }
   ]
 }
