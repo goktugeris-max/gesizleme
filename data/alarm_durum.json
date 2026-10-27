@@ -1,23 +1,23 @@
 {
- "guncelleme": "2026-10-26T08:47:10+00:00",
+ "guncelleme": "2026-10-27T08:52:55+00:00",
  "sorunlar": {
   "inv:GoodWe:b1ffbc3b-fb0f-498d-bdf1-9254d3035823:9060KMTN215W0015": {
    "ilk": "2026-10-25T13:41:03+00:00",
-   "ardisik": 1,
+   "ardisik": 2,
    "bildirildi": false,
    "ad": "Bornova havuz Ges — İnvertör 2",
    "sorun": "Haberleşme Yok",
    "kaynak": "GoodWe",
-   "ayrinti": "Santral anlık 8,74 kW, bugün 203,7 kWh"
+   "ayrinti": "Santral anlık 33,63 kW, bugün 95,8 kWh"
   },
-  "portal:GoodWe": {
-   "ilk": "2026-10-26T08:47:10+00:00",
+  "santral:SMA:871175": {
+   "ilk": "2026-10-27T08:52:55+00:00",
    "ardisik": 1,
    "bildirildi": false,
-   "ad": "GoodWe portalı",
-   "sorun": "Veri alınamıyor (portal erişim hatası)",
-   "kaynak": "GoodWe",
-   "ayrinti": ""
+   "ad": "ibbseyrekges",
+   "sorun": "Arızalı",
+   "kaynak": "SMA",
+   "ayrinti": "Santral anlık 129,03 kW, bugün 235,78 kWh"
   }
  }
 }
