@@ -1,0 +1,536 @@
+{
+ "profil": "entes_mpr",
+ "ad": "ENTES MPR-3x/4x serisi çok fonksiyonlu analizör",
+ "kaynak": "MPR-3_4_Series_Register_Table (Entes, 2023-10-27)",
+ "protokol": {
+  "fonksiyon": 3,
+  "adres_tabani": 0,
+  "kelime_sirasi": "yuksek_once",
+  "bayt_sirasi": "MSB",
+  "azami_kayit_blogu": 100
+ },
+ "notlar": [
+  "Tüm sayılar MSB first; 32/64 bitlik değerlerde yüksek kelime önce gelir (üretici örneği: 00 00 08 EE = 2286 → ×0,1 = 228,6 V).",
+  "Modelden modele bazı kayıtlar yoktur (tabloda kırmızı); okuyucu hata veren bloğu tek tek dener ve desteklenmeyeni atlar.",
+  "Güç/PF/enerji tipleri farklıdır: gerilim-akım uint32, güçler float32, PF int32 (işaretli), enerjiler uint64 (Wh).",
+  "Sadece panelin kullandığı kayıtlar tanımlıdır; harmonik sıraları (3000+), kayıt (records) ve ayar alanları alınmamıştır."
+ ],
+ "kimlik": [
+  {
+   "anahtar": "cihaz_no",
+   "adres": 60418,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 1
+  },
+  {
+   "anahtar": "yazilim",
+   "adres": 60420,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 1
+  }
+ ],
+ "kayitlar": [
+  {
+   "anahtar": "v_l1",
+   "adres": 0,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "V",
+   "ad": "Voltage L1-N",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "v_l2",
+   "adres": 2,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "V",
+   "ad": "Voltage L2-N",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "v_l3",
+   "adres": 4,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "V",
+   "ad": "Voltage L3-N",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "v_l12",
+   "adres": 8,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "V",
+   "ad": "Voltage L1-L2",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "v_l23",
+   "adres": 10,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "V",
+   "ad": "Voltage L2-L3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "v_l31",
+   "adres": 12,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "V",
+   "ad": "Voltage L3-L1",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "i_l1",
+   "adres": 14,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "A",
+   "ad": "Current L1",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "i_l2",
+   "adres": 16,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "A",
+   "ad": "Current L2",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "i_l3",
+   "adres": 18,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "A",
+   "ad": "Current L3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "i_n",
+   "adres": 22,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "A",
+   "ad": "Neutral Current = IL1+IL2+IL3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "f",
+   "adres": 24,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.01,
+   "birim": "Hz",
+   "ad": "Measured frequency",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "p_l1",
+   "adres": 26,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "W",
+   "ad": "Active power L1-N",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "p_l2",
+   "adres": 28,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "W",
+   "ad": "Active power L2-N",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "p_l3",
+   "adres": 30,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "W",
+   "ad": "Active power L3-N",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "p_ithal",
+   "adres": 34,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "W",
+   "ad": "Total import active power",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "p_ihrac",
+   "adres": 36,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "W",
+   "ad": "Total export active power",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "p_top",
+   "adres": 38,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "W",
+   "ad": "∑Active Power +/- = ∑P =P1+P2+P3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "q_l1",
+   "adres": 40,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "VAr",
+   "ad": "Reactive power L1",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "q_l2",
+   "adres": 42,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "VAr",
+   "ad": "Reactive power L2",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "q_l3",
+   "adres": 44,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "VAr",
+   "ad": "Reactive power L3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "q_top",
+   "adres": 56,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "VAr",
+   "ad": "∑Reactive Power +/- = ∑Q=Q1+Q2+Q3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "s_l1",
+   "adres": 58,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "VA",
+   "ad": "Apperant power L1-N",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "s_l2",
+   "adres": 60,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "VA",
+   "ad": "Apparent power L2-N",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "s_l3",
+   "adres": 62,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "VA",
+   "ad": "Apparent power L3-N",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "s_top",
+   "adres": 70,
+   "tip": "float",
+   "kelime": 2,
+   "carpan": 1.0,
+   "birim": "VA",
+   "ad": "∑Apperant Power +/- = ∑S=S1+S2+S3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "pf_l1",
+   "adres": 72,
+   "tip": "int32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "-",
+   "ad": "Power Factor L1",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "pf_l2",
+   "adres": 74,
+   "tip": "int32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "-",
+   "ad": "Power Factor L2",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "pf_l3",
+   "adres": 76,
+   "tip": "int32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "-",
+   "ad": "Power Factor L3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "pf_top",
+   "adres": 80,
+   "tip": "int32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "-",
+   "ad": "∑POWER FACTOR +/- = ∑PF=PFL1+PFL2+PFL3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "cosphi_top",
+   "adres": 90,
+   "tip": "int32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "-",
+   "ad": "∑Cos Phi = COS_L1 + COS_L2 + COS_L3",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "v_dengesizlik",
+   "adres": 94,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Voltage Unbalance",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "i_dengesizlik",
+   "adres": 96,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Current Unbalance",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "saat_sayaci",
+   "adres": 154,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.001,
+   "birim": "h",
+   "ad": "Hour Meter ( Non Resetable )",
+   "grup": "anlik"
+  },
+  {
+   "anahtar": "e_tuketim_wh",
+   "adres": 216,
+   "tip": "uint64",
+   "kelime": 4,
+   "carpan": 1.0,
+   "birim": "Wh",
+   "ad": "Total Consumed Energy L1..L3",
+   "grup": "enerji"
+  },
+  {
+   "anahtar": "e_verilen_wh",
+   "adres": 236,
+   "tip": "uint64",
+   "kelime": 4,
+   "carpan": 1.0,
+   "birim": "Wh",
+   "ad": "Total Delivered Energy L1..L3",
+   "grup": "enerji"
+  },
+  {
+   "anahtar": "e_tuketim_vah",
+   "adres": 256,
+   "tip": "uint64",
+   "kelime": 4,
+   "carpan": 1.0,
+   "birim": "VAh",
+   "ad": "Total Consumed Apperant Energy L1..L3",
+   "grup": "enerji"
+  },
+  {
+   "anahtar": "e_verilen_vah",
+   "adres": 276,
+   "tip": "uint64",
+   "kelime": 4,
+   "carpan": 1.0,
+   "birim": "VAh",
+   "ad": "Total Delivered Apparent energy L1..L3",
+   "grup": "enerji"
+  },
+  {
+   "anahtar": "e_reaktif_q1_varh",
+   "adres": 296,
+   "tip": "uint64",
+   "kelime": 4,
+   "carpan": 1.0,
+   "birim": "VArh",
+   "ad": "Quadrant 1 total reactive Energy",
+   "grup": "enerji"
+  },
+  {
+   "anahtar": "e_reaktif_q2_varh",
+   "adres": 316,
+   "tip": "uint64",
+   "kelime": 4,
+   "carpan": 1.0,
+   "birim": "VArh",
+   "ad": "Quadrant 2 total reactive Energy",
+   "grup": "enerji"
+  },
+  {
+   "anahtar": "e_reaktif_q3_varh",
+   "adres": 336,
+   "tip": "uint64",
+   "kelime": 4,
+   "carpan": 1.0,
+   "birim": "VArh",
+   "ad": "Quadrant 3 total reactive Energy",
+   "grup": "enerji"
+  },
+  {
+   "anahtar": "e_reaktif_q4_varh",
+   "adres": 356,
+   "tip": "uint64",
+   "kelime": 4,
+   "carpan": 1.0,
+   "birim": "VArh",
+   "ad": "Quadrant 4 total reactive Energy",
+   "grup": "enerji"
+  },
+  {
+   "anahtar": "thd_v_l12",
+   "adres": 2000,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Total Harmoic Distorsion VLL12",
+   "grup": "thd"
+  },
+  {
+   "anahtar": "thd_v_l23",
+   "adres": 2002,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Total Harmoic Distorsion VLL23",
+   "grup": "thd"
+  },
+  {
+   "anahtar": "thd_v_l31",
+   "adres": 2004,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Total Harmoic Distorsion VLL31",
+   "grup": "thd"
+  },
+  {
+   "anahtar": "thd_v_l1",
+   "adres": 2006,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Total Harmonic Distorsion VL1",
+   "grup": "thd"
+  },
+  {
+   "anahtar": "thd_v_l2",
+   "adres": 2008,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Total Harmonic Distorsion VL2",
+   "grup": "thd"
+  },
+  {
+   "anahtar": "thd_v_l3",
+   "adres": 2010,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Total Harmonic Distorsion VL3",
+   "grup": "thd"
+  },
+  {
+   "anahtar": "thd_i_l1",
+   "adres": 2014,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Total Harmonic Distorsion IL1",
+   "grup": "thd"
+  },
+  {
+   "anahtar": "thd_i_l2",
+   "adres": 2016,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Total Harmonic Distorsion IL2",
+   "grup": "thd"
+  },
+  {
+   "anahtar": "thd_i_l3",
+   "adres": 2018,
+   "tip": "uint32",
+   "kelime": 2,
+   "carpan": 0.1,
+   "birim": "%",
+   "ad": "Total Harmonic Distorsion IL3",
+   "grup": "thd"
+  }
+ ]
+}

@@ -1,0 +1,191 @@
+/* Ölçüm sekmesi (enerji analizörü / süzme sayaç): anlık değerler, 24 saatlik güç eğrisi, güç kalitesi uyarıları.
+ *
+ * Akış: binadaki okuyucu (collector/olcum/olcum_oku.py) Modbus ile cihazları okur → Supabase (olcum_nokta, olcum_son, olcum_15dk;
+ * supabase/olcum.sql) → bu sekme Veri Girişi hesabıyla giriş yapılınca okur. Tablolar anon'a KAPALIDIR.
+ * Cihaz henüz yokken "Örnek veriyle göster" düğmesi sahte (simülasyon) veriyle arayüzü gösterir; örnek veri belirgin şekilde etiketlenir.
+ * Değer anahtarları profildeki standart adlardır (v_l1, i_l1, p_top [W], pf_top, thd_i_l1, e_tuketim_wh …) — cihaz markasından bağımsızdır.
+ */
+(function () {
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const sayi = (n, o) => (n == null || !isFinite(n) ? '—' : Number(n).toLocaleString('tr-TR', o || { maximumFractionDigits: 1 }));
+  const ESIK = { bayat_dk: 5, vmin: 207, vmax: 253, thdv: 8, thdi: 15, pf: 0.9, dengesiz_i: 10, fmin: 49.5, fmax: 50.5 };   // EN 50160 ±%10, THD-V %8; diğerleri başlangıç değeri
+  const YENILE_MS = 30000;
+  let D = null, secili = null, grafik = null, zamanlayici = null, ornek = false, yukleniyor = false, hata = null;
+
+  // ---------- veri ----------
+  async function yukle() {
+    if (ornek) { D = ornekVeri(); return; }
+    if (!window.VeriDB || !VeriDB.hazir() || !VeriDB.oturum()) { D = null; return; }
+    yukleniyor = true; hata = null;
+    try {
+      const baslangic = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      const [nokta, son, d15] = await Promise.all([
+        VeriDB.istek('/rest/v1/olcum_nokta?select=*&order=kod'),
+        VeriDB.istek('/rest/v1/olcum_son?select=*'),
+        VeriDB.istek('/rest/v1/olcum_15dk?select=*&donem=gte.' + encodeURIComponent(baslangic) + '&order=donem&limit=5000'),
+      ]);
+      D = { nokta: nokta || [], son: Object.fromEntries((son || []).map((s) => [s.nokta_kod, s])), d15: d15 || [] };
+    } catch (e) {
+      hata = /relation|does not exist|42P01|schema cache/i.test(e.message) ? 'Ölçüm tabloları kurulmamış görünüyor: supabase/olcum.sql dosyasını Supabase SQL Editor\'de bir kez çalıştırın.' : 'Veri okunamadı: ' + e.message;
+      D = null;
+    } finally { yukleniyor = false; }
+  }
+
+  function ornekVeri() {
+    const t0 = Date.now(), noktalar = [
+      { kod: 'AASSM-ZK-CH1', ad: 'AASSM chiller grubu 1', tesis: 'AASSM', cihaz_tipi: 'analizor', k: 1.0 },
+      { kod: 'AASSM-ZK-CH2', ad: 'AASSM chiller grubu 2', tesis: 'AASSM', cihaz_tipi: 'analizor', k: 0.8 },
+      { kod: 'BUZ-ZK-CH1', ad: 'Buz Sporları chiller', tesis: 'Buz Sporları', cihaz_tipi: 'analizor', k: 1.3 },
+      { kod: 'BUCA-ASEVI-P1', ad: 'Buca Aşevi ana pano', tesis: 'Buca SYK', cihaz_tipi: 'sayac_ct', k: 0.4 },
+    ];
+    const D = { nokta: noktalar, son: {}, d15: [], ornek: true };
+    noktalar.forEach((n, ix) => {
+      let sayac = 1.2e9 + ix * 3e8;
+      for (let k = 96; k >= 0; k--) {
+        const t = new Date(Math.floor((t0 - k * 900000) / 900000) * 900000), saat = t.getHours() + t.getMinutes() / 60;
+        const yuk = 0.35 + 0.55 * Math.max(0, Math.sin((saat - 6) / 14 * Math.PI)) + 0.03 * Math.sin(ix + k);
+        const p = 150000 * n.k * yuk;
+        sayac += p * 0.25;
+        D.d15.push({ nokta_kod: n.kod, donem: t.toISOString(), ort_p_w: p, maks_p_w: p * 1.08, ort_pf: 0.95, ort_v: 229, ort_i_a: p / 396, maks_thd_i: 6.5, maks_thd_v: 1.8, e_tuketim_wh: sayac });
+      }
+      const son = D.d15[D.d15.length - 1], zayif = ix === 3;
+      const v = [229.1, 228.4, 230.2], i = [1, 0.97, 1.03].map((c) => son.ort_i_a * c);
+      D.son[n.kod] = {
+        nokta_kod: n.kod, zaman: new Date().toISOString(), durum: ix === 2 ? 'cevrimdisi' : 'cevrimici',
+        deger: {
+          v_l1: v[0], v_l2: v[1], v_l3: v[2], i_l1: i[0], i_l2: i[1], i_l3: i[2], f: 50.01, p_l1: son.ort_p_w / 3, p_l2: son.ort_p_w / 3.05, p_l3: son.ort_p_w / 2.95, p_top: son.ort_p_w, q_top: son.ort_p_w * 0.33, s_top: son.ort_p_w / 0.95,
+          pf_top: zayif ? 0.82 : 0.95, thd_v_l1: zayif ? 9.1 : 1.8, thd_i_l1: 6.5, thd_i_l2: 6.2, thd_i_l3: 6.8, i_dengesizlik: ix === 1 ? 12.4 : 3.2, e_tuketim_wh: son.e_tuketim_wh,
+        },
+      };
+    });
+    return D;
+  }
+
+  // ---------- kurallar ----------
+  function uyarilar(n, s) {
+    const u = [];
+    if (!s) return [{ s: 'k', m: 'Henüz hiç ölçüm gelmedi' }];
+    const yas = (Date.now() - new Date(s.zaman).getTime()) / 60000;
+    if (s.durum === 'cevrimdisi' || yas > ESIK.bayat_dk) u.push({ s: 'k', m: s.durum === 'cevrimdisi' ? 'Haberleşme yok (cihaz okunamıyor)' : 'Veri ' + Math.round(yas) + ' dk önce geldi (okuyucu durmuş olabilir)' });
+    const d = s.deger;
+    if (!d) return u;
+    const vler = ['v_l1', 'v_l2', 'v_l3'].map((k) => d[k]).filter((x) => x != null);
+    if (vler.some((v) => v < ESIK.vmin || v > ESIK.vmax)) u.push({ s: 'k', m: 'Gerilim sınır dışı (' + sayi(Math.min(...vler)) + '–' + sayi(Math.max(...vler)) + ' V; sınır ' + ESIK.vmin + '–' + ESIK.vmax + ')' });
+    const thdv = Math.max(...['thd_v_l1', 'thd_v_l2', 'thd_v_l3'].map((k) => d[k]).filter((x) => x != null), 0);
+    if (thdv > ESIK.thdv) u.push({ s: 'k', m: 'Gerilim harmoniği (THD-V) %' + sayi(thdv) + ' > %' + ESIK.thdv });
+    const thdi = Math.max(...['thd_i_l1', 'thd_i_l2', 'thd_i_l3'].map((k) => d[k]).filter((x) => x != null), 0);
+    if (thdi > ESIK.thdi) u.push({ s: 's', m: 'Akım harmoniği (THD-I) %' + sayi(thdi) + ' > %' + ESIK.thdi });
+    if (d.pf_top != null && d.p_top > 1000 && Math.abs(d.pf_top) < ESIK.pf) u.push({ s: 's', m: 'Güç faktörü düşük (' + sayi(d.pf_top, { maximumFractionDigits: 2 }) + ' < ' + ESIK.pf + ') — reaktif ceza riski' });
+    if (d.i_dengesizlik != null && d.i_dengesizlik > ESIK.dengesiz_i) u.push({ s: 's', m: 'Akım dengesizliği %' + sayi(d.i_dengesizlik) });
+    if (d.f != null && (d.f < ESIK.fmin || d.f > ESIK.fmax)) u.push({ s: 's', m: 'Frekans ' + sayi(d.f, { maximumFractionDigits: 2 }) + ' Hz' });
+    return u;
+  }
+  const seviye = (u) => (u.some((x) => x.s === 'k') ? 'k' : u.length ? 's' : 'y');
+  const ROZET = { k: 'bg-rose-500/15 text-rose-400 border-rose-500/30', s: 'bg-amber-500/15 text-amber-400 border-amber-500/30', y: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' };
+  const ROZET_AD = { k: 'Sorunlu', s: 'Dikkat', y: 'Normal' };
+
+  // 24 saatte tüketim (kWh): sayaç farkı
+  function tuketim24(kod) {
+    const l = D.d15.filter((r) => r.nokta_kod === kod && r.e_tuketim_wh != null);
+    return l.length > 1 ? (l[l.length - 1].e_tuketim_wh - l[0].e_tuketim_wh) / 1000 : null;
+  }
+
+  // ---------- arayüz ----------
+  function kart(b, v, alt, renk) { return `<div class="glass-card rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400">${b}</div><div class="text-2xl font-bold mt-1 ${renk || 'text-white'}">${v}</div><div class="text-[11px] text-slate-500 mt-1">${alt}</div></div>`; }
+
+  function bosEkran(mesaj, giris) {
+    return `<div class="glass-card rounded-xl p-6 space-y-3"><div class="flex items-start gap-3"><i data-lucide="gauge" class="w-5 h-5 mt-0.5 text-sky-400 shrink-0"></i><div class="text-sm text-slate-300 space-y-2">
+      <p>${mesaj}</p>
+      <div class="flex flex-wrap gap-2 pt-1">${giris ? `<button onclick="Dash.sekme('veri')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">Veri Girişi'ne git (giriş yap)</button>` : ''}
+      <button onclick="Olcum.ornek(true)" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-600 text-slate-300">Örnek veriyle göster</button></div></div></div></div>`;
+  }
+
+  function ciz() {
+    const el = document.getElementById('olcumIcerik');
+    if (!el) return;
+    if (!window.VeriDB || !VeriDB.hazir()) { el.innerHTML = bosEkran('Supabase ayarı yok (supabase-ayar.js). Ölçüm verisi veritabanından okunur.', false); return icon(); }
+    if (!ornek && !VeriDB.oturum()) { el.innerHTML = bosEkran('Ölçüm verileri yalnız giriş yapmış kullanıcılara açıktır. Önce Veri Girişi hesabınızla giriş yapın.', true); return icon(); }
+    if (hata) { el.innerHTML = bosEkran(esc(hata), false); return icon(); }
+    if (!D) { el.innerHTML = '<div class="text-sm text-slate-400 p-4">Yükleniyor…</div>'; return; }
+    if (!D.nokta.length) { el.innerHTML = bosEkran('Henüz ölçüm noktası yok. Okuyucu (collector/olcum/olcum_oku.py) çalışmaya başlayınca noktalar burada görünür. Kurulum: collector/olcum/README.md', false); return icon(); }
+
+    const satir = D.nokta.map((n) => { const s = D.son[n.kod], u = uyarilar(n, s); return { n, s, u, sev: seviye(u) }; });
+    const cevrimici = satir.filter((x) => x.s && x.s.durum === 'cevrimici' && (Date.now() - new Date(x.s.zaman).getTime()) / 60000 <= ESIK.bayat_dk).length;
+    const toplamKw = satir.reduce((t, x) => t + (x.s && x.s.durum === 'cevrimici' && x.s.deger && x.s.deger.p_top > 0 ? x.s.deger.p_top / 1000 : 0), 0);
+    const kwh24 = satir.reduce((t, x) => t + (tuketim24(x.n.kod) || 0), 0);
+    const sorunlu = satir.filter((x) => x.sev === 'k').length, dikkat = satir.filter((x) => x.sev === 's').length;
+    if (!secili || !D.nokta.some((n) => n.kod === secili)) secili = (satir.find((x) => x.sev === 'k') || satir[0]).n.kod;
+
+    el.innerHTML = `
+      ${D.ornek ? `<div class="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs text-amber-300 flex items-center justify-between gap-3"><span><b>ÖRNEK VERİ</b> — gerçek ölçüm değildir; arayüzü göstermek için simülasyonla üretildi.</span><button onclick="Olcum.ornek(false)" class="underline shrink-0">Kapat</button></div>` : ''}
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        ${kart('Anlık toplam güç', sayi(toplamKw) + ' kW', 'çevrimiçi noktaların toplamı')}
+        ${kart('Çevrimiçi nokta', cevrimici + ' / ' + satir.length, 'son ' + ESIK.bayat_dk + ' dk içinde okunan', cevrimici < satir.length ? 'text-amber-400' : 'text-emerald-400')}
+        ${kart('Son 24 saat tüketim', sayi(kwh24, { maximumFractionDigits: 0 }) + ' kWh', 'sayaç farkından')}
+        ${kart('Uyarı', sorunlu + ' sorunlu · ' + dikkat + ' dikkat', 'haberleşme, gerilim, harmonik, güç faktörü', sorunlu ? 'text-rose-400' : dikkat ? 'text-amber-400' : 'text-emerald-400')}
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <div class="lg:col-span-2 space-y-2 min-w-0" id="olcumListe">${satir.map((x) => {
+          const d = x.s && x.s.deger, aktif = x.n.kod === secili;
+          return `<button onclick="Olcum.sec('${esc(x.n.kod)}')" class="w-full text-left glass-card rounded-xl p-3 border ${aktif ? 'border-amber-500/50' : 'border-transparent'}">
+            <div class="flex items-center justify-between gap-2"><div class="min-w-0"><div class="text-sm font-semibold truncate">${esc(x.n.ad || x.n.kod)}</div><div class="text-[11px] text-slate-500 truncate">${esc(x.n.tesis || '')} · ${esc(x.n.kod)}</div></div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full border shrink-0 ${ROZET[x.sev]}">${ROZET_AD[x.sev]}</span></div>
+            <div class="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]"><div><div class="text-base font-bold">${d && d.p_top != null ? sayi(d.p_top / 1000) : '—'}</div><div class="text-slate-500">kW</div></div>
+            <div><div class="text-base font-bold">${d && d.pf_top != null ? sayi(Math.abs(d.pf_top), { maximumFractionDigits: 2 }) : '—'}</div><div class="text-slate-500">cos φ</div></div>
+            <div><div class="text-base font-bold">${d && d.i_l1 != null ? sayi((d.i_l1 + d.i_l2 + d.i_l3) / 3, { maximumFractionDigits: 0 }) : '—'}</div><div class="text-slate-500">A ort.</div></div></div></button>`; }).join('')}</div>
+        <div class="lg:col-span-3 space-y-3 min-w-0" id="olcumDetay"></div>
+      </div>
+      <p class="text-[11px] text-slate-500">Uyarı eşikleri başlangıç değeridir: gerilim ${ESIK.vmin}–${ESIK.vmax} V (EN 50160 ±%10), THD-V ≤ %${ESIK.thdv}, THD-I ≤ %${ESIK.thdi}, güç faktörü ≥ ${ESIK.pf}, akım dengesizliği ≤ %${ESIK.dengesiz_i}. Şartname: donanımla izlenen noktalarda en fazla 1 dakikalık veri.</p>`;
+    detayCiz(satir.find((x) => x.n.kod === secili));
+    icon();
+  }
+
+  function detayCiz(x) {
+    const el = document.getElementById('olcumDetay');
+    if (!el || !x) return;
+    const d = (x.s && x.s.deger) || {}, f = (k, o) => sayi(d[k], o);
+    const faz = (b, ks, o, bol) => `<tr><td class="py-1 text-slate-400">${b}</td>${ks.map((k) => `<td class="py-1 text-right">${d[k] != null ? sayi(d[k] / (bol || 1), o) : '—'}</td>`).join('')}</tr>`;
+    el.innerHTML = `
+      <div class="glass-card rounded-xl p-4 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2"><div><div class="font-semibold">${esc(x.n.ad || x.n.kod)}</div><div class="text-[11px] text-slate-500">${esc(x.n.kod)} · ${esc(x.n.cihaz_tipi || '')} · son okuma ${x.s ? new Date(x.s.zaman).toLocaleTimeString('tr-TR') : '—'}</div></div>
+        <span class="text-[10px] px-2 py-0.5 rounded-full border ${ROZET[x.sev]}">${ROZET_AD[x.sev]}</span></div>
+        ${x.u.length ? `<ul class="space-y-1">${x.u.map((a) => `<li class="text-xs flex gap-2 ${a.s === 'k' ? 'text-rose-400' : 'text-amber-400'}"><i data-lucide="alert-triangle" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>${esc(a.m)}</li>`).join('')}</ul>` : '<div class="text-xs text-emerald-400">Uyarı yok.</div>'}
+        <div class="h-52"><canvas id="chOlcumGuc"></canvas></div>
+        <div class="text-[11px] text-slate-500">Son 24 saat, 15 dakikalık ortalama ve en yüksek güç (kW). Tüketim: ${sayi(tuketim24(x.n.kod), { maximumFractionDigits: 0 })} kWh.</div>
+      </div>
+      <div class="glass-card rounded-xl p-4 overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-400"><th class="text-left font-medium"> </th><th class="text-right font-medium">L1</th><th class="text-right font-medium">L2</th><th class="text-right font-medium">L3</th></tr></thead><tbody>
+        ${faz('Gerilim (V)', ['v_l1', 'v_l2', 'v_l3'])}${faz('Akım (A)', ['i_l1', 'i_l2', 'i_l3'])}${faz('Aktif güç (kW)', ['p_l1', 'p_l2', 'p_l3'], { maximumFractionDigits: 1 }, 1000)}
+        ${faz('THD-V (%)', ['thd_v_l1', 'thd_v_l2', 'thd_v_l3'])}${faz('THD-I (%)', ['thd_i_l1', 'thd_i_l2', 'thd_i_l3'])}</tbody></table>
+        <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-400"><div>Frekans <b class="text-slate-200">${f('f', { maximumFractionDigits: 2 })} Hz</b></div><div>Reaktif <b class="text-slate-200">${d.q_top != null ? sayi(d.q_top / 1000) : '—'} kVAr</b></div><div>Görünür <b class="text-slate-200">${d.s_top != null ? sayi(d.s_top / 1000) : '—'} kVA</b></div><div>Akım dengesizliği <b class="text-slate-200">%${f('i_dengesizlik')}</b></div></div></div>`;
+    const r = D.d15.filter((q) => q.nokta_kod === x.n.kod);
+    if (grafik) grafik.destroy();
+    const cv = document.getElementById('chOlcumGuc');
+    if (cv && window.Chart) {
+      grafik = new Chart(cv, {
+        type: 'line',
+        data: { labels: r.map((q) => new Date(q.donem).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })), datasets: [
+          { label: 'Ortalama kW', data: r.map((q) => (q.ort_p_w == null ? null : q.ort_p_w / 1000)), borderColor: window.TV ? TV() : '#211950', backgroundColor: 'rgba(63,143,210,.12)', fill: true, tension: .25, pointRadius: 0, borderWidth: 2 },
+          { label: 'En yüksek kW', data: r.map((q) => (q.maks_p_w == null ? null : q.maks_p_w / 1000)), borderColor: '#3f8fd2', borderDash: [4, 3], pointRadius: 0, borderWidth: 1.2, fill: false }] },
+        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { labels: { boxWidth: 10, font: { size: 10 } } } }, scales: { x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } }, y: { beginAtZero: true, ticks: { font: { size: 10 } } } } },
+      });
+    }
+  }
+
+  function icon() { if (window.lucide) lucide.createIcons(); }
+
+  async function yenile() { await yukle(); ciz(); }
+  function ac() {
+    yenile();
+    clearInterval(zamanlayici);
+    zamanlayici = setInterval(() => { const t = document.getElementById('tab-olcum'); if (!t || t.classList.contains('hidden')) { clearInterval(zamanlayici); return; } if (!yukleniyor) yenile(); }, YENILE_MS);
+  }
+
+  window.Olcum = {
+    ac,
+    sec(kod) { secili = kod; ciz(); },
+    ornek(v) { ornek = !!v; yenile(); },
+    uyarilar,   // test/rapor için
+    ESIK,
+  };
+  if (location.hash === '#olcum') ac();   // doğrudan #olcum bağlantısıyla açılışta dashboard.js bu betikten önce çalışır
+})();
