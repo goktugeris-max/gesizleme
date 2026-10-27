@@ -7,11 +7,11 @@
  * iso.js `Ikiz.ciz({D, tesis, eylemler, acik})` çağırır. esc() (index.html) ve Karbon.faktorler() (karbon.js) kullanılır.
  */
 (function () {
-  const ANAHTAR = 'iso_ikiz_v2';   // v2: Buca 735 kW (5 birim), Buz Sporları 990 kWe varsayılanları
+  const ANAHTAR = 'iso_ikiz_v3';   // v3: Buca 1.034 kWe (etüt/kullanıcı teyidi, 5 birim + 299 kW diğer), Buz Sporları 990 kWe varsayılanları
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const GES_BIRIM = {
-    // Buca kampüsü: performans.json "planlanan" (Projelendirme aşaması; Geriatri ve İdari/Teknik Bina kullanıcı tarafından Buca'da olduğu teyit edildi); Buz Sporları 990 kWe (kullanıcı bilgisi)
-    buca: [{ ad: 'Huzurevi', kw: 120 }, { ad: 'Aşevi', kw: 225 }, { ad: 'Kapalı Spor Salonu', kw: 240 }, { ad: 'Geriatri Merkezi', kw: 100 }, { ad: 'İdari ve Teknik Bina', kw: 50 }],
+    // Buca kampüsü toplam 1.034 kWe (etüt raporu ile kullanıcı teyidi, 27.10.2026); performans.json "planlanan" 735 kW'ı (Huzurevi, Aşevi, Kapalı Spor, Geriatri, İdari/Teknik) + 299 kW diğer çatılar; Buz Sporları 990 kWe (kullanıcı bilgisi)
+    buca: [{ ad: 'Huzurevi', kw: 120 }, { ad: 'Aşevi', kw: 225 }, { ad: 'Kapalı Spor Salonu', kw: 240 }, { ad: 'Geriatri Merkezi', kw: 100 }, { ad: 'İdari ve Teknik Bina', kw: 50 }, { ad: 'Diğer çatılar', kw: 299 }],
     buz: [{ ad: 'Buz Sporları Salonu', kw: 990 }],
     aassm: [{ ad: 'Ana bina', kw: 0 }],
   };
