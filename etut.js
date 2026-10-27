@@ -177,7 +177,16 @@
     el.dataset.tesis = tesisId;
   }
 
+  // YGG özeti için: önlemlerin uygulama durumu sayıları (TL'siz öneriler dahil)
+  function sayilar() {
+    if (!D) return null;
+    const tum = D.binalar.flatMap((b) => tumOnlem(b).concat(tumAlt(b))), c = { toplam: tum.length, bekliyor: 0, planli: 0, devam: 0, tamam: 0, yok: 0 };
+    tum.forEach((o) => { c[durumu(o.kod)]++; });
+    return c;
+  }
+
   window.Etut = {
+    sayilar,
     async ac() {
       const k = document.getElementById('tab-etut');
       try { await yukle(); } catch (e) { k.innerHTML = '<p class="text-sm text-slate-400 p-6">Etüt verisi (data/etut.json) yüklenemedi.</p>'; return; }
