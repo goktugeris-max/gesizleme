@@ -104,7 +104,9 @@ def enpg(yol):
             deger = ISO.sayi(al(r, "enpg değeri"))
             if kwh is None and deger is None:
                 continue
-            liste.append({"no": int(r[0]), "bina": re.sub(r"^Buca Sosyal Yaşam Kampüsü\s*\(?|\)$", "", bina or "").strip() or bina, "kullanim": hucre(al(r, "enerji kullanımı")),
+            ad = hucre(bina) or ""
+            tesis = "aassm" if ad.startswith("AASSM") else "buz" if ad.startswith("Buz") else "buca"
+            liste.append({"no": int(r[0]), "tesis": tesis, "bina": re.sub(r"^Buca Sosyal Yaşam Kampüsü\s*\(?|\)$", "", bina or "").strip() or bina, "kullanim": hucre(al(r, "enerji kullanımı")),
                           "tur": hucre(al(r, "enerji türü")), "kwh": kwh and round(kwh, 1), "sabit": ISO.sayi(al(r, "faaliyet sabiti")),
                           "degisken": ISO.sayi(al(r, "faaliyet değişkeni")), "tanim": hucre(al(r, "enpg tanımı")), "deger": deger and round(deger, 4)})
         sonuc[yil] = liste

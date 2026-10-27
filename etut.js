@@ -5,7 +5,7 @@
 (function () {
   const TAKIP = 'etut_v1_takip';
   const DURUM = { bekliyor: ['Değerlendiriliyor', '#94a3b8'], planli: ['Planlandı', '#3f8fd2'], devam: ['Uygulanıyor', '#d9822b'], tamam: ['Tamamlandı', '#10b981'], yok: ['Uygulanmayacak', '#64748b'] };
-  let D = null, yukleniyor = null, takip = {}, bina = 'hepsi', tur = 'hepsi', vade = 'hepsi', sira = { k: 'geri_odeme_yil', y: 1 };
+  let D = null, yukleniyor = null, takip = {}, panelEl = null, bina = 'hepsi', tur = 'hepsi', vade = 'hepsi', sira = { k: 'geri_odeme_yil', y: 1 };
   const grafik = {};
   try { takip = JSON.parse(localStorage.getItem(TAKIP) || '{}') || {}; } catch (e) { takip = {}; }
   const kaydet = () => { try { localStorage.setItem(TAKIP, JSON.stringify(takip)); } catch (e) { /* özel pencere */ } };
@@ -45,8 +45,8 @@
   }
 
   // ---------- görünüm ----------
-  function kpiKartlari() {
-    return D.binalar.map((b) => {
+  function kpiKartlari(liste) {
+    return (liste || D.binalar).map((b) => {
       const y = son(b), v = b.yillar[y], m2 = b.kullanim_alani_m2, kwhm2 = kwhEs(b, y) / m2, pot = b.toplam_onlem.tep / v.toplam_tep * 100;
       const ges = b.alternatif.find((o) => o.ikiz === 'ges'), gesPay = ges ? (ges.miktar / v.elek_kwh) * 100 : null;
       return `<div class="glass-card rounded-xl p-4"><div class="text-sm font-semibold text-white">${e2(b.kisa)}</div><div class="text-[11px] text-slate-500 mb-2">${e2(b.kullanim)} • ${e2(b.insaat_yili)} • ${tr0(m2)} m²</div>
@@ -117,7 +117,7 @@
   }
 
   function takipOzeti() {
-    const tum = D.binalar.flatMap(tumOnlem).filter((o) => o.tl_yil != null), say = {};
+    const tum = D.binalar.filter((b) => bina === 'hepsi' || b.id === bina).flatMap(tumOnlem).filter((o) => o.tl_yil != null), say = {};
     Object.keys(DURUM).forEach((k) => { say[k] = tum.filter((o) => durumu(o.kod) === k); });
     const tamTL = topla(say.tamam.map((o) => o.tl_yil)), tamTep = topla(say.tamam.map((o) => o.tep)), toplamTL = topla(tum.filter((o) => durumu(o.kod) !== 'yok').map((o) => o.tl_yil));
     return `<div class="grid grid-cols-2 lg:grid-cols-5 gap-3">${Object.keys(DURUM).map((k) => `<div class="glass-card rounded-xl p-3"><div class="text-[10px] uppercase tracking-wider text-slate-500">${DURUM[k][0]}</div><div class="text-xl font-bold" style="color:${DURUM[k][1]}">${say[k].length}</div><div class="text-[10px] text-slate-500">${tr0(topla(say[k].map((o) => o.tl_yil)))} TL/yıl</div></div>`).join('')}</div>
@@ -134,18 +134,23 @@
           ${dis.map((x) => `<tr class="border-t border-slate-800/70"><td class="px-3 py-2 text-slate-100">${e2(x.ad)}</td><td class="px-3 py-2 text-slate-400">${e2(x.binaAd)}</td><td class="px-3 py-2 text-right font-mono">${tr0(x.tl_yil)}</td><td class="px-3 py-2 text-right font-mono">${tr0(x.yatirim_tl)}</td><td class="px-3 py-2 text-right font-mono">${tr1(x.geri_odeme_yil)}</td></tr>`).join('')}</tbody></table></div>` : ''}</div></details>`;
   }
 
-  function iskelet() {
-    const bn = D.binalar;
-    const kap = document.getElementById('tab-etut');
-    kap.innerHTML = `<div class="space-y-6">
-      <section class="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-[#0b1220] to-slate-900 p-5 sm:p-6">
-        <p class="text-[11px] uppercase tracking-widest text-cyan-400 font-semibold">Enerji etütleri</p>
-        <h2 class="text-xl sm:text-2xl font-bold text-white mt-1">Bina enerji etüt raporları</h2>
-        <p class="text-sm text-slate-400 mt-2 max-w-3xl">${bn.length} tesisin ayrıntılı bina enerji etütleri: tüketim, m² başına kıyas ve önerilen tasarruf önlemleri (yatırım, geri ödeme). Önlemlerin uygulama durumunu takip edebilirsiniz.</p>
-        <p class="text-[11px] text-slate-500 mt-2">Kaynak: ${e2(D.kaynak)}. ${e2(D.not)} Etütler 2022 tüketimlerine göre yapılmıştır; ayrıntılar ve ölçümler için ilgili etüt raporuna bakınız.</p></section>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">${kpiKartlari()}</div>
+  // ISO sekmesinde seçili tesisin "Enerji etüdü" paneli (bina sabit)
+  function kunye(b) {
+    const y = son(b), v = b.yillar[y], ges = b.alternatif.find((o) => o.ikiz === 'ges');
+    const sat = (a, d) => `<div class="flex justify-between gap-3 py-1 border-t border-slate-800/70 first:border-0 text-xs"><span class="text-slate-400">${a}</span><span class="text-slate-100 text-right">${d}</span></div>`;
+    return `<div class="glass-card rounded-xl p-4"><div class="text-sm font-semibold text-white mb-1">${e2(b.ad)}</div>
+      ${sat('Kullanım / inşaat yılı', `${e2(b.kullanim)} • ${e2(b.insaat_yili)}`)}${sat('Kullanım alanı / hacim', `${tr0(b.kullanim_alani_m2)} m² • ${tr0(b.kapali_hacim_m3)} m³`)}${sat('Isıtma-soğutma sistemi', e2(b.sistem))}${sat('Yalıtım', e2(b.yalitim))}
+      ${sat('Isıtma / soğutma derece-gün', `${tr0(b.isitma_derece_gun)} / ${tr0(b.sogutma_derece_gun)}`)}${sat('Etüt dönemi', e2(b.etut_donemi))}
+      ${sat('Çatı GES önerisi', ges ? `${tr0(b.alternatif_kw)} kWe • GÖS ${tr1(ges.geri_odeme_yil)} yıl` : '—')}</div>`;
+  }
+
+  function panelIskelet(el) {
+    const b = D.binalar.find((x) => x.id === bina);
+    el.innerHTML = `<div class="space-y-4">
+      <p class="text-[11px] text-slate-500">Kaynak: ${e2(D.kaynak)}. ${e2(D.not)} Etütler 2022 tüketimlerine göre yapılmıştır; ayrıntılar ve ölçümler için ilgili etüt raporuna bakınız.</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${kpiKartlari([b])}${kunye(b)}</div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><div class="glass-card rounded-xl p-4"><div class="h-64"><canvas id="chEtutM2"></canvas></div></div><div class="glass-card rounded-xl p-4"><div class="h-64"><canvas id="chEtutPay"></canvas></div></div></div>
-      ${karsilastirmaTablosu()}
+      <details class="glass-card rounded-xl p-4"><summary class="cursor-pointer text-sm font-semibold text-white">Üç tesisin kıyası (m² başına tüketim)</summary><div class="mt-3">${karsilastirmaTablosu()}</div></details>
       <section><h3 class="text-sm font-semibold text-white mb-1">Önlemlerin uygulama durumu</h3><div id="etutTakip"></div></section>
       <section><div class="flex flex-wrap items-center gap-2 mb-3"><h3 class="text-sm font-semibold text-white mr-2">Tasarruf önlemleri</h3><div id="etutSuzgec" class="flex flex-wrap items-center gap-2"></div>
         <button onclick="Etut.csv()" class="ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200">CSV indir</button></div>
@@ -156,28 +161,20 @@
   function liste() {
     const bn = D.binalar, l = suzulmus();
     const g = (grup, mevcut, secenekler) => `<div class="flex flex-wrap gap-1 bg-slate-900/80 rounded-lg p-0.5">${secenekler.map(([k, ad]) => dugme(grup, k, ad, mevcut === k)).join('')}</div>`;
-    document.getElementById('etutSuzgec').innerHTML = g('bina', bina, [['hepsi', 'Tüm binalar'], ...bn.map((b) => [b.id, b.kisa])]) + g('tur', tur, [['hepsi', 'Tümü'], ['elektrik', 'Elektrik'], ['doğalgaz', 'Doğalgaz']]) + g('vade', vade, [['hepsi', 'Tüm vadeler'], ['Derhal', 'Derhal'], ['Kısa', 'Kısa'], ['Orta', 'Orta'], ['Uzun', 'Uzun']]);
+    document.getElementById('etutSuzgec').innerHTML = g('tur', tur, [['hepsi', 'Tümü'], ['elektrik', 'Elektrik'], ['doğalgaz', 'Doğalgaz']]) + g('vade', vade, [['hepsi', 'Tüm vadeler'], ['Derhal', 'Derhal'], ['Kısa', 'Kısa'], ['Orta', 'Orta'], ['Uzun', 'Uzun']]);
     document.getElementById('etutTablo').innerHTML = onlemTablosu(l);
     document.getElementById('etutAlt').innerHTML = altTablolar();
     document.getElementById('etutTakip').innerHTML = takipOzeti();
   }
 
-  // ---------- ISO sekmesine "Etütten gelen öneriler" bölümü ----------
-  function isoBolum(tesisId, el) {
-    if (!el) return;
-    const b = D && D.binalar.find((x) => x.tesis === tesisId);
-    if (!b) { el.innerHTML = ''; return; }
-    const l = tumOnlem(b).concat(tumAlt(b)), uyg = l.filter((o) => durumu(o.kod) === 'tamam').length;
-    const tl = topla(b.onlemler.map((o) => o.tl_yil));
-    el.innerHTML = `<details data-k="etut" class="group glass-card rounded-xl overflow-hidden"><summary class="cursor-pointer select-none p-4 flex flex-wrap items-center gap-x-3 gap-y-2 hover:bg-slate-800/40" style="list-style:none"><span class="text-slate-400 inline-block transition-transform group-open:rotate-90">▸</span>
-      <h2 class="text-sm font-semibold text-white">Etütten gelen öneriler</h2><div class="ml-auto flex flex-wrap items-center gap-3 text-[11px] text-slate-400"><span>${e2(b.kisa)} etüt raporu (2023)</span><span>${l.length} öneri</span><span class="text-emerald-300">${uyg} tamamlandı</span><span>${tr0(tl)} TL/yıl potansiyel</span></div></summary>
-      <div class="border-t border-slate-800 p-4 space-y-3"><p class="text-[11px] text-slate-400">Bu tesisin enerji etüt raporundaki önlemler. Uygulama durumunu buradan ya da <a href="#etut" class="text-amber-300 underline">Etütler</a> sekmesinden güncelleyebilirsiniz (ikisi aynı kaydı kullanır, yalnız bu tarayıcıda tutulur). TL değerleri 2022 fiyatlarıdır; ISO eylem planındaki (Excel) eylemlerden ayrıdır, çakışabilir.</p>
-        <div class="overflow-x-auto"><table class="w-full text-xs" style="min-width:700px"><thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px]"><tr><th class="px-3 py-2 text-left">Önlem</th><th class="px-3 text-left">Tür</th><th class="px-3 text-right">Tasarruf/yıl</th><th class="px-3 text-right">TL/yıl</th><th class="px-3 text-right">GÖS (yıl)</th><th class="px-3 text-left">Vade</th><th class="px-3 text-left">Durum</th></tr></thead><tbody>
-        ${l.map((o) => `<tr class="border-t border-slate-800/70 align-top"><td class="px-3 py-2 text-slate-100">${e2(o.ad)}${o.alt ? ' <span class="text-[10px] text-amber-300">(alternatif)</span>' : ''}</td><td class="px-3 py-2 text-slate-400">${e2(o.tur)}</td><td class="px-3 py-2 text-right font-mono whitespace-nowrap">${miktar(o)}</td><td class="px-3 py-2 text-right font-mono">${tr0(o.tl_yil)}</td><td class="px-3 py-2 text-right font-mono text-cyan-300">${o.geri_odeme_yil == null ? '—' : tr1(o.geri_odeme_yil)}</td><td class="px-3 py-2 ${vadeRenk[o.vade] || 'text-slate-500'}">${e2(o.vade || 'nitel')}</td><td class="px-3 py-2">${durumSecim(o.kod, 1)}</td></tr>`).join('')}</tbody></table></div></div></details>`;
-    el.dataset.tesis = tesisId;
+  // ISO "Özet" kartı için: seçili tesisin etüt önlemleri (TL/yıl 2022 fiyatı)
+  function tesisOzet(tesisId) {
+    const b = D && D.binalar.find((x) => x.id === tesisId); if (!b) return null;
+    const l = b.onlemler.filter((o) => o.tl_yil != null), tum = tumOnlem(b).concat(tumAlt(b));
+    return { n: tum.length, tamam: tum.filter((o) => durumu(o.kod) === 'tamam').length, tlYil: topla(l.map((o) => o.tl_yil)) };
   }
 
-  // YGG özeti için: önlemlerin uygulama durumu sayıları (TL'siz öneriler dahil)
+  // YGG özeti için: önlemlerin uygulama durumu sayıları
   function sayilar() {
     if (!D) return null;
     const tum = D.binalar.flatMap((b) => tumOnlem(b).concat(tumAlt(b))), c = { toplam: tum.length, bekliyor: 0, planli: 0, devam: 0, tamam: 0, yok: 0 };
@@ -187,19 +184,20 @@
 
   window.Etut = {
     sayilar,
-    async ac() {
-      const k = document.getElementById('tab-etut');
-      try { await yukle(); } catch (e) { k.innerHTML = '<p class="text-sm text-slate-400 p-6">Etüt verisi (data/etut.json) yüklenemedi.</p>'; return; }
-      iskelet(); if (window.lucide) lucide.createIcons();
+    // ISO sekmesi: seçili tesisin enerji etüdü paneli
+    async panel(tesisId, el) {
+      if (!el) return;
+      try { await yukle(); } catch (e) { el.innerHTML = '<p class="text-sm text-slate-400 p-6">Etüt verisi (data/etut.json) yüklenemedi.</p>'; return; }
+      if (!D.binalar.some((x) => x.id === tesisId)) { el.innerHTML = '<p class="text-sm text-slate-400 p-6">Bu tesis için etüt raporu yok.</p>'; return; }
+      bina = tesisId; panelEl = el; panelIskelet(el);
     },
-    yukle, oneri, isoBolum,
+    yukle, oneri, tesisOzet,
     sz(grup, k) { if (grup === 'bina') bina = k; else if (grup === 'tur') tur = k; else vade = k; liste(); },
     srl(k) { sira = { k, y: sira.k === k ? -sira.y : 1 }; liste(); },
     durum(id, d) {
       if (d === 'bekliyor') delete takip[id]; else takip[id] = { durum: d, tarih: new Date().toISOString().slice(0, 10) };
       kaydet();
       if (document.getElementById('etutTablo')) liste();
-      const iso = document.getElementById('isoEtut'); if (iso && iso.dataset.tesis) { const a = iso.querySelector('details'); const acik = a && a.open; isoBolum(iso.dataset.tesis, iso); if (acik) iso.querySelector('details').open = true; }
     },
     csv() {
       const sat = [['Bina', 'Önlem', 'Tür', 'Tasarruf miktarı', 'Birim', 'TEP/yıl', 'TL/yıl (2022)', 'CO2 ton/yıl', 'Yatırım TL', 'Geri ödeme yıl', 'Vade', 'Durum'],
@@ -209,5 +207,4 @@
     },
   };
   yukle().catch(() => {});   // ISO sekmesi ve dijital ikiz için arka planda önceden yükle
-  if ((location.hash || '').slice(1) === 'etut') window.Etut.ac();   // sayfa doğrudan #etut ile açılırsa dashboard.js bu dosyadan önce çalışmış olur
 })();

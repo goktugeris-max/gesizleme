@@ -10,7 +10,8 @@
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const KH = 'enys_v1_hedef', KT = 'enys_v1_tetkik';
   let E = null, yuk = null, hedefYil = null, enpgYil = null, tf = { madde: 'hepsi', kim: 'hepsi', durum: 'hepsi' };
-  const acik = new Set(['hedef']);
+  const acik = new Set(['hedef', 'enpg', 'tetkik']);
+  const tesisKodu = () => (ctxSon && ctxSon.ctx && ctxSon.ctx.tesis) || 'aassm';
   let kh = {}, kt = { meta: {}, s: {} };
   try { kh = JSON.parse(localStorage.getItem(KH) || '{}') || {}; } catch (e) { kh = {}; }
   try { kt = Object.assign({ meta: {}, s: {} }, JSON.parse(localStorage.getItem(KT) || '{}')); } catch (e) { /* boş */ }
@@ -73,7 +74,7 @@
     const el = document.getElementById('isoHedef'); if (!el || !E) return;
     const yillar = Object.keys(E.hedefler).filter((y) => E.hedefler[y].some((h) => h.tur === 'nicel')).sort();
     if (!hedefYil || !yillar.includes(hedefYil)) hedefYil = yillar.includes('2026') ? '2026' : yillar[yillar.length - 1];
-    const liste = E.hedefler[hedefYil] || [];
+    const liste = (E.hedefler[hedefYil] || []).filter((h) => h.tur !== 'nicel' || h.tesis === tesisKodu());
     const satirlar = [];
     liste.filter((h) => h.tur === 'nicel').forEach((h) => h.kalemler.forEach((k) => satirlar.push({ h, k, r: hesap(D, h, k, hedefYil) })));
     const say = { hedefte: 0, geride: 0, riskte: 0 };
@@ -102,7 +103,7 @@
         <span class="text-[11px] text-slate-500">Hedefler (FRM.06.02): bir önceki yılın aynı aylarına göre azaltım. Gerçekleşen, ISO şifreli verisindeki aylık tüketimden hesaplanır.</span></div>
         <div class="overflow-x-auto"><table class="w-full text-xs" style="min-width:900px"><thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px]"><tr><th class="px-3 py-2 text-left">Amaç</th><th class="px-3 text-left">Enerji</th><th class="px-3 text-left">Dönem</th><th class="px-3 text-right">Baz (${(liste.find((h) => h.baz_yil) || {}).baz_yil || '—'})</th><th class="px-3 text-right">${hedefYil}</th><th class="px-3 text-right">Değişim</th><th class="px-3 text-right">Hedef</th><th class="px-3 text-left">Durum</th><th class="px-3 text-right" title="Yıl sonu hedefi için kalan aylarda bazın yüzde kaçı olmalı">Kalan aylarda gereken</th></tr></thead><tbody>${tablo || '<tr><td colspan="9" class="px-3 py-6 text-center text-slate-500">Bu yıl için hesaplanabilir hedef yok.</td></tr>'}</tbody></table></div>
         <p class="text-[11px] text-slate-500">Değişim = (${hedefYil} dönem toplamı ÷ baz yılın aynı ayları) − 1; hedefin altında (daha negatif) olması iyidir. "Kalan aylarda gereken" = yıl sonunda hedefe ulaşmak için bazın kalan aylarına göre gereken değişim (veri tamamlanmamış aylar için).</p>
-        ${nitel ? `<div class="text-xs font-semibold text-white pt-1">Nicel olmayan hedefler (elle takip, yalnız bu tarayıcıda)</div><div class="grid grid-cols-1 lg:grid-cols-2 gap-3">${nitel}</div>` : ''}</div>`);
+        ${nitel ? `<div class="text-xs font-semibold text-white pt-1">Kurum geneli, nicel olmayan hedefler (elle takip, yalnız bu tarayıcıda)</div><div class="grid grid-cols-1 lg:grid-cols-2 gap-3">${nitel}</div>` : ''}</div>`);
   }
 
   // ---------- 2) ÖEK / EnPG ----------
@@ -111,7 +112,7 @@
     const el = document.getElementById('isoEnpg'); if (!el || !E) return;
     const yillar = Object.keys(E.enpg).sort();
     if (!enpgYil || !yillar.includes(enpgYil)) enpgYil = yillar[yillar.length - 1];
-    const bu = E.enpg[enpgYil] || [], onceki = E.enpg[String(+enpgYil - 1)] || [], om = {};
+    const bu = (E.enpg[enpgYil] || []).filter((r) => r.tesis === tesisKodu()), onceki = (E.enpg[String(+enpgYil - 1)] || []).filter((r) => r.tesis === tesisKodu()), om = {};
     onceki.forEach((r) => { om[anahtar(r)] = r; });
     const oekBy = {}; if (enpgYil === yillar[yillar.length - 1]) bu.forEach((r) => { oekBy[r.no] = (E.oek || {})[r.no]; });
     const satir = bu.map((r) => {
@@ -136,8 +137,8 @@
   function grafikEnpg(yillar) {
     if (!window.Chart || !document.getElementById('chEnpg')) return;
     if (grafikler.enpg) grafikler.enpg.destroy();
-    const son = E.enpg[yillar[yillar.length - 1]] || [], renkler = ['#211950', '#3f8fd2', '#d9822b', '#10b981', '#8b5cf6', '#ef4444', '#14b8a6', '#eab308', '#64748b', '#ec4899', '#0ea5e9', '#84cc16', '#f97316'];
-    const ds = son.filter((r) => (r.tanim || '').includes('m2')).map((r, i) => ({ label: r.bina.replace(/^Buca Sosyal Yaşam Kampüsü\s*/, 'Buca ') + ' – ' + (r.tur === 'Elektrik' ? 'elek.' : 'gaz'), borderColor: renkler[i % renkler.length], backgroundColor: renkler[i % renkler.length], tension: 0.25,
+    const son = (E.enpg[yillar[yillar.length - 1]] || []).filter((r) => r.tesis === tesisKodu()), renkler = ['#211950', '#3f8fd2', '#d9822b', '#10b981', '#8b5cf6', '#ef4444', '#14b8a6', '#eab308', '#64748b', '#ec4899', '#0ea5e9', '#84cc16', '#f97316'];
+    const ds = son.filter((r) => (r.tanim || '').includes('m2')).map((r, i) => ({ label: r.bina + ' – ' + (r.tur === 'Elektrik' ? 'elek.' : 'gaz'), borderColor: renkler[i % renkler.length], backgroundColor: renkler[i % renkler.length], tension: 0.25,
       data: yillar.map((y) => { const o = (E.enpg[y] || []).find((x) => anahtar(x) === anahtar(r)); return o ? Math.round(o.deger * 10) / 10 : null; }) }));
     grafikler.enpg = new Chart(document.getElementById('chEnpg'), { type: 'line', data: { labels: yillar, datasets: ds }, options: { responsive: true, maintainAspectRatio: false, spanGaps: true,
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }, title: { display: true, text: 'EnPG (kWh/m²) — yıllara göre', color: koyuMu() ? '#94a3b8' : '#5b6b7e', font: { size: 11, weight: 'normal' } } } } });
@@ -228,24 +229,35 @@
   }
 
   // ---------- çizim ----------
-  async function ciz(D, ctx) {
-    if (!document.getElementById('isoHedef')) return;
+  async function ciz(D, ctx, hangi) {
     try { await yukle(); } catch (e) {
       ['isoHedef', 'isoEnpg', 'isoTetkik'].forEach((id) => { const x = document.getElementById(id); if (x) x.innerHTML = ''; });
       const y = document.getElementById('isoYgg'); if (y) y.innerHTML = '<p class="text-xs text-slate-500">EnYS verisi (data/enys.json) yüklenemedi.</p>'; return;
     }
     birlestir(D);
     ctxSon = { D, ctx };
-    hedefBolumu(D); enpgBolumu(); tetkikBolumu();
-    const y = document.getElementById('isoYgg');
-    if (y) y.innerHTML = `<div class="glass-card rounded-xl p-4 flex flex-wrap items-center gap-3"><div><div class="text-sm font-semibold text-white">Yönetimin gözden geçirmesi (YGG) hazırlığı</div><div class="text-[11px] text-slate-400">Hedefler, EnPG, referans sapmaları, eylem planı, riskler ve iç tetkik özeti tek sayfada; karar alanları boş bırakılır. Yazdırıp PDF olarak kaydedebilirsiniz.</div></div>
-      <button onclick="Enys.ygg()" class="ml-auto px-4 py-2 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30">YGG özetini oluştur</button></div>`;
+    if (!hangi || hangi === 'hedef') { hedefBolumu(D); enpgBolumu(); }
+    if (!hangi || hangi === 'denetim') {
+      tetkikBolumu();
+      const y = document.getElementById('isoYgg');
+      if (y) y.innerHTML = `<div class="glass-card rounded-xl p-4 flex flex-wrap items-center gap-3"><div><div class="text-sm font-semibold text-white">Yönetimin gözden geçirmesi (YGG) hazırlığı</div><div class="text-[11px] text-slate-400">Hedefler, EnPG, referans sapmaları, eylem planı, riskler ve iç tetkik özeti tek sayfada (tüm tesisler); karar alanları boş bırakılır. Yazdırıp PDF olarak kaydedebilirsiniz.</div></div>
+        <button onclick="Enys.ygg()" class="ml-auto px-4 py-2 rounded-lg text-xs font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30">YGG özetini oluştur</button></div>`;
+    }
+  }
+  // ISO "Özet" sekmesi için: seçili tesisin hedef durum sayıları
+  function ozet(D, tesis) {
+    if (!E) return null;
+    birlestir(D);
+    const yillar = Object.keys(E.hedefler).filter((y) => E.hedefler[y].some((h) => h.tur === 'nicel')).sort(), yil = yillar.includes('2026') ? '2026' : yillar[yillar.length - 1];
+    const say = { yil, hedefte: 0, geride: 0, riskte: 0, toplam: 0 };
+    (E.hedefler[yil] || []).filter((h) => h.tur === 'nicel' && h.tesis === tesis).forEach((h) => h.kalemler.forEach((k) => { const r = hesap(D, h, k, yil); say.toplam++; if (r && r.durum) say[r.durum]++; }));
+    return say;
   }
   let ctxSon = null;
   const yeniden = () => { if (ctxSon) ciz(ctxSon.D, ctxSon.ctx); };
 
   window.Enys = {
-    yukle, birlestir, ciz, tetkikSay,
+    yukle, birlestir, ciz, tetkikSay, ozet,
     tog(k, a) { a ? acik.add(k) : acik.delete(k); },
     hy(y) { hedefYil = y; hedefBolumu(ctxSon.D); },
     ey(y) { enpgYil = y; enpgBolumu(); },
@@ -263,5 +275,6 @@
     ygg() { if (ctxSon) ygg(ctxSon.D, ctxSon.ctx); },
     yeniden,
   };
+  window.Enys.hedefYili = () => hedefYil;
   yukle().catch(() => {});
 })();

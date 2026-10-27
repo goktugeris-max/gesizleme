@@ -229,7 +229,9 @@
       ${etutKutusu(d)}
       ${planTablosu()}
       <p class="text-[10px] text-slate-500">Fiyat ve yatırım tutarları yalnızca bu tarayıcıda saklanır, siteye veya depoya yazılmaz. Model, ${esc2(T.yil)} yılı tüketim profilini sabit kabul eder (hava ve faaliyet farkları ayrıca modellenmemiştir); GES aylık mahsuplaşması abone bazlı değil tesis toplamı üzerindendir.</p></div>`;
+    const acikDurum = [...el.querySelectorAll('details')].map((d) => d.open);   // yeniden çizimde açık/kapalı durumu korunur (kaldıraç seçince bölüm kapanmasın)
     el.innerHTML = `<details data-k="ikiz" ${ctx.acik ? 'open' : ''} class="group glass-card rounded-xl overflow-hidden"><summary class="cursor-pointer select-none p-4 flex flex-wrap items-center gap-x-3 gap-y-2 hover:bg-slate-800/40" style="list-style:none"><span class="text-slate-400 inline-block transition-transform group-open:rotate-90">▸</span><h2 class="text-sm font-semibold text-white">Dijital ikiz ve yatırım senaryoları</h2><div class="ml-auto flex flex-wrap items-center gap-3 text-[11px] text-slate-400">${ozet}</div></summary><div class="border-t border-slate-800">${govde}</div></details>`;
+    el.querySelectorAll('details').forEach((d, i) => { if (acikDurum[i] != null) d.open = acikDurum[i]; });
     ctx.son = { T, d, V, S, F, tesisAd };
     grafikCiz();
   }

@@ -8,11 +8,11 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const RENK = { Elektrik: TV(), 'Doğalgaz': '#3f8fd2' };
-  let D = null, sifreli = null, tesis = 'aassm', yil = '2024', yuklendi = false, rfTur = 'hepsi';
+  let D = null, sifreli = null, tesis = 'aassm', yil = '2024', yuklendi = false, rfTur = 'hepsi', altSekme = 'ozet', bolumSec = 'hepsi';
   const grafik = {};
 
   // ---- bölümlerin açık/kapalı durumu (sekme içinde yeniden çizimlerde korunur)
-  const acik = new Set(['eylem']);
+  const acik = new Set(['eylem', 'risk', 'ikiz', 'motorin', 'havuz', 'notlar']);
   const acikSatir = new Set();
   let eDurum = 'hepsi';
   let kayitlar = [];
@@ -162,11 +162,13 @@
     if (el && window.Chart) grafik[id] = new Chart(el, yapi);
   }
 
-  const seriler = () => D.seriler.filter((s) => s.tesis === tesis && s.yillar[yil]);
+  const tumSeri = () => D.seriler.filter((s) => s.tesis === tesis && s.yillar[yil]);
+  const bolumAdi = (s) => s.bolum.split(' –')[0].trim();
+  const seriler = () => tumSeri().filter((s) => bolumSec === 'hepsi' || bolumAdi(s) === bolumSec);
 
   function ozetKartlari() {
     const gruplar = {};
-    seriler().forEach((s) => {
+    tumSeri().forEach((s) => {
       const v = s.yillar[yil], c = karsilastir(v);
       const g = (gruplar[s.enerji] = gruplar[s.enerji] || { birim: s.birim, takip: 0, kt: 0, kr: 0, ay: 0, sn: 0, sr: 0 });
       g.takip += topla(v.takip); g.kt += c.t; g.kr += c.r; g.ay = Math.max(g.ay, veriAy(v)); g.sn++; if (c.n) g.sr++;
@@ -177,7 +179,7 @@
       const donem = g.ay < 12 ? `Oca–${AY[g.ay - 1]} ${yil}` : yil;
       return kart(`${e} (${donem})`, `${tr0(g.takip)} <span class="text-sm font-medium text-slate-400">${g.birim}</span>`,
         g.kr ? `${g.sr < g.sn ? `Yalnızca referansı olan ${g.sr}/${g.sn} seride: ` : ''}Referans ${tr0(g.kr)} • <span class="${sinif(sapma)} font-semibold">${yuzde(sapma)}</span> ${sapma <= 0 ? '(referansın altında)' : '(referansın üstünde)'}` : 'Referans çizgisi yok (bkz. okuma notları)', e === 'Elektrik' ? 'text-amber-300' : 'text-cyan-300');
-    }).join('') + kart('Hedef', '%' + ((seriler()[0] && seriler()[0].yillar[yil].hedef || 0.02) * 100).toLocaleString('tr-TR'), 'Her enerji kullanımı için yıllık tasarruf hedefi (Excel\'deki HEDEF hücresi)');
+    }).join('') + kart('Hedef', '%' + ((tumSeri()[0] && tumSeri()[0].yillar[yil].hedef || 0.02) * 100).toLocaleString('tr-TR'), 'Her enerji kullanımı için yıllık tasarruf hedefi (Excel\'deki HEDEF hücresi)');
   }
 
   function seriKarti(s, i) {
@@ -357,25 +359,26 @@
       </ul>`);
   }
 
+  // ---- alt sekmeler (tesis içinde tek seferde bir bölüm görünür; uzun sayfa yerine)
+  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim']];
+
   function iskelet() {
-    document.getElementById('isoIcerik').innerHTML = `<style>#isoIcerik summary::-webkit-details-marker{display:none}</style><div class="space-y-6">
+    document.getElementById('isoIcerik').innerHTML = `<style>#isoIcerik summary::-webkit-details-marker{display:none}#isoAlt::-webkit-scrollbar{height:4px}</style><div class="space-y-4">
       <div class="flex flex-wrap items-center gap-3">
         <div id="isoTesisler" class="flex flex-wrap gap-2 mr-auto"></div>
         <label class="text-[11px] text-slate-400">Yıl <select id="isoYil" onchange="Iso.yil(this.value)" class="ml-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100"></select></label>
+        <button onclick="Enys.ygg()" title="Yönetimin gözden geçirmesi hazırlık özeti (tüm tesisler)" class="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30">YGG özeti</button>
       </div>
       <h2 id="isoBaslik" class="text-lg font-bold text-white"></h2>
-      <section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section>
-      <section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section>
-      <section id="isoHedef"></section>
-      <section id="isoEnpg"></section>
-      <section id="isoIkiz"></section>
-      <section id="isoEylem"></section>
-      <section id="isoEtut"></section>
-      <section id="isoTetkik"></section>
-      <section id="isoYgg"></section>
-      <section id="isoEk" class="space-y-4"></section>
-      <section id="isoRisk" class="hidden"></section>
-      <div id="isoNotlar"></div></div>`;
+      <nav id="isoAlt" class="flex gap-1 overflow-x-auto border-b border-slate-800 pb-1"></nav>
+      <div id="isoP-ozet"><section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section><section id="isoOzetSerit" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4"></section></div>
+      <div id="isoP-ref" class="hidden space-y-4"><div id="isoBolumChips" class="flex flex-wrap gap-1"></div><section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoEk" class="space-y-4"></section><div id="isoNotlar"></div></div>
+      <div id="isoP-hedef" class="hidden space-y-4"><section id="isoHedef"></section><section id="isoEnpg"></section></div>
+      <div id="isoP-eylem" class="hidden"><section id="isoEylem"></section></div>
+      <div id="isoP-etut" class="hidden"><section id="isoEtutPanel"></section></div>
+      <div id="isoP-ikiz" class="hidden"><section id="isoIkiz"></section></div>
+      <div id="isoP-risk" class="hidden"><section id="isoRisk" class="hidden"></section><p id="isoRiskBos" class="hidden text-sm text-slate-400 p-6">Bu tesis için risk ve fırsat kaydı yok.</p></div>
+      <div id="isoP-denetim" class="hidden space-y-4"><section id="isoTetkik"></section><section id="isoYgg"></section></div></div>`;
     // açılır bölümlerin durumunu hatırla; grafik içeren bölüm açılınca boyutu yenile
     document.getElementById('isoIcerik').addEventListener('toggle', (ev) => {
       const d = ev.target; if (!d.dataset || !d.dataset.k) return;
@@ -388,21 +391,63 @@
   function ikizBolumu() {
     if (!window.Ikiz) return;
     const bitmemis = kayit(tesis).filter((k) => !['tamamlandi', 'iptal', 'surekli'].includes(etkinDurum(k))).map((k) => k.e);
-    Ikiz.ciz({ D, tesis, eylemler: bitmemis, acik: acik.has('ikiz') });
+    Ikiz.ciz({ D, tesis, eylemler: bitmemis, acik: true });
+  }
+
+  function altNavCiz() {
+    document.getElementById('isoAlt').innerHTML = ALT.map(([k, ad]) => `<button onclick="Iso.alt('${k}')" data-iso-alt="${k}" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${k === altSekme ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-slate-200'}">${ad}</button>`).join('');
+  }
+
+  // Özet sekmesindeki kısa durum kartları: tıklayınca ilgili sekmeye geçer
+  function ozetSerit() {
+    const el = document.getElementById('isoOzetSerit'); if (!el) return;
+    const c = sayilar(kayit(tesis)), oran = tamamlanma(c), riskler = (D.risk && D.risk[tesis]) || [], yRisk = riskler.filter((x) => x.tur === 'Risk' && (x.seviye || 0) >= 12).length;
+    const kart = (k, baslik, deger, alt, renk) => `<button onclick="Iso.alt('${k}')" class="glass-card rounded-xl p-3 text-left hover:border-amber-500/40 transition"><div class="text-[10px] uppercase tracking-wider text-slate-500">${baslik}</div><div class="text-lg font-bold mt-0.5 ${renk || 'text-white'}">${deger}</div><div class="text-[11px] text-slate-500 mt-0.5">${alt}</div></button>`;
+    const ham = (h, e) => [
+      kart('hedef', `${h ? h.yil : ''} hedefleri`, h && h.toplam ? `${h.hedefte}/${h.toplam} hedefte` : '—', h ? `${h.geride} geride • ${h.riskte} riskte` : 'yükleniyor…', h && h.riskte ? 'text-red-300' : 'text-emerald-300'),
+      kart('eylem', 'Eylem planı', oran == null ? '—' : '%' + Math.round(oran * 100) + ' tamamlandı', `${c.gecikmis ? c.gecikmis + ' gecikmiş • ' : ''}${kayit(tesis).length} eylem`, c.gecikmis ? 'text-red-300' : 'text-white'),
+      kart('etut', 'Enerji etüdü', e ? `${tr0(e.tlYil)} TL/yıl` : '—', e ? `${e.n} öneri • ${e.tamam} tamamlandı • 2022 fiyatı` : 'yükleniyor…', 'text-cyan-300'),
+      kart('risk', 'Risk ve fırsat', `${riskler.filter((x) => x.tur === 'Risk').length} risk`, `${yRisk} yüksek seviyeli • ${riskler.filter((x) => x.tur === 'Fırsat').length} fırsat`, yRisk ? 'text-red-300' : 'text-white'),
+    ].join('');
+    el.innerHTML = ham(null, null);
+    const t0 = tesis;
+    Promise.all([window.Enys ? Enys.yukle() : null, window.Etut ? Etut.yukle() : null]).then(() => {
+      if (t0 !== tesis || altSekme !== 'ozet') return;
+      el.innerHTML = ham(window.Enys ? Enys.ozet(D, tesis) : null, window.Etut ? Etut.tesisOzet(tesis) : null);
+    }).catch(() => {});
+  }
+
+  function bolumChips() {
+    const adlar = [...new Set(tumSeri().map(bolumAdi))];
+    const el = document.getElementById('isoBolumChips');
+    el.innerHTML = adlar.length > 1 ? [['hepsi', 'Tüm bölümler'], ...adlar.map((a) => [a, a])].map(([k, ad]) => `<button onclick="Iso.bolum('${k.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-md text-[11px] font-semibold ${bolumSec === k ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-300 hover:text-white'}">${esc(ad)}</button>`).join('') : '';
+  }
+
+  const PANEL = {
+    ozet() { ozetKartlari(); ozetSerit(); },
+    ref() { bolumChips(); document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('') || '<p class="text-sm text-slate-400 p-6">Bu yıl için seri yok.</p>'; seriGrafikleri(); ekBolum(); notlar(); },
+    hedef() { if (window.Enys) Enys.ciz(D, { tesis, yil }, 'hedef'); },
+    eylem() { eylemBolumu(); },
+    etut() { if (window.Etut) Etut.panel(tesis, document.getElementById('isoEtutPanel')); },
+    ikiz() { ikizBolumu(); },
+    risk() { riskBolumu(); document.getElementById('isoRiskBos').classList.toggle('hidden', !document.getElementById('isoRisk').classList.contains('hidden')); },
+    denetim() { if (window.Enys) Enys.ciz(D, { tesis, yil }, 'denetim'); },
+  };
+  function panelGoster() {
+    ALT.forEach(([k]) => document.getElementById('isoP-' + k).classList.toggle('hidden', k !== altSekme));
+    altNavCiz();
+    PANEL[altSekme]();
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 60);
   }
 
   function ciz() {
     if (!document.getElementById('isoTesisler')) iskelet();
     const t = D.tesisler.find((x) => x.id === tesis);
-    document.getElementById('isoTesisler').innerHTML = D.tesisler.map((x) => `<button data-iso-tesis="${x.id}" onclick="Iso.tesis('${x.id}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${x.id === tesis ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-300 hover:text-white'}">${esc(x.ad)}</button>`).join('');
+    document.getElementById('isoTesisler').innerHTML = D.tesisler.map((x) => `<button data-iso-tesis="${x.id}" onclick="Iso.tesis('${x.id}')" class="px-3.5 py-2 rounded-lg text-xs font-semibold ${x.id === tesis ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-300 hover:text-white border border-transparent'}"><span class="hidden sm:inline">${esc(x.ad)}</span><span class="sm:hidden">${esc(({ aassm: 'AASSM', buz: 'Buz Sporları', buca: 'Buca SYK' })[x.id] || x.ad)}</span></button>`).join('');
     document.getElementById('isoYil').innerHTML = [...new Set(D.seriler.flatMap((x) => Object.keys(x.yillar)))].sort().map((y) => `<option ${y === yil ? 'selected' : ''}>${y}</option>`).join('');
     document.getElementById('isoBaslik').textContent = t ? t.ad : '';
-    ozetKartlari();
-    document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('');
-    seriGrafikleri(); ikizBolumu(); eylemBolumu(); ekBolum(); riskBolumu(); notlar();
-    if (window.Etut) Etut.yukle().then(() => Etut.isoBolum(tesis, document.getElementById('isoEtut'))).catch(() => {});
-    if (window.Enys) Enys.ciz(D, { tesis, yil });
-    if (window.lucide) lucide.createIcons();
+    panelGoster();
   }
 
   const satirAc = (onek, k, simgeOnek) => {
@@ -422,7 +467,9 @@
       await ortakYukle();
       ciz();
     },
-    tesis(id) { tesis = id; ciz(); },
+    tesis(id) { tesis = id; bolumSec = 'hepsi'; ciz(); },
+    alt(k) { if (!PANEL[k]) return; altSekme = k; if (yuklendi && document.getElementById('isoAlt')) panelGoster(); },
+    bolum(b) { bolumSec = b; PANEL.ref(); },
     yil(y) { yil = y; ciz(); },
     rf(k) { rfTur = k; riskBolumu(); },
     ed(k) { eDurum = k; eylemBolumu(); },
