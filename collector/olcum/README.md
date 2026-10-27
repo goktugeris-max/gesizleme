@@ -1,7 +1,7 @@
 # Analizör / süzme sayaç okuyucu — kurulum
 
 Amaç: şartnamedeki 5 enerji analizörü ve 50 süzme sayaçtan (RS-485 Modbus RTU → ağ geçidi → Modbus TCP) veriyi okuyup
-Supabase'e yazmak; panelde **Ölçüm** sekmesi bunu gösterir. Cihaz markasından bağımsızdır: her cihaz tipi için `profiller/` altında bir
+Supabase'e yazmak; panelde **ISO 50001 → tesis → Ölçüm** alt sekmesi bunu gösterir (nokta listesindeki `tesis` alanı `aassm`, `buz` ya da `buca` olmalı). Cihaz markasından bağımsızdır: her cihaz tipi için `profiller/` altında bir
 "kayıt haritası" (profil) vardır. Hazır profil: `entes_mpr` (Entes MPR-3x/4x, üretici register tablosundan).
 
 ## Parçalar
@@ -19,7 +19,7 @@ Supabase'e yazmak; panelde **Ölçüm** sekmesi bunu gösterir. Cihaz markasınd
 1. Terminal 1: `python3 olcum_sim.py --port 5020`
 2. Terminal 2: `python3 olcum_oku.py --ayar noktalar.ornek.json --bir-tur --cikti son.json` → `son.json` içinde değerler görünür.
    (Örnekteki ikinci nokta için port 5021'de sim yoksa "okunamadı" yazar — çevrimdışı davranışı budur.)
-3. Panelde Ölçüm sekmesi → "Örnek veriyle göster" arayüzü gösterir.
+3. Panelde ISO 50001 → tesis → Ölçüm alt sekmesi → "Örnek veriyle göster" arayüzü gösterir.
 
 ## Gerçek kurulum
 1. Supabase → SQL Editor: `supabase/olcum.sql` dosyasını bir kez çalıştırın.
