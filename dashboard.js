@@ -7,7 +7,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'karbon', 'veri', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'etut', 'karbon', 'veri', 'canli', 'ariza'];
 
   const GES_ALT = ['genel', 'santraller', 'harita', 'analiz', 'canli', 'ariza'];
 
@@ -344,6 +344,7 @@
     if (ad === 'dogalgaz' && window.Dogalgaz) Dogalgaz.ac();
     if (ad === 'kaynak' && window.Kaynak) Kaynak.ac();
     if (ad === 'iso' && window.Iso) Iso.ac();
+    if (ad === 'etut' && window.Etut) Etut.ac();
     if (ad === 'harita' && window.Harita) Harita.ac();
     if (ad === 'karbon' && window.Karbon) Karbon.ac();
     if (ad === 'analiz' && window.Analiz) Analiz.ac();
@@ -405,7 +406,7 @@
   // ---------- kaydırma (swipe) ile ana sekmeler arasında geçiş ----------
   // Sola kaydır = sonraki ana sekme, sağa kaydır = önceki. GES alt sekmeleri (Genel Bakış hariç), harita, tablo/grafik gibi
   // kendi kaydırması olan alanlar ve pencereler etkilenmez.
-  const ANA_SIRA = ['ozet', 'genel', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'karbon'];
+  const ANA_SIRA = ['ozet', 'genel', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'etut', 'karbon'];
   function anaIndeks(ad) { return GES_ALT.includes(ad) ? 1 : ANA_SIRA.indexOf(ad); }
   function kaydirmaEngelli(el) {
     if (!el || !el.closest) return true;

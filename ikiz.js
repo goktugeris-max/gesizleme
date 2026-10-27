@@ -16,7 +16,7 @@
     aassm: [{ ad: 'Ana bina', kw: 0 }],
   };
   const grafik = {};
-  let ctx = null, kayitlar = {};
+  let ctx = null, kayitlar = {}, etutHazir = false;
   try { kayitlar = JSON.parse(localStorage.getItem(ANAHTAR) || '{}') || {}; } catch (e) { kayitlar = {}; }
   const sakla = () => { try { localStorage.setItem(ANAHTAR, JSON.stringify(kayitlar)); } catch (e) { /* özel pencere */ } };
 
@@ -163,6 +163,23 @@
       <td class="px-3 py-2 font-mono text-slate-400">${r && r.yatirim != null ? tr0(r.yatirim) : '—'}</td><td class="px-3 py-2 text-right font-mono">${r && r.geriOdeme != null ? tr1(r.geriOdeme) + ' yıl' : '—'}</td></tr>`;
   }
 
+  // Etüt raporundaki hesaplanmış tasarruf oranları (Etut.oneri) — "Uygula" kaldıracın tasarruf yüzdesini etüt değerine ayarlar
+  function etutKutusu(d) {
+    const o = window.Etut && Etut.oneri(ctx.tesis); if (!o) return '';
+    const p1 = (n) => (n == null ? '—' : n.toLocaleString('tr-TR', { maximumFractionDigits: 1, minimumFractionDigits: 1 }));
+    const satir = (ad, deger, aciklama, k) => `<tr class="border-t border-slate-800/70"><td class="px-2 py-1.5 text-slate-200">${ad}</td><td class="px-2 py-1.5 text-right font-mono text-cyan-300">${deger}</td><td class="px-2 py-1.5 text-slate-400">${aciklama}</td><td class="px-2 py-1.5 text-right">${k ? `<button onclick="Ikiz.etutUygula('${k}')" class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">Uygula</button>` : ''}</td></tr>`;
+    const adlar = (l) => l.map((x) => esc2(x.ad)).join('; ') || '—';
+    const gesTek = d.ges.birimler.length === 1, g = o.ges;
+    return `<details class="mt-4"><summary class="cursor-pointer text-xs text-slate-300">Etüt raporundaki değerler (${esc2(o.bina.kisa)}, ${o.yil} tüketimine göre) — tasarruf oranlarını etütle eşleştir</summary>
+      <table class="w-full text-xs mt-2"><thead><tr class="text-slate-400"><th class="px-2 py-1 text-left">Kaldıraç</th><th class="px-2 py-1 text-right">Etüt değeri</th><th class="px-2 py-1 text-left">Etüt önlemleri</th><th></th></tr></thead><tbody>
+      ${satir('Bina kabuğu ve tesisat yalıtımı', o.kabuk.pct ? '%' + p1(o.kabuk.pct) + ' gaz' : '—', adlar(o.kabuk.onlemler), o.kabuk.pct ? 'kabuk' : '')}
+      ${satir('Kazan / kaskad sistemi', o.kazan.pct ? '%' + p1(o.kazan.pct) + ' gaz' : '—', adlar(o.kazan.onlemler), o.kazan.pct ? 'kazan' : '')}
+      ${satir('LED aydınlatma', o.led.pct ? '%' + p1(o.led.pct) + ' elektrik' : '—', adlar(o.led.onlemler) + (o.led.pct ? ' (aydınlatma payı, LED tasarrufu %' + (d.led.tas) + ' kabul edilerek ayarlanır)' : ''), o.led.pct ? 'led' : '')}
+      ${satir('Çatı GES', g ? tr0(g.kw) + ' kWe' : '—', g ? `etüt önerisi ~${tr0(g.kwh)} kWh/yıl • geri ödeme ${p1(g.geri_odeme_yil)} yıl${gesTek ? '' : ' • tesiste birden çok GES birimi var, kW\'ları elle girin'}` : 'etütte GES önerisi yok', g && gesTek ? 'ges' : '')}
+      </tbody></table>
+      <p class="text-[10px] text-slate-500 mt-1">Etüt oranları, etüt yılı tüketimine göre hesaplanmış yüzdelerdir; burada ikizin taban yılına uygulanır. Etütteki motor, stand-by, tarife gibi önlemlerin ikizde karşılığı yoktur (Enerji Etütleri sekmesinde bakınız). Çakışmayı önlemek için yalıtım/kazan değerlerini birlikte açıp kontrol edin.</p></details>`;
+  }
+
   function planTablosu() {
     const sayiDeger = (s) => Number(String(s).replace(/\./g, '').replace(',', '.'));
     const l = (ctx.eylemler || []).map((e) => { const m = /([\d.]+(?:,\d+)?)\s*(kWh|Sm³|Sm3)/i.exec(e.hedef || ''); return Object.assign({}, e, { kwh: m && /kwh/i.test(m[2]) ? sayiDeger(m[1]) : null, sm3: m && /sm/i.test(m[2]) ? sayiDeger(m[1]) : null }); });
@@ -176,6 +193,7 @@
   function ciz(c) {
     ctx = c;
     const el = document.getElementById('isoIkiz'); if (!el) return;
+    if (window.Etut && !etutHazir) { etutHazir = true; Etut.yukle().then(() => ciz(ctx)).catch(() => {}); }
     const F = (window.Karbon && Karbon.faktorler) ? Karbon.faktorler() : { ef_elek: 0.479, dg_kwh_sm3: 9.5, ef_dg: 0.184 };
     const T = taban(), d = durum(), V = gesVerim(), S = hesapla(T, d, F, V);
     const tesisAd = (ctx.D.tesisler.find((t) => t.id === ctx.tesis) || {}).ad || '';
@@ -208,6 +226,7 @@
         <button onclick="Ikiz.yazdir()" class="px-3 py-1.5 rounded-lg font-semibold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30">Yönetim özeti (yazdır)</button>
         <button onclick="Ikiz.sifirla()" class="px-3 py-1.5 rounded-lg font-semibold text-slate-400 hover:text-slate-200">Varsayılanlara dön</button></div>
       <div class="h-64"><canvas id="chIkiz"></canvas></div>
+      ${etutKutusu(d)}
       ${planTablosu()}
       <p class="text-[10px] text-slate-500">Fiyat ve yatırım tutarları yalnızca bu tarayıcıda saklanır, siteye veya depoya yazılmaz. Model, ${esc2(T.yil)} yılı tüketim profilini sabit kabul eder (hava ve faaliyet farkları ayrıca modellenmemiştir); GES aylık mahsuplaşması abone bazlı değil tesis toplamı üzerindendir.</p></div>`;
     el.innerHTML = `<details data-k="ikiz" ${ctx.acik ? 'open' : ''} class="group glass-card rounded-xl overflow-hidden"><summary class="cursor-pointer select-none p-4 flex flex-wrap items-center gap-x-3 gap-y-2 hover:bg-slate-800/40" style="list-style:none"><span class="text-slate-400 inline-block transition-transform group-open:rotate-90">▸</span><h2 class="text-sm font-semibold text-white">Dijital ikiz ve yatırım senaryoları</h2><div class="ml-auto flex flex-wrap items-center gap-3 text-[11px] text-slate-400">${ozet}</div></summary><div class="border-t border-slate-800">${govde}</div></details>`;
@@ -232,7 +251,15 @@
     ayar(p, v) { yol(durum(), p, sayi(v)); sakla(); ciz(ctx); },
     ac(k, v) { durum()[k].on = !!v; sakla(); ciz(ctx); },
     gesKw(i, v) { durum().ges.birimler[i].kw = sayi(v) || 0; sakla(); ciz(ctx); },
-    sifirla() { delete kayitlar[ctx.tesis]; sakla(); ciz(ctx); },
+    etutUygula(k) {
+      const o = window.Etut && Etut.oneri(ctx.tesis), d = durum(); if (!o) return;
+      const yv = (n) => Math.round(n * 10) / 10;
+      if (k === 'kabuk' || k === 'kazan') { d[k].on = true; d[k].tas = yv(o[k].pct); }
+      else if (k === 'led') { d.led.on = true; d.led.pay = yv(o.led.pct / ((d.led.tas || 50) / 100)); }
+      else if (k === 'ges' && o.ges && d.ges.birimler.length === 1) { d.ges.on = true; d.ges.birimler[0].kw = o.ges.kw; }
+      sakla(); ciz(ctx);
+    },
+        sifirla() { delete kayitlar[ctx.tesis]; sakla(); ciz(ctx); },
     csv() {
       const { T, d, S, tesisAd } = ctx.son, sat = [['Kaldıraç', 'Elektrik kWh', 'Doğalgaz Sm3', 'CO2 t', 'Yatırım TL', 'Yıllık kazanç TL', 'Geri ödeme yıl'],
         ...S.sonuc.map((r) => [r.ad, Math.round(r.dE), Math.round(r.dG), r.co2.toFixed(1), r.yatirim ?? '', r.tl != null ? Math.round(r.tl) : '', r.geriOdeme != null ? r.geriOdeme.toFixed(1) : '']),
