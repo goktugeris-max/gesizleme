@@ -1,7 +1,7 @@
 /* Ölçüm sekmesi (enerji analizörü / süzme sayaç): anlık değerler, 24 saatlik güç eğrisi, güç kalitesi uyarıları.
  *
  * Akış: binadaki okuyucu (collector/olcum/olcum_oku.py) Modbus ile cihazları okur → Supabase (olcum_nokta, olcum_son, olcum_15dk;
- * supabase/olcum.sql) → bu sekme Veri Girişi hesabıyla giriş yapılınca okur. Tablolar anon'a KAPALIDIR.
+ * supabase/olcum.sql) → bu sekme Veri Girişi hesabıyla giriş yapılınca okur. Arayüz ISO 50001 sekmesinin "Ölçüm" alt sekmesindedir (iso.js → Olcum.panel(tesis, el)). Tablolar anon'a KAPALIDIR.
  * Cihaz henüz yokken "Örnek veriyle göster" düğmesi sahte (simülasyon) veriyle arayüzü gösterir; örnek veri belirgin şekilde etiketlenir.
  * Değer anahtarları profildeki standart adlardır (v_l1, i_l1, p_top [W], pf_top, thd_i_l1, e_tuketim_wh …) — cihaz markasından bağımsızdır.
  */
@@ -10,7 +10,7 @@
   const sayi = (n, o) => (n == null || !isFinite(n) ? '—' : Number(n).toLocaleString('tr-TR', o || { maximumFractionDigits: 1 }));
   const ESIK = { bayat_dk: 5, vmin: 207, vmax: 253, thdv: 8, thdi: 15, pf: 0.9, dengesiz_i: 10, fmin: 49.5, fmax: 50.5 };   // EN 50160 ±%10, THD-V %8; diğerleri başlangıç değeri
   const YENILE_MS = 30000;
-  let D = null, secili = null, grafik = null, zamanlayici = null, ornek = false, yukleniyor = false, hata = null;
+  let D = null, secili = null, grafik = null, zamanlayici = null, ornek = false, yukleniyor = false, hata = null, kap = null, tesisId = null;
 
   // ---------- veri ----------
   async function yukle() {
@@ -33,10 +33,10 @@
 
   function ornekVeri() {
     const t0 = Date.now(), noktalar = [
-      { kod: 'AASSM-ZK-CH1', ad: 'AASSM chiller grubu 1', tesis: 'AASSM', cihaz_tipi: 'analizor', k: 1.0 },
-      { kod: 'AASSM-ZK-CH2', ad: 'AASSM chiller grubu 2', tesis: 'AASSM', cihaz_tipi: 'analizor', k: 0.8 },
-      { kod: 'BUZ-ZK-CH1', ad: 'Buz Sporları chiller', tesis: 'Buz Sporları', cihaz_tipi: 'analizor', k: 1.3 },
-      { kod: 'BUCA-ASEVI-P1', ad: 'Buca Aşevi ana pano', tesis: 'Buca SYK', cihaz_tipi: 'sayac_ct', k: 0.4 },
+      { kod: 'AASSM-ZK-CH1', ad: 'AASSM chiller grubu 1', tesis: 'aassm', cihaz_tipi: 'analizor', k: 1.0 },
+      { kod: 'AASSM-ZK-CH2', ad: 'AASSM chiller grubu 2', tesis: 'aassm', cihaz_tipi: 'analizor', k: 0.8 },
+      { kod: 'BUZ-ZK-CH1', ad: 'Buz Sporları chiller', tesis: 'buz', cihaz_tipi: 'analizor', k: 1.3 },
+      { kod: 'BUCA-ASEVI-P1', ad: 'Buca Aşevi ana pano', tesis: 'buca', cihaz_tipi: 'sayac_ct', k: 0.4 },
     ];
     const D = { nokta: noktalar, son: {}, d15: [], ornek: true };
     noktalar.forEach((n, ix) => {
@@ -60,6 +60,11 @@
     });
     return D;
   }
+
+  // Nokta hangi ISO tesisine ait: olcum_nokta.tesis alanı tesis kimliği (aassm/buz/buca) ya da adı olabilir
+  const NORM = (x) => String(x || '').toLocaleLowerCase('tr').replace(/[^a-z0-9ğüşıöç]/g, '');
+  const TESIS_ANAHTAR = { aassm: ['aassm', 'ahmedadnan'], buz: ['buzsporlar', 'buzpisti', 'asıkveysel', 'buz'], buca: ['buca'] };
+  const tesisiMi = (n) => { const t = NORM(n.tesis); return !tesisId || (t && (TESIS_ANAHTAR[tesisId] || [tesisId]).some((a) => t.includes(a))); };
 
   // ---------- kurallar ----------
   function uyarilar(n, s) {
@@ -101,20 +106,21 @@
   }
 
   function ciz() {
-    const el = document.getElementById('olcumIcerik');
-    if (!el) return;
+    const el = kap;
+    if (!el || !document.body.contains(el)) return;
     if (!window.VeriDB || !VeriDB.hazir()) { el.innerHTML = bosEkran('Supabase ayarı yok (supabase-ayar.js). Ölçüm verisi veritabanından okunur.', false); return icon(); }
     if (!ornek && !VeriDB.oturum()) { el.innerHTML = bosEkran('Ölçüm verileri yalnız giriş yapmış kullanıcılara açıktır. Önce Veri Girişi hesabınızla giriş yapın.', true); return icon(); }
     if (hata) { el.innerHTML = bosEkran(esc(hata), false); return icon(); }
     if (!D) { el.innerHTML = '<div class="text-sm text-slate-400 p-4">Yükleniyor…</div>'; return; }
-    if (!D.nokta.length) { el.innerHTML = bosEkran('Henüz ölçüm noktası yok. Okuyucu (collector/olcum/olcum_oku.py) çalışmaya başlayınca noktalar burada görünür. Kurulum: collector/olcum/README.md', false); return icon(); }
+    const noktalar = D.nokta.filter(tesisiMi);
+    if (!noktalar.length) { el.innerHTML = bosEkran('Bu tesis için henüz ölçüm noktası yok. Analizörler takılıp okuyucu (collector/olcum/olcum_oku.py) çalışmaya başlayınca noktalar burada görünür. Kurulum: collector/olcum/README.md', false); return icon(); }
 
-    const satir = D.nokta.map((n) => { const s = D.son[n.kod], u = uyarilar(n, s); return { n, s, u, sev: seviye(u) }; });
+    const satir = noktalar.map((n) => { const s = D.son[n.kod], u = uyarilar(n, s); return { n, s, u, sev: seviye(u) }; });
     const cevrimici = satir.filter((x) => x.s && x.s.durum === 'cevrimici' && (Date.now() - new Date(x.s.zaman).getTime()) / 60000 <= ESIK.bayat_dk).length;
     const toplamKw = satir.reduce((t, x) => t + (x.s && x.s.durum === 'cevrimici' && x.s.deger && x.s.deger.p_top > 0 ? x.s.deger.p_top / 1000 : 0), 0);
     const kwh24 = satir.reduce((t, x) => t + (tuketim24(x.n.kod) || 0), 0);
     const sorunlu = satir.filter((x) => x.sev === 'k').length, dikkat = satir.filter((x) => x.sev === 's').length;
-    if (!secili || !D.nokta.some((n) => n.kod === secili)) secili = (satir.find((x) => x.sev === 'k') || satir[0]).n.kod;
+    if (!secili || !noktalar.some((n) => n.kod === secili)) secili = (satir.find((x) => x.sev === 'k') || satir[0]).n.kod;
 
     el.innerHTML = `
       ${D.ornek ? `<div class="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs text-amber-300 flex items-center justify-between gap-3"><span><b>ÖRNEK VERİ</b> — gerçek ölçüm değildir; arayüzü göstermek için simülasyonla üretildi.</span><button onclick="Olcum.ornek(false)" class="underline shrink-0">Kapat</button></div>` : ''}
@@ -141,7 +147,7 @@
   }
 
   function detayCiz(x) {
-    const el = document.getElementById('olcumDetay');
+    const el = kap && kap.querySelector('#olcumDetay');
     if (!el || !x) return;
     const d = (x.s && x.s.deger) || {}, f = (k, o) => sayi(d[k], o);
     const faz = (b, ks, o, bol) => `<tr><td class="py-1 text-slate-400">${b}</td>${ks.map((k) => `<td class="py-1 text-right">${d[k] != null ? sayi(d[k] / (bol || 1), o) : '—'}</td>`).join('')}</tr>`;
@@ -174,18 +180,23 @@
   function icon() { if (window.lucide) lucide.createIcons(); }
 
   async function yenile() { await yukle(); ciz(); }
-  function ac() {
+  // ISO 50001 sekmesindeki "Ölçüm" alt sekmesi: seçili tesisin noktalarını `el` içine çizer ve görünür kaldığı sürece yeniler
+  function panel(tesis, el) {
+    kap = el; tesisId = tesis; secili = null;
+    if (grafik) { grafik.destroy(); grafik = null; }
     yenile();
     clearInterval(zamanlayici);
-    zamanlayici = setInterval(() => { const t = document.getElementById('tab-olcum'); if (!t || t.classList.contains('hidden')) { clearInterval(zamanlayici); return; } if (!yukleniyor) yenile(); }, YENILE_MS);
+    zamanlayici = setInterval(() => {
+      if (!kap || !document.body.contains(kap) || kap.closest('.hidden')) { clearInterval(zamanlayici); return; }
+      if (!yukleniyor) yenile();
+    }, YENILE_MS);
   }
 
   window.Olcum = {
-    ac,
+    panel,
     sec(kod) { secili = kod; ciz(); },
     ornek(v) { ornek = !!v; yenile(); },
     uyarilar,   // test/rapor için
     ESIK,
   };
-  if (location.hash === '#olcum') ac();   // doğrudan #olcum bağlantısıyla açılışta dashboard.js bu betikten önce çalışır
 })();

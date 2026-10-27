@@ -7,7 +7,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'olcum', 'karbon', 'veri', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'karbon', 'veri', 'canli', 'ariza'];
 
   const GES_ALT = ['genel', 'santraller', 'harita', 'analiz', 'canli', 'ariza'];
 
@@ -318,7 +318,7 @@
 
   // ---------- sekmeler ----------
   function sekmeGoster(ad) {
-    if (ad === 'etut') { ad = 'iso'; if (window.Iso) Iso.alt('etut'); }   // eski #etut bağlantısı: enerji etüdü artık ISO 50001 içinde
+    if (ad === 'etut' || ad === 'olcum') { const alt = ad; ad = 'iso'; if (window.Iso) Iso.alt(alt); }   // eski #etut bağlantısı: enerji etüdü artık ISO 50001 içinde
     if (!SEKMELER.includes(ad)) ad = 'ozet';
     SEKMELER.forEach((t) => {
       document.getElementById('tab-' + t).classList.toggle('hidden', t !== ad);
@@ -347,7 +347,6 @@
     if (ad === 'iso' && window.Iso) Iso.ac();
     if (ad === 'harita' && window.Harita) Harita.ac();
     if (ad === 'karbon' && window.Karbon) Karbon.ac();
-    if (ad === 'olcum' && window.Olcum) Olcum.ac();
     if (ad === 'analiz' && window.Analiz) Analiz.ac();
     if (ad === 'veri' && window.Veri) Veri.ac();
     if (history.replaceState) history.replaceState(null, '', '#' + ad);
@@ -407,7 +406,7 @@
   // ---------- kaydırma (swipe) ile ana sekmeler arasında geçiş ----------
   // Sola kaydır = sonraki ana sekme, sağa kaydır = önceki. GES alt sekmeleri (Genel Bakış hariç), harita, tablo/grafik gibi
   // kendi kaydırması olan alanlar ve pencereler etkilenmez.
-  const ANA_SIRA = ['ozet', 'genel', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'olcum', 'karbon'];
+  const ANA_SIRA = ['ozet', 'genel', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'karbon'];
   function anaIndeks(ad) { return GES_ALT.includes(ad) ? 1 : ANA_SIRA.indexOf(ad); }
   function kaydirmaEngelli(el) {
     if (!el || !el.closest) return true;

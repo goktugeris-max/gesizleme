@@ -109,12 +109,14 @@
     const secili = D.seriler.filter((s) => s.yillar[yil]);
     const liste = secili.map((s) => { const v = s.yillar[yil], c = karsilastir(v); return { s, v, c, sapma: c.r ? c.t / c.r - 1 : null, ay: veriAy(v) }; }).filter((x) => x.sapma != null);
     const asan = liste.filter((x) => x.sapma > 0);
+    const tepT = tepHesap(secili);
     const tesisAd = (id) => ((D.tesisler.find((t) => t.id === id) || {}).ad || id);
     const uyarilar = liste.filter((x) => x.sapma > 0.05 && x.ay >= 3).map((x) => ({ modul: 'ISO 50001', etiket: 'Referans aşımı', metin: `${tesisAd(x.s.tesis)} / ${x.s.bolum} (${x.s.enerji}, ${yil}): referansın ${(x.sapma * 100).toLocaleString('tr-TR', { maximumFractionDigits: 1 })}% üstünde.`, renk: x.sapma > 0.15 ? 'text-red-400' : 'text-amber-300', href: '#iso', puan: 25 + Math.min(55, x.sapma * 200) }));
     Dash.ozetKaydet('iso', {
       kart: `<div class="grid grid-cols-2 gap-3 text-xs text-slate-500">
         <div><div class="text-[10px] uppercase tracking-wider text-slate-500">${yil} izlenen seri</div><div class="text-lg font-bold text-white">${liste.length}</div></div>
         <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Referans aşımı</div><div class="text-lg font-bold ${asan.length ? 'text-amber-300' : 'text-emerald-400'}">${asan.length} <span class="text-xs text-slate-400">seri</span></div></div>
+        <div class="col-span-2"><div class="text-[10px] uppercase tracking-wider text-slate-500">${yil} elektrik + doğalgaz (3 tesis)</div><div class="text-lg font-bold text-cyan-300">${tr0(tepT.elek + tepT.gaz)} <span class="text-xs text-slate-500">TEP</span></div><div class="text-[11px] text-slate-500">${D.tesisler.map((t) => { const x = tepHesap(secili.filter((q) => q.tesis === t.id)); return (t.ad.match(/\(([^)]+)\)/) ? t.ad.match(/\(([^)]+)\)/)[1] : t.ad.split(' ')[0]) + ' ' + tr0(x.elek + x.gaz); }).join(' • ')}</div></div>
         <div class="col-span-2 text-[11px] text-slate-500">${uyarilar.length ? `%5'in üzerinde aşan ${uyarilar.length} seri var` : 'Referans çizgisine göre belirgin aşım yok'}</div></div>`,
       uyarilar: uyarilar.sort((a, b) => b.puan - a.puan).slice(0, 4),
     });
@@ -162,6 +164,9 @@
     if (el && window.Chart) grafik[id] = new Chart(el, yapi);
   }
 
+  // TEP dönüşümü: etüt raporlarıyla aynı (elektrik 0,000086 TEP/kWh; doğalgaz 0,000825 TEP/Sm³). Motorin vb. dahil değildir.
+  const TEP_ORAN = { 'kWh': 0.000086, 'Sm³': 0.000825 };
+  const tepHesap = (seriler_) => seriler_.reduce((a, s) => { const v = s.yillar[yil], o = TEP_ORAN[s.birim]; if (!v || !o) return a; const t = topla(v.takip) * o; if (s.birim === 'kWh') a.elek += t; else a.gaz += t; return a; }, { elek: 0, gaz: 0 });
   const tumSeri = () => D.seriler.filter((s) => s.tesis === tesis && s.yillar[yil]);
   const bolumAdi = (s) => s.bolum.split(' –')[0].trim();
   const seriler = () => tumSeri().filter((s) => bolumSec === 'hepsi' || bolumAdi(s) === bolumSec);
@@ -179,7 +184,11 @@
       const donem = g.ay < 12 ? `Oca–${AY[g.ay - 1]} ${yil}` : yil;
       return kart(`${e} (${donem})`, `${tr0(g.takip)} <span class="text-sm font-medium text-slate-400">${g.birim}</span>`,
         g.kr ? `${g.sr < g.sn ? `Yalnızca referansı olan ${g.sr}/${g.sn} seride: ` : ''}Referans ${tr0(g.kr)} • <span class="${sinif(sapma)} font-semibold">${yuzde(sapma)}</span> ${sapma <= 0 ? '(referansın altında)' : '(referansın üstünde)'}` : 'Referans çizgisi yok (bkz. okuma notları)', e === 'Elektrik' ? 'text-amber-300' : 'text-cyan-300');
-    }).join('') + kart('Hedef', '%' + ((tumSeri()[0] && tumSeri()[0].yillar[yil].hedef || 0.02) * 100).toLocaleString('tr-TR'), 'Her enerji kullanımı için yıllık tasarruf hedefi (Excel\'deki HEDEF hücresi)');
+    }).join('') + (() => {
+      const t = tepHesap(tumSeri()), ay = Math.max(0, ...tumSeri().map((x) => veriAy(x.yillar[yil])));
+      return kart(`Toplam enerji — TEP (${ay && ay < 12 ? 'Oca–' + AY[ay - 1] + ' ' + yil : yil})`, `${tr0(t.elek + t.gaz)} <span class="text-sm font-medium text-slate-400">TEP</span>`,
+        `Elektrik ${tr0(t.elek)} • Doğalgaz ${tr0(t.gaz)} TEP <span class="text-slate-500">(etüt raporlarıyla aynı dönüşüm; motorin dahil değil)</span>`, 'text-cyan-300');
+    })() + kart('Hedef', '%' + ((tumSeri()[0] && tumSeri()[0].yillar[yil].hedef || 0.02) * 100).toLocaleString('tr-TR'), 'Her enerji kullanımı için yıllık tasarruf hedefi (Excel\'deki HEDEF hücresi)');
   }
 
   function seriKarti(s, i) {
@@ -360,7 +369,7 @@
   }
 
   // ---- alt sekmeler (tesis içinde tek seferde bir bölüm görünür; uzun sayfa yerine)
-  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim']];
+  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim']];
 
   function iskelet() {
     document.getElementById('isoIcerik').innerHTML = `<style>#isoIcerik summary::-webkit-details-marker{display:none}#isoAlt::-webkit-scrollbar{height:4px}</style><div class="space-y-4">
@@ -373,6 +382,7 @@
       <nav id="isoAlt" class="flex gap-1 overflow-x-auto border-b border-slate-800 pb-1"></nav>
       <div id="isoP-ozet"><section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section><section id="isoOzetSerit" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4"></section></div>
       <div id="isoP-ref" class="hidden space-y-4"><div id="isoBolumChips" class="flex flex-wrap gap-1"></div><section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoEk" class="space-y-4"></section><div id="isoNotlar"></div></div>
+      <div id="isoP-olcum" class="hidden"><section id="isoOlcum"></section></div>
       <div id="isoP-hedef" class="hidden space-y-4"><section id="isoHedef"></section><section id="isoEnpg"></section></div>
       <div id="isoP-eylem" class="hidden"><section id="isoEylem"></section></div>
       <div id="isoP-etut" class="hidden"><section id="isoEtutPanel"></section></div>
@@ -426,6 +436,7 @@
   const PANEL = {
     ozet() { ozetKartlari(); ozetSerit(); },
     ref() { bolumChips(); document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('') || '<p class="text-sm text-slate-400 p-6">Bu yıl için seri yok.</p>'; seriGrafikleri(); ekBolum(); notlar(); },
+    olcum() { if (window.Olcum) Olcum.panel(tesis, document.getElementById('isoOlcum')); },
     hedef() { if (window.Enys) Enys.ciz(D, { tesis, yil }, 'hedef'); },
     eylem() { eylemBolumu(); },
     etut() { if (window.Etut) Etut.panel(tesis, document.getElementById('isoEtutPanel')); },
