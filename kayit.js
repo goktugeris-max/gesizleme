@@ -18,11 +18,17 @@
     const rest = (yol, ayar) => VeriDB.istek('/rest/v1/' + yol, ayar);
     const ids = (s) => cfg.id + '_' + s;
 
-    async function yukle() {
+    // Aynı anda gelen yükleme istekleri tek isteği paylaşır (iki liste birbirinin verisini beklerken yarış olmasın)
+    function yukle(zorla) {
+      if (k._bekleyen) return k._bekleyen;
+      if (!zorla && k._son && Date.now() - k._son < 2000) return Promise.resolve();   // az önce okundu (ilişkili listeler birbirini beklerken gereksiz istek olmasın)
       k.yukleniyor = true; k.hata = null;
-      try { await rol(); k.satirlar = (await rest(cfg.tablo + '?' + (cfg.sorgu || 'select=*&order=id'))) || []; }
-      catch (e) { k.satirlar = []; k.hata = /relation|does not exist|42P01|schema cache/i.test(e.message) ? 'Tablolar kurulmamış görünüyor: supabase/iso_kayit.sql dosyasını Supabase SQL Editor\'de bir kez çalıştırın.' : 'Veri okunamadı: ' + e.message; }
-      finally { k.yukleniyor = false; }
+      k._bekleyen = (async () => {
+        try { await rol(); k.satirlar = (await rest(cfg.tablo + '?' + (cfg.sorgu || 'select=*&order=id'))) || []; }
+        catch (e) { k.satirlar = []; k.hata = /relation|does not exist|42P01|schema cache/i.test(e.message) ? 'Tablolar kurulmamış görünüyor: supabase/iso_kayit.sql dosyasını Supabase SQL Editor\'de bir kez çalıştırın.' : 'Veri okunamadı: ' + e.message; }
+        finally { k.yukleniyor = false; k.yuklendi = true; k._son = Date.now(); k._bekleyen = null; }
+      })();
+      return k._bekleyen;
     }
     const gorunen = () => {
       const a = k.ara.toLocaleLowerCase('tr');
@@ -34,7 +40,7 @@
       if (!window.VeriDB || !VeriDB.hazir()) { el.innerHTML = bos('Supabase ayarı yok (supabase-ayar.js).'); return; }
       if (!VeriDB.oturum()) { el.innerHTML = bos('Bu kayıtlar yalnız giriş yapmış kullanıcılara açıktır. Önce Veri Girişi hesabınızla giriş yapın.', true); return; }
       if (k.hata) { el.innerHTML = bos(esc(k.hata)); return; }
-      if (k.yukleniyor && !k.satirlar.length) { el.innerHTML = '<div class="text-sm text-slate-400 p-4">Yükleniyor…</div>'; return; }
+      if (!k.yuklendi) { el.innerHTML = '<div class="text-sm text-slate-400 p-4">Yükleniyor…</div>'; return; }
       const liste = gorunen(), yaz = yazabilir();
       const pasifSay = k.satirlar.filter((r) => r.aktif === false).length;
       el.innerHTML = `
@@ -108,21 +114,21 @@
       try {
         if (k.duzenle === 'yeni') await rest(cfg.tablo, { method: 'POST', prefer: 'return=minimal', body: son });
         else await rest(cfg.tablo + '?id=eq.' + k.duzenle, { method: 'PATCH', prefer: 'return=minimal', body: son });
-        k.duzenle = null; await yukle(); ciz(); bildirListe('Kaydedildi.');
+        k.duzenle = null; await yukle(true); ciz(); bildirListe('Kaydedildi.'); if (cfg.kayitSonrasi) cfg.kayitSonrasi(k);
       } catch (e) { bildir(e.message || String(e), true); }
     }
     function bildirListe(m, h) { bildir(m, h, 'msg'); }
     async function pasifle() {
       const r = k.satirlar.find((x) => x.id === k.duzenle); if (!r) return;
-      try { await rest(cfg.tablo + '?id=eq.' + r.id, { method: 'PATCH', prefer: 'return=minimal', body: { aktif: r.aktif === false } }); k.duzenle = null; await yukle(); ciz(); bildirListe(r.aktif === false ? 'Yeniden etkinleştirildi.' : 'Pasife alındı (kayıt silinmez, geçmiş korunur).'); }
+      try { await rest(cfg.tablo + '?id=eq.' + r.id, { method: 'PATCH', prefer: 'return=minimal', body: { aktif: r.aktif === false } }); k.duzenle = null; await yukle(true); ciz(); bildirListe(r.aktif === false ? 'Yeniden etkinleştirildi.' : 'Pasife alındı (kayıt silinmez, geçmiş korunur).'); }
       catch (e) { bildir(e.message || String(e), true); }
     }
 
     Object.assign(k, {
-      ciz: async (el) => { k.el = el; ciz(); await yukle(); if (cfg.oncesi) { try { await cfg.oncesi(k); } catch (e) { /* ilişkili veri okunamadıysa liste yine de çizilir */ } } ciz(); },
-      veri: yukle,
+      ciz: async (el) => { k.el = el; ciz(); await yukle(true); if (cfg.oncesi) { try { await cfg.oncesi(k); } catch (e) { /* ilişkili veri okunamadıysa liste yine de çizilir */ } } ciz(); },
+      veri: () => yukle(),
       alan: (a) => document.getElementById(ids('f_' + a)),
-      yenile: async () => { await yukle(); ciz(); },
+      yenile: async () => { await yukle(true); ciz(); },
       ac(id) { k.duzenle = id == null ? 'yeni' : id; drawer(); },
       kapat() { k.duzenle = null; const e = document.getElementById(ids('drawer')); if (e) e.innerHTML = ''; },
       kaydet, pasifle, bildir: bildirListe, bildirDrawer: bildir, rest, yetki: yazabilir,
