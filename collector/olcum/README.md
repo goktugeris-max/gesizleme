@@ -29,6 +29,11 @@ Supabase'e yazmak; panelde **ISO 50001 → tesis → Ölçüm** alt sekmesi bunu
 4. Ortam değişkenleri: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (supabase-ayar.js'teki herkese açık anahtar), `OLCUM_EPOSTA`, `OLCUM_SIFRE`. `service_role` anahtarı KULLANILMAZ.
 5. Çalıştırma: `python3 olcum_oku.py --ayar noktalar.yerel.json --surekli --aralik 60` (açılışta otomatik başlaması için systemd/Görev Zamanlayıcı).
 
+## Nokta hiyerarşisi ve canlı referans karşılaştırması
+Her noktaya `tesis` (aassm | buz | buca), `iso_bolum` (ISO 50001 serisindeki bölüm adı, ör. "Ana bina", "Huzurevi", "Aşevi"), `kat_mahal`, `pano` ve `enerji_turu` (elektrik | dogalgaz | su) yazılır.
+`iso_bolum` doluysa panel, o bölümün noktalarının ay başından beri ölçülen elektriğini bölümün aylık referans çizgisi (EnRÇ) ve yıllık hedefiyle karşılaştırır (ISO → Ölçüm → "Canlı referans karşılaştırması").
+Gerekli SQL: `supabase/iso_kayit.sql` (olcum_nokta yeni kolonlar ve `olcum_ay_tuketim` fonksiyonu).
+
 ## Yeni cihaz modeli eklemek
 `profiller/` altına aynı biçimde yeni JSON koyun (`anahtar` adları standarttır: `v_l1`, `i_l1`, `p_top`[W], `pf_top`, `thd_i_l1`, `e_tuketim_wh` …); nokta listesinde `"profil": "<dosya adı>"` yazın.
 Süzgeç sayaçlarda harmonik kayıtları yoktur: profilde olmayan anahtar panelde "—" görünür (şartname: yazılım bu durumu ayırt etmeden işlemeli).

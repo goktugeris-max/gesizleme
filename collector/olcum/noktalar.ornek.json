@@ -1,7 +1,8 @@
 {
   "_not": "Bu dosya ÖRNEKTİR. Gerçek IP/adresler 'noktalar.yerel.json' adlı kopyaya yazılır (depoya konmaz, .gitignore'dadır). Kod = tesis-kat/mahal-pano (şartname madde 3.3).",
   "noktalar": [
-    { "kod": "AASSM-ZK-CH1", "ad": "AASSM chiller grubu 1", "tesis": "aassm", "profil": "entes_mpr", "host": "127.0.0.1", "port": 5020, "birim": 1 },
+    { "kod": "AASSM-ZK-CH1", "ad": "AASSM chiller grubu 1", "tesis": "aassm", "profil": "entes_mpr", "host": "127.0.0.1", "port": 5020, "birim": 1,
+      "enerji_turu": "elektrik", "iso_bolum": "Ana bina", "kat_mahal": "Zemin kat / kazan dairesi", "pano": "P-1" },
     { "kod": "BUZ-ZK-CH1", "ad": "Buz Sporları chiller grubu", "tesis": "buz", "profil": "entes_mpr", "host": "127.0.0.1", "port": 5021, "birim": 1 }
   ]
 }

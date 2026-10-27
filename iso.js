@@ -439,7 +439,16 @@
   const PANEL = {
     ozet() { ozetKartlari(); ozetSerit(); },
     ref() { bolumChips(); document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('') || '<p class="text-sm text-slate-400 p-6">Bu yıl için seri yok.</p>'; seriGrafikleri(); ekBolum(); notlar(); },
-    olcum() { if (window.Olcum) Olcum.panel(tesis, document.getElementById('isoOlcum')); },
+    olcum() {
+      if (!window.Olcum) return;
+      // Canlı referans karşılaştırması için: bu tesisin elektrik serisi, bölüm adıyla; içinde bulunulan ayın referansı ve yıllık hedef
+      const seri = (bolum) => {
+        const yl = String(new Date().getFullYear()), ay = new Date().getMonth(), n = (x) => String(x || '').toLocaleLowerCase('tr').replace(/\s+/g, ' ').trim();
+        const s = D.seriler.find((x) => x.tesis === tesis && x.enerji === 'Elektrik' && x.yillar[yl] && n(bolumAdi(x)) === n(bolum));
+        return s ? { referans: s.yillar[yl].referans[ay], hedef: s.yillar[yl].hedef } : null;
+      };
+      Olcum.panel(tesis, document.getElementById('isoOlcum'), { seri });
+    },
     hedef() { if (window.Enys) Enys.ciz(D, { tesis, yil }, 'hedef'); },
     eylem() {
       eylemBolumu();

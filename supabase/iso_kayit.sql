@@ -219,3 +219,19 @@ do $$ begin
     alter table public.olcum_nokta add constraint olcum_nokta_enerji_turu_check check (enerji_turu in ('elektrik', 'dogalgaz', 'su'));
   end if;
 end $$;
+
+-- Canlı referans karşılaştırması için: ay başından beri her noktanın tüketimi (sayaç farkı).
+-- İlk değer: ay başından ÖNCEKİ son 15 dk özetindeki sayaç (yoksa ayın ilk özeti). RLS geçerlidir (security invoker): yalnız giriş yapmış, profili olanlar.
+create or replace function public.olcum_ay_tuketim(p_bas timestamptz default (date_trunc('month', now() at time zone 'Europe/Istanbul') at time zone 'Europe/Istanbul'))
+returns table (nokta_kod text, ilk_wh numeric, son_wh numeric, son_donem timestamptz)
+language sql stable security invoker set search_path = public as $$
+  select a.nokta_kod,
+         coalesce((select o.e_tuketim_wh from public.olcum_15dk o where o.nokta_kod = a.nokta_kod and o.donem < p_bas and o.e_tuketim_wh is not null order by o.donem desc limit 1), a.ilk),
+         a.son, a.son_donem
+  from (select nokta_kod,
+               (array_agg(e_tuketim_wh order by donem asc))[1] as ilk,
+               (array_agg(e_tuketim_wh order by donem desc))[1] as son,
+               max(donem) as son_donem
+        from public.olcum_15dk where donem >= p_bas and e_tuketim_wh is not null group by nokta_kod) a
+$$;
+grant execute on function public.olcum_ay_tuketim(timestamptz) to authenticated;
