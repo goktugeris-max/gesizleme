@@ -121,7 +121,7 @@
   }
 
   async function parolaDene(p) {
-    try { D = await coz(p); yuklendi = true; const yl = [...new Set(D.seriler.flatMap((x) => Object.keys(x.yillar)))].sort(); yil = yl.includes('2026') ? '2026' : (yl[yl.length - 1] || yil); ozetKayit(); return true; } catch (e) { return false; }
+    try { D = await coz(p); if (window.Enys) { try { await Enys.yukle(); Enys.birlestir(D); } catch (e) { /* EnYS verisi yoksa ISO verisi olduğu gibi çalışır */ } } yuklendi = true; const yl = [...new Set(D.seriler.flatMap((x) => Object.keys(x.yillar)))].sort(); yil = yl.includes('2026') ? '2026' : (yl[yl.length - 1] || yil); ozetKayit(); return true; } catch (e) { return false; }
   }
 
   function girisFormu(hata) {
@@ -366,9 +366,13 @@
       <h2 id="isoBaslik" class="text-lg font-bold text-white"></h2>
       <section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section>
       <section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section>
+      <section id="isoHedef"></section>
+      <section id="isoEnpg"></section>
       <section id="isoIkiz"></section>
       <section id="isoEylem"></section>
       <section id="isoEtut"></section>
+      <section id="isoTetkik"></section>
+      <section id="isoYgg"></section>
       <section id="isoEk" class="space-y-4"></section>
       <section id="isoRisk" class="hidden"></section>
       <div id="isoNotlar"></div></div>`;
@@ -397,6 +401,7 @@
     document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('');
     seriGrafikleri(); ikizBolumu(); eylemBolumu(); ekBolum(); riskBolumu(); notlar();
     if (window.Etut) Etut.yukle().then(() => Etut.isoBolum(tesis, document.getElementById('isoEtut'))).catch(() => {});
+    if (window.Enys) Enys.ciz(D, { tesis, yil });
     if (window.lucide) lucide.createIcons();
   }
 
@@ -409,6 +414,8 @@
   };
 
   window.Iso = {
+    // YGG özeti için: tesis bazında eylem durumu sayıları
+    ozetVeri() { return D ? D.tesisler.map((t) => ({ id: t.id, ad: t.ad, c: sayilar(kayit(t.id)) })) : []; },
     async ac() {
       if (!yuklendi) await yukle();
       if (!yuklendi) { if (sifreli) girisFormu(); return; }
