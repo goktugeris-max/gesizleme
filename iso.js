@@ -369,7 +369,7 @@
   }
 
   // ---- alt sekmeler (tesis içinde tek seferde bir bölüm görünür; uzun sayfa yerine)
-  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['belge', 'Belgeler']];
+  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['baglam', 'Bağlam ve taraflar'], ['belge', 'Belgeler']];
 
   function iskelet() {
     document.getElementById('isoIcerik').innerHTML = `<style>#isoIcerik summary::-webkit-details-marker{display:none}#isoAlt::-webkit-scrollbar{height:4px}</style><div class="space-y-4">
@@ -384,10 +384,11 @@
       <div id="isoP-ref" class="hidden space-y-4"><div id="isoBolumChips" class="flex flex-wrap gap-1"></div><section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoEk" class="space-y-4"></section><div id="isoNotlar"></div></div>
       <div id="isoP-olcum" class="hidden"><section id="isoOlcum"></section></div>
       <div id="isoP-hedef" class="hidden space-y-4"><section id="isoHedef"></section><section id="isoEnpg"></section></div>
-      <div id="isoP-eylem" class="hidden"><section id="isoEylem"></section></div>
+      <div id="isoP-eylem" class="hidden"><section id="isoEylem"></section><section id="isoEylemDB" class="mt-6"></section></div>
       <div id="isoP-etut" class="hidden"><section id="isoEtutPanel"></section></div>
       <div id="isoP-ikiz" class="hidden"><section id="isoIkiz"></section></div>
-      <div id="isoP-risk" class="hidden"><section id="isoRisk" class="hidden"></section><p id="isoRiskBos" class="hidden text-sm text-slate-400 p-6">Bu tesis için risk ve fırsat kaydı yok.</p></div>
+      <div id="isoP-risk" class="hidden"><section id="isoRiskDB"></section><section id="isoRisk" class="hidden"></section><p id="isoRiskBos" class="hidden text-sm text-slate-400 p-6">Bu tesis için risk ve fırsat kaydı yok.</p></div>
+      <div id="isoP-baglam" class="hidden"><section id="isoBaglam"></section></div>
       <div id="isoP-belge" class="hidden"><section id="isoBelge"></section></div>
       <div id="isoP-denetim" class="hidden space-y-4"><section id="isoTetkik"></section><section id="isoYgg"></section></div></div>`;
     // açılır bölümlerin durumunu hatırla; grafik içeren bölüm açılınca boyutu yenile
@@ -434,15 +435,39 @@
     el.innerHTML = adlar.length > 1 ? [['hepsi', 'Tüm bölümler'], ...adlar.map((a) => [a, a])].map(([k, ad]) => `<button onclick="Iso.bolum('${k.replace(/'/g, "\\'")}')" class="px-2.5 py-1 rounded-md text-[11px] font-semibold ${bolumSec === k ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-300 hover:text-white'}">${esc(ad)}</button>`).join('') : '';
   }
 
+  const girisVar = () => !!(window.VeriDB && VeriDB.hazir() && VeriDB.oturum());
   const PANEL = {
     ozet() { ozetKartlari(); ozetSerit(); },
     ref() { bolumChips(); document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('') || '<p class="text-sm text-slate-400 p-6">Bu yıl için seri yok.</p>'; seriGrafikleri(); ekBolum(); notlar(); },
-    olcum() { if (window.Olcum) Olcum.panel(tesis, document.getElementById('isoOlcum')); },
+    olcum() {
+      if (!window.Olcum) return;
+      // Canlı referans karşılaştırması için: bu tesisin elektrik serisi, bölüm adıyla; içinde bulunulan ayın referansı ve yıllık hedef
+      const seri = (bolum) => {
+        const yl = String(new Date().getFullYear()), ay = new Date().getMonth(), n = (x) => String(x || '').toLocaleLowerCase('tr').replace(/\s+/g, ' ').trim();
+        const s = D.seriler.find((x) => x.tesis === tesis && x.enerji === 'Elektrik' && x.yillar[yl] && n(bolumAdi(x)) === n(bolum));
+        return s ? { referans: s.yillar[yl].referans[ay], hedef: s.yillar[yl].hedef } : null;
+      };
+      Olcum.panel(tesis, document.getElementById('isoOlcum'), { seri });
+    },
     hedef() { if (window.Enys) Enys.ciz(D, { tesis, yil }, 'hedef'); },
-    eylem() { eylemBolumu(); },
+    eylem() {
+      eylemBolumu();
+      const db = document.getElementById('isoEylemDB');
+      if (window.Risk && girisVar()) Risk.eylemPanel(tesis, db); else db.innerHTML = '';
+    },
     etut() { if (window.Etut) Etut.panel(tesis, document.getElementById('isoEtutPanel')); },
     ikiz() { ikizBolumu(); },
-    risk() { riskBolumu(); document.getElementById('isoRiskBos').classList.toggle('hidden', !document.getElementById('isoRisk').classList.contains('hidden')); },
+    risk() {
+      const db = document.getElementById('isoRiskDB');
+      if (window.Risk && girisVar()) {   // Veri Girişi hesabıyla giriş yapılmışsa düzenlenebilir veritabanı kayıtları
+        document.getElementById('isoRisk').classList.add('hidden'); document.getElementById('isoRiskBos').classList.add('hidden');
+        Risk.panel(tesis, db, D.risk);
+      } else {
+        db.innerHTML = '<p class="text-[11px] text-slate-500 mb-2">Risk ve fırsatları düzenlemek, skoru sunucuda hesaplatmak ve riskten eylem açmak için Veri Girişi hesabınızla giriş yapın. Aşağıda Excel\'den okunan salt okunur görünüm var.</p>';
+        riskBolumu(); document.getElementById('isoRiskBos').classList.toggle('hidden', !document.getElementById('isoRisk').classList.contains('hidden'));
+      }
+    },
+    baglam() { if (window.Baglam) Baglam.panel(tesis, document.getElementById('isoBaglam')); },
     belge() { if (window.Dys) Dys.panel(document.getElementById('isoBelge')); },
     denetim() { if (window.Enys) Enys.ciz(D, { tesis, yil }, 'denetim'); },
   };

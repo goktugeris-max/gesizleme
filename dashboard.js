@@ -318,7 +318,7 @@
 
   // ---------- sekmeler ----------
   function sekmeGoster(ad) {
-    if (ad === 'etut' || ad === 'olcum' || ad === 'belge') { const alt = ad; ad = 'iso'; if (window.Iso) Iso.alt(alt); }   // eski #etut bağlantısı: enerji etüdü artık ISO 50001 içinde
+    if (ad === 'etut' || ad === 'olcum' || ad === 'belge' || ad === 'baglam') { const alt = ad; ad = 'iso'; if (window.Iso) Iso.alt(alt); }   // eski #etut bağlantısı: enerji etüdü artık ISO 50001 içinde
     if (!SEKMELER.includes(ad)) ad = 'ozet';
     SEKMELER.forEach((t) => {
       document.getElementById('tab-' + t).classList.toggle('hidden', t !== ad);

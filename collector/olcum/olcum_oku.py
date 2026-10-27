@@ -123,7 +123,9 @@ class Toplayici:
     def noktalari_kaydet(self):
         """Ayar dosyasındaki nokta adlarını olcum_nokta tablosuna yazar (panel adları buradan okur)."""
         self.sb.yaz('olcum_nokta', [{'kod': n['kod'], 'ad': n.get('ad'), 'tesis': n.get('tesis'),
-                                     'cihaz_tipi': n.get('cihaz_tipi', 'analizor'), 'profil': n.get('profil')} for n in self.noktalar], 'kod')
+                                     'cihaz_tipi': n.get('cihaz_tipi', 'analizor'), 'profil': n.get('profil'),
+                                     'enerji_turu': n.get('enerji_turu', 'elektrik'), 'iso_bolum': n.get('iso_bolum'),
+                                     'kat_mahal': n.get('kat_mahal'), 'pano': n.get('pano')} for n in self.noktalar], 'kod')
         self.kayitli = True
 
     def tur(self):

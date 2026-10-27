@@ -10,7 +10,7 @@
   const sayi = (n, o) => (n == null || !isFinite(n) ? '—' : Number(n).toLocaleString('tr-TR', o || { maximumFractionDigits: 1 }));
   const ESIK = { bayat_dk: 5, vmin: 207, vmax: 253, thdv: 8, thdi: 15, pf: 0.9, dengesiz_i: 10, fmin: 49.5, fmax: 50.5 };   // EN 50160 ±%10, THD-V %8; diğerleri başlangıç değeri
   const YENILE_MS = 30000;
-  let D = null, secili = null, grafik = null, zamanlayici = null, ornek = false, yukleniyor = false, hata = null, kap = null, tesisId = null;
+  let D = null, secili = null, grafik = null, zamanlayici = null, ornek = false, yukleniyor = false, hata = null, kap = null, tesisId = null, isoErisim = null;
 
   // ---------- veri ----------
   async function yukle() {
@@ -24,21 +24,25 @@
         VeriDB.istek('/rest/v1/olcum_son?select=*'),
         VeriDB.istek('/rest/v1/olcum_15dk?select=*&donem=gte.' + encodeURIComponent(baslangic) + '&order=donem&limit=5000'),
       ]);
-      D = { nokta: nokta || [], son: Object.fromEntries((son || []).map((s) => [s.nokta_kod, s])), d15: d15 || [] };
+      D = { nokta: nokta || [], son: Object.fromEntries((son || []).map((s) => [s.nokta_kod, s])), d15: d15 || [], ay: {} };
+      // Ay başından beri tüketim (canlı referans karşılaştırması için); SQL fonksiyonu yoksa (eski kurulum) karşılaştırma gizlenir
+      try { D.ay = Object.fromEntries(((await VeriDB.istek('/rest/v1/rpc/olcum_ay_tuketim', { method: 'POST', body: { p_bas: ayBasi().toISOString() } })) || []).map((r) => [r.nokta_kod, r])); } catch (e) { D.ay = {}; }
     } catch (e) {
       hata = /relation|does not exist|42P01|schema cache/i.test(e.message) ? 'Ölçüm tabloları kurulmamış görünüyor: supabase/olcum.sql dosyasını Supabase SQL Editor\'de bir kez çalıştırın.' : 'Veri okunamadı: ' + e.message;
       D = null;
     } finally { yukleniyor = false; }
   }
 
+  const ayBasi = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), 1); };
+
   function ornekVeri() {
     const t0 = Date.now(), noktalar = [
-      { kod: 'AASSM-ZK-CH1', ad: 'AASSM chiller grubu 1', tesis: 'aassm', cihaz_tipi: 'analizor', k: 1.0 },
-      { kod: 'AASSM-ZK-CH2', ad: 'AASSM chiller grubu 2', tesis: 'aassm', cihaz_tipi: 'analizor', k: 0.8 },
+      { kod: 'AASSM-ZK-CH1', ad: 'AASSM chiller grubu 1', tesis: 'aassm', cihaz_tipi: 'analizor', k: 1.0, enerji_turu: 'elektrik', iso_bolum: 'Ana bina', kat_mahal: 'Zemin kat / kazan dairesi', pano: 'P-1' },
+      { kod: 'AASSM-ZK-CH2', ad: 'AASSM chiller grubu 2', tesis: 'aassm', cihaz_tipi: 'analizor', k: 0.8, enerji_turu: 'elektrik', iso_bolum: 'Ana bina', kat_mahal: 'Zemin kat / kazan dairesi', pano: 'P-2' },
       { kod: 'BUZ-ZK-CH1', ad: 'Buz Sporları chiller', tesis: 'buz', cihaz_tipi: 'analizor', k: 1.3 },
       { kod: 'BUCA-ASEVI-P1', ad: 'Buca Aşevi ana pano', tesis: 'buca', cihaz_tipi: 'sayac_ct', k: 0.4 },
     ];
-    const D = { nokta: noktalar, son: {}, d15: [], ornek: true };
+    const D = { nokta: noktalar, son: {}, d15: [], ornek: true, ay: {} };
     noktalar.forEach((n, ix) => {
       let sayac = 1.2e9 + ix * 3e8;
       for (let k = 96; k >= 0; k--) {
@@ -49,6 +53,7 @@
         D.d15.push({ nokta_kod: n.kod, donem: t.toISOString(), ort_p_w: p, maks_p_w: p * 1.08, ort_pf: 0.95, ort_v: 229, ort_i_a: p / 396, maks_thd_i: 6.5, maks_thd_v: 1.8, e_tuketim_wh: sayac });
       }
       const son = D.d15[D.d15.length - 1], zayif = ix === 3;
+      D.ay[n.kod] = { nokta_kod: n.kod, ilk_wh: son.e_tuketim_wh - n.k * 21e6 * (new Date().getDate() - 0.5) / 15, son_wh: son.e_tuketim_wh, son_donem: new Date().toISOString() };   // örnek ay tüketimi
       const v = [229.1, 228.4, 230.2], i = [1, 0.97, 1.03].map((c) => son.ort_i_a * c);
       D.son[n.kod] = {
         nokta_kod: n.kod, zaman: new Date().toISOString(), durum: ix === 2 ? 'cevrimdisi' : 'cevrimici',
@@ -105,6 +110,28 @@
       <button onclick="Olcum.ornek(true)" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-600 text-slate-300">Örnek veriyle göster</button></div></div></div></div>`;
   }
 
+
+  // ---------- Canlı referans karşılaştırması (ISO 50001 EnRÇ): ay başından beri tüketim ↔ bölümün aylık referansı ve hedefi ----------
+  function canliSapma(satir) {
+    if (!isoErisim || !D.ay) return '';
+    const bas = ayBasi(), simdi = new Date(), ayUz = new Date(bas.getFullYear(), bas.getMonth() + 1, 1) - bas, gruplar = {};
+    satir.forEach((x) => { const n = x.n; if (n.iso_bolum && (n.enerji_turu || 'elektrik') === 'elektrik' && D.ay[n.kod]) (gruplar[n.iso_bolum] = gruplar[n.iso_bolum] || []).push(D.ay[n.kod]); });
+    const satirlar = Object.entries(gruplar).map(([bolum, l]) => {
+      const ref = isoErisim.seri(bolum); if (!ref || !ref.referans) return null;
+      const tuk = l.reduce((t, r) => t + (r.son_wh - r.ilk_wh) / 1000, 0), sonVeri = new Date(Math.max(...l.map((r) => new Date(r.son_donem).getTime())));
+      const oran = Math.min(1, Math.max(0.02, (sonVeri - bas) / ayUz)), beklenen = ref.referans * oran, sapma = beklenen ? tuk / beklenen - 1 : null, tahmin = tuk / oran;
+      const sinir = ref.hedef ? ref.referans * (1 - ref.hedef) : null;
+      const durum = sinir != null && tahmin <= sinir ? ['Hedefte', 'text-emerald-400'] : tahmin <= ref.referans ? ['Referansın altında', 'text-sky-300'] : tahmin <= ref.referans * 1.05 ? ['Referansa yakın', 'text-amber-400'] : ['Referans aşımı riski', 'text-rose-400'];
+      return `<tr class="border-t border-slate-800/70"><td class="px-3 py-2 font-semibold">${esc(bolum)}</td><td class="px-3 text-right">${sayi(tuk, { maximumFractionDigits: 0 })}</td><td class="px-3 text-right">${sayi(beklenen, { maximumFractionDigits: 0 })}</td>
+        <td class="px-3 text-right font-semibold ${sapma > 0.05 ? 'text-rose-400' : sapma > 0 ? 'text-amber-400' : 'text-emerald-400'}">${sapma == null ? '—' : (sapma > 0 ? '+' : '') + (sapma * 100).toFixed(1).replace('.', ',') + '%'}</td>
+        <td class="px-3 text-right">${sayi(tahmin, { maximumFractionDigits: 0 })}</td><td class="px-3 text-right">${sayi(ref.referans, { maximumFractionDigits: 0 })}</td><td class="px-3 text-right">${sinir == null ? '—' : sayi(sinir, { maximumFractionDigits: 0 })}</td><td class="px-3 ${durum[1]} font-semibold">${durum[0]}</td></tr>`;
+    }).filter(Boolean);
+    if (!satirlar.length) return '';
+    return `<div class="glass-card rounded-xl overflow-hidden"><div class="px-4 py-2 flex flex-wrap items-center gap-2"><div class="text-sm font-bold text-white">Canlı referans karşılaştırması</div><div class="text-[11px] text-slate-500">${simdi.toLocaleString('tr-TR', { month: 'long', year: 'numeric' })} · ölçülen elektrik, bölümün aylık referans çizgisiyle (EnRÇ) kıyaslanır</div></div>
+      <div class="overflow-x-auto"><table class="w-full text-xs" style="min-width:640px"><thead class="text-slate-400 uppercase tracking-wider text-[10px]"><tr><th class="px-3 py-2 text-left">ISO bölümü</th><th class="px-3 text-right">Ay başından (kWh)</th><th class="px-3 text-right">Referansın orantılı payı</th><th class="px-3 text-right">Sapma</th><th class="px-3 text-right">Ay sonu tahmini</th><th class="px-3 text-right">Aylık referans</th><th class="px-3 text-right">Hedef sınırı</th><th class="px-3 text-left">Durum</th></tr></thead><tbody>${satirlar.join('')}</tbody></table></div>
+      <p class="px-4 py-2 text-[11px] text-slate-500">Tahmin = ay başından beri tüketim ÷ geçen ay oranı (düz projeksiyon). Bölümün tüm tüketimi ölçülmüyorsa (yalnız bazı panolar) karşılaştırma eksik kalır; ölçüm noktasına ISO bölümü, nokta listesindeki "iso_bolum" alanıyla verilir.</p></div>`;
+  }
+
   function ciz() {
     const el = kap;
     if (!el || !document.body.contains(el)) return;
@@ -130,11 +157,12 @@
         ${kart('Son 24 saat tüketim', sayi(kwh24, { maximumFractionDigits: 0 }) + ' kWh', 'sayaç farkından')}
         ${kart('Uyarı', sorunlu + ' sorunlu · ' + dikkat + ' dikkat', 'haberleşme, gerilim, harmonik, güç faktörü', sorunlu ? 'text-rose-400' : dikkat ? 'text-amber-400' : 'text-emerald-400')}
       </div>
+      ${canliSapma(satir)}
       <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
         <div class="lg:col-span-2 space-y-2 min-w-0" id="olcumListe">${satir.map((x) => {
           const d = x.s && x.s.deger, aktif = x.n.kod === secili;
           return `<button onclick="Olcum.sec('${esc(x.n.kod)}')" class="w-full text-left glass-card rounded-xl p-3 border ${aktif ? 'border-amber-500/50' : 'border-transparent'}">
-            <div class="flex items-center justify-between gap-2"><div class="min-w-0"><div class="text-sm font-semibold truncate">${esc(x.n.ad || x.n.kod)}</div><div class="text-[11px] text-slate-500 truncate">${esc(x.n.tesis || '')} · ${esc(x.n.kod)}</div></div>
+            <div class="flex items-center justify-between gap-2"><div class="min-w-0"><div class="text-sm font-semibold truncate">${esc(x.n.ad || x.n.kod)}</div><div class="text-[11px] text-slate-500 truncate">${esc([x.n.iso_bolum, x.n.kat_mahal, x.n.pano].filter(Boolean).join(' › ') || x.n.tesis || '')} · ${esc(x.n.kod)}</div></div>
             <span class="text-[10px] px-2 py-0.5 rounded-full border shrink-0 ${ROZET[x.sev]}">${ROZET_AD[x.sev]}</span></div>
             <div class="mt-2 grid grid-cols-3 gap-2 text-center text-[11px]"><div><div class="text-base font-bold">${d && d.p_top != null ? sayi(d.p_top / 1000) : '—'}</div><div class="text-slate-500">kW</div></div>
             <div><div class="text-base font-bold">${d && d.pf_top != null ? sayi(Math.abs(d.pf_top), { maximumFractionDigits: 2 }) : '—'}</div><div class="text-slate-500">cos φ</div></div>
@@ -181,8 +209,8 @@
 
   async function yenile() { await yukle(); ciz(); }
   // ISO 50001 sekmesindeki "Ölçüm" alt sekmesi: seçili tesisin noktalarını `el` içine çizer ve görünür kaldığı sürece yeniler
-  function panel(tesis, el) {
-    kap = el; tesisId = tesis; secili = null;
+  function panel(tesis, el, iso) {
+    kap = el; tesisId = tesis; secili = null; isoErisim = iso || null;
     if (grafik) { grafik.destroy(); grafik = null; }
     yenile();
     clearInterval(zamanlayici);
