@@ -88,5 +88,22 @@
     return PERF;
   }
 
-  window.VeriDB = { hazir, giris, cikis, istek, rol, birlestir, oturum: () => oturum, url: () => A().url };
+  // ---- Dosya deposu (Supabase Storage): özel kova, oturumlu istek ----
+  const yolKodla = (y) => y.split('/').map(encodeURIComponent).join('/');
+  async function dosyaYukle(kova, yol, dosya) {
+    const t = await jeton();
+    if (!t) throw Object.assign(new Error('Oturum süresi doldu, yeniden giriş yapın.'), { durum: 401 });
+    const r = await fetch(A().url.replace(/\/$/, '') + '/storage/v1/object/' + kova + '/' + yolKodla(yol), {
+      method: 'POST', headers: { apikey: A().anonKey, Authorization: 'Bearer ' + t, 'Content-Type': dosya.type || 'application/octet-stream', 'x-upsert': 'false' }, body: dosya,
+    });
+    if (!r.ok) { let m = ''; try { m = (await r.json()).message || ''; } catch (e) { /* gövde yok */ } throw new Error(m || 'Dosya yüklenemedi (HTTP ' + r.status + ')'); }
+  }
+  // Kısa ömürlü (2 dk) imzalı indirme adresi
+  async function dosyaAdresi(kova, yol) {
+    const y = await istek('/storage/v1/object/sign/' + kova + '/' + yolKodla(yol), { method: 'POST', body: { expiresIn: 120 } });
+    if (!y || !y.signedURL) throw new Error('İndirme adresi alınamadı');
+    return A().url.replace(/\/$/, '') + '/storage/v1' + y.signedURL;
+  }
+
+  window.VeriDB = { hazir, giris, cikis, istek, rol, birlestir, dosyaYukle, dosyaAdresi, oturum: () => oturum, url: () => A().url };
 })();
