@@ -368,6 +368,7 @@
       <section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section>
       <section id="isoIkiz"></section>
       <section id="isoEylem"></section>
+      <section id="isoEtut"></section>
       <section id="isoEk" class="space-y-4"></section>
       <section id="isoRisk" class="hidden"></section>
       <div id="isoNotlar"></div></div>`;
@@ -395,6 +396,7 @@
     ozetKartlari();
     document.getElementById('isoSeriler').innerHTML = seriler().map(seriKarti).join('');
     seriGrafikleri(); ikizBolumu(); eylemBolumu(); ekBolum(); riskBolumu(); notlar();
+    if (window.Etut) Etut.yukle().then(() => Etut.isoBolum(tesis, document.getElementById('isoEtut'))).catch(() => {});
     if (window.lucide) lucide.createIcons();
   }
 
