@@ -3,3 +3,6 @@ __pycache__/
 *.xlsx
 *.xls
 data/elektrik.json
+
+# Analizör okuyucu: gerçek cihaz adresleri depoya girmez
+collector/olcum/noktalar.yerel.json
