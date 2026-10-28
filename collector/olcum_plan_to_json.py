@@ -1,8 +1,7 @@
 """FRM.06.06 Enerji Ölçme ve İzleme formundan ölçüm planı üretir.
 
-Çıktılar:
-  data/olcum_plan.json                 ISO → Ölçüm sekmesindeki "Ölçüm planı" tablosu (ŞİFRESİZ)
-  collector/olcum/noktalar.plan.json   okuyucu için nokta şablonu (adres boş; cihaz gelince doldurulur)
+Çıktı: data/olcum_plan.json — ISO → Ölçüm sekmesindeki "Ölçüm planı" (enerji kullanımları) tablosu (ŞİFRESİZ).
+(Monte edilecek analizör noktaları ve IP'leri ayrıdır: supabase/olcum_plan.sql, panelde ISO → Ölçüm → "Analizör montaj ve IP planı".)
 
 Sayaç/tesisat numaraları, kişi adları ve veri kayıt yeri BİLEREK alınmaz (depo herkese açık).
 Kullanım: python3 collector/olcum_plan_to_json.py "<FRM.06.06 Enerji Ölçme ve İzleme.xlsx>" [sayfa=2026]
@@ -26,7 +25,6 @@ BINA = [
     ("eşrefpaşa", ("buca", "Eşrefpaşa Semt Polikliniği")),
     ("kapalı s", ("buca", "Kapalı Spor Salonu")),
 ]
-KISA = {"aassm": "AASSM", "buz": "BUZ", "buca": "BUCA"}
 
 
 def temiz(x):
@@ -52,20 +50,7 @@ def ana(yol, sayfa):
         })
     with open(os.path.join(KOK, "data", "olcum_plan.json"), "w", encoding="utf-8") as f:
         json.dump({"kaynak": "İBB-FRM-06-06 Enerji Ölçme ve İzleme (" + sayfa + ")", "satirlar": satirlar}, f, ensure_ascii=False, indent=1)
-    sayac, noktalar = {}, []
-    for s in satirlar:
-        if s["tur"] != "elektrik":
-            continue   # doğalgaz fatura/sayaç üzerinden elle okunur; analizör planı yalnız elektrik içindir
-        sayac[s["tesis"]] = sayac.get(s["tesis"], 0) + 1
-        noktalar.append({
-            "kod": "%s-OEK-%02d" % (KISA[s["tesis"]], sayac[s["tesis"]]), "ad": s["bolum"] + " — " + s["kullanim"], "tesis": s["tesis"],
-            "profil": "entes_mpr", "host": "", "port": 502, "birim": 1,
-            "enerji_turu": "elektrik", "iso_bolum": s["bolum"], "kat_mahal": "", "pano": "",
-        })
-    with open(os.path.join(KOK, "collector", "olcum", "noktalar.plan.json"), "w", encoding="utf-8") as f:
-        json.dump({"_not": "FRM.06.06'dan üretilen ŞABLON. 'host' (cihaz IP) boş olan noktalar okunmaz. Cihaz takılınca host, kat_mahal, pano, kod doldurulup "
-                           "'noktalar.yerel.json' olarak kopyalanır (yerel dosya depoya konmaz).", "noktalar": noktalar}, f, ensure_ascii=False, indent=1)
-    print("%d ÖEK satırı, %d elektrik noktası şablonu yazıldı." % (len(satirlar), len(noktalar)))
+    print("%d ÖEK satırı yazıldı." % len(satirlar))
 
 
 if __name__ == "__main__":

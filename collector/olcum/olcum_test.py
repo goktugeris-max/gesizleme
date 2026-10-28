@@ -59,6 +59,7 @@ sim.durdur()
 # 7) Supabase yazımı (sahte PostgREST/GoTrue sunucusu)
 import http.server, threading
 alinan = []
+PLAN_YANIT = []
 
 class H(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
@@ -67,6 +68,14 @@ class H(http.server.BaseHTTPRequestHandler):
         alinan.append((self.path, dict(self.headers), govde))
         yanit = json.dumps({'access_token': 'JETON', 'expires_in': 3600} if 'auth/v1' in self.path else {}).encode()
         self.send_response(200 if 'auth/v1' in self.path else 201)
+        self.send_header('Content-Length', str(len(yanit)))
+        self.end_headers()
+        self.wfile.write(yanit)
+
+    def do_GET(self):
+        alinan.append((self.path, dict(self.headers), None))
+        yanit = json.dumps(PLAN_YANIT).encode()
+        self.send_response(200)
         self.send_header('Content-Length', str(len(yanit)))
         self.end_headers()
         self.wfile.write(yanit)
@@ -87,4 +96,28 @@ kontrol('yazma isteği Bearer jetonlu', alinan[2][1].get('Authorization') == 'Be
 kontrol('upsert çakışma anahtarı', 'on_conflict=nokta_kod' in alinan[2][0])
 kontrol('son satırda deger var', alinan[2][2][0]['deger']['v_l1'] > 200)
 sim.durdur()
+
+# 8) --plan-db: nokta listesi/IP'ler panelden (olcum_plan); IP'si olmayan satır gelmez, değişiklik yeniden okunur
+sim = Sunucu(profil, 0).baslat()
+PLAN_YANIT[:] = [{'kod': 'P-1', 'ad': 'Plan noktası', 'tesis': 'aassm', 'profil': 'entes_mpr', 'host': '127.0.0.1', 'port': sim.port, 'birim': 1, 'iso_bolum': 'Ana bina', 'kat_mahal': None, 'pano': None}]
+alinan.clear()
+top = Toplayici(None, Supabase(), True)
+son, biten = top.tur()
+yollar = [a[0].split('?')[0] for a in alinan]
+kontrol('plan okundu, nokta kaydedildi, son yazıldı', yollar == ['/auth/v1/token', '/rest/v1/olcum_plan', '/rest/v1/olcum_nokta', '/rest/v1/olcum_son'], yollar)
+kontrol('plan sorgusu yalnız IP girilmiş + aktif', 'host=not.is.null' in alinan[1][0] and 'aktif=eq.true' in alinan[1][0])
+kontrol('plan noktası okundu', [x['nokta_kod'] for x in son] == ['P-1'] and son[0]['durum'] == 'cevrimici', son)
+nk = [a for a in alinan if a[0].startswith('/rest/v1/olcum_nokta')][0][2][0]
+kontrol('nokta alanları (iso_bolum, enerji_turu, cihaz_tipi)', (nk['iso_bolum'], nk['enerji_turu'], nk['cihaz_tipi']) == ('Ana bina', 'elektrik', 'analizor'), nk)
+# 5 dk dolmadan yeniden istenmez; dolunca ve IP değişince yeniden alınır, eski bağlantı atılır
+alinan.clear(); top.tur()
+kontrol('plan 5 dk içinde yeniden sorulmaz', not any('olcum_plan' in a[0] for a in alinan))
+sim2 = Sunucu(profil, 0).baslat()
+PLAN_YANIT[0]['port'] = sim2.port
+top.plan_son = 0; alinan.clear(); son, _ = top.tur()
+kontrol('IP/port değişimi alındı, nokta yeniden okundu', son[0]['durum'] == 'cevrimici' and any('olcum_nokta' in a[0] for a in alinan), [a[0] for a in alinan])
+PLAN_YANIT[:] = []
+top.plan_son = 0; son, _ = top.tur()
+kontrol('IP kaldırılınca nokta okunmaz', son == [], son)
+sim.durdur(); sim2.durdur()
 print('Tüm testler geçti.')

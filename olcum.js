@@ -146,14 +146,14 @@
     const bagli = (s) => (D && D.nokta ? D.nokta.filter((n) => tesisiMi(n) && (n.enerji_turu || 'elektrik') === s.tur && NORM(n.iso_bolum) === NORM(s.bolum)).length : 0);
     const durum = (s) => {
       if (s.okuma !== 'osos') return ['Elle: fatura ve sayaç', 'text-slate-400'];
-      const k = bagli(s); return k ? [k + ' ölçüm noktası bağlı', 'text-emerald-400'] : ['Analizör bekliyor', 'text-amber-400'];
+      const k = bagli(s); return k ? [k + ' ölçüm noktası bağlı', 'text-emerald-400'] : s.tesis === 'buca' ? ['Mevcut OSOS verisi (analizör ikinci faz)', 'text-slate-400'] : ['Analizör bekliyor', 'text-amber-400'];
     };
-    const bekleyen = satir.filter((s) => s.okuma === 'osos' && !bagli(s)).length;
+    const bekleyen = satir.filter((s) => s.okuma === 'osos' && s.tesis !== 'buca' && !bagli(s)).length;
     const div = document.createElement('div'); div.id = 'olcumPlan'; div.className = 'glass-card rounded-xl overflow-hidden mt-4';
     div.innerHTML = `<div class="px-4 py-2 flex flex-wrap items-center gap-2"><div class="text-sm font-bold text-white">Ölçüm planı</div><div class="text-[11px] text-slate-500">${esc(PLAN.kaynak || 'FRM.06.06')} · ${satir.length} enerji kullanımı${bekleyen ? ' · ' + bekleyen + ' elektrik kullanımı için analizör bekleniyor' : ''}</div></div>
       <div class="overflow-x-auto"><table class="w-full text-xs" style="min-width:640px"><thead class="text-slate-400 uppercase tracking-wider text-[10px]"><tr><th class="px-3 py-2 text-left">Bölüm</th><th class="px-3 text-left">Enerji kullanımı</th><th class="px-3 text-left">Tür</th><th class="px-3 text-left">İlgili değişken</th><th class="px-3 text-left">Veri okuma</th><th class="px-3 text-left">Sıklık</th><th class="px-3 text-left">Durum</th></tr></thead><tbody>
       ${satir.map((s) => { const d = durum(s); return `<tr class="border-t border-slate-800/70"><td class="px-3 py-2 font-semibold">${esc(s.bolum)}</td><td class="px-3">${esc(s.kullanim)}</td><td class="px-3 whitespace-nowrap">${s.tur === 'elektrik' ? 'Elektrik' : 'Doğalgaz'} (${esc(s.birim)})</td><td class="px-3">${esc(s.degisken)}</td><td class="px-3">${esc(s.okuma_ad)}</td><td class="px-3 whitespace-nowrap">${esc(s.periyot)}</td><td class="px-3 font-semibold ${d[1]}">${d[0]}</td></tr>`; }).join('')}</tbody></table></div>
-      <p class="px-4 py-2 text-[11px] text-slate-500">Plan, Enerji Ölçme ve İzleme formundan (FRM.06.06) alınmıştır; sayaç numaraları gösterilmez. Analizör takılınca noktanın <b>tesis</b>, <b>enerji_turu</b> ve <b>iso_bolum</b> alanları bu satırın bölümüyle aynı yazılırsa durum kendiliğinden "bağlı" olur (collector/olcum/noktalar.plan.json şablonu hazırdır).</p>`;
+      <p class="px-4 py-2 text-[11px] text-slate-500">Plan, Enerji Ölçme ve İzleme formundan (FRM.06.06) alınmıştır; sayaç numaraları gösterilmez. Bölümün <b>ana giriş</b> analizörü bağlanıp okunmaya başlayınca (aşağıdaki "Analizör montaj ve IP planı") durum kendiliğinden "bağlı" olur.</p>`;
     kap.appendChild(div);
   }
 
