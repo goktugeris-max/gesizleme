@@ -369,7 +369,7 @@
   }
 
   // ---- alt sekmeler (tesis içinde tek seferde bir bölüm görünür; uzun sayfa yerine)
-  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['baglam', 'Bağlam ve taraflar'], ['belge', 'Belgeler']];
+  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['baglam', 'Bağlam ve taraflar'], ['bakim', 'Bakım ve yetkinlik'], ['belge', 'Belgeler']];
 
   function iskelet() {
     document.getElementById('isoIcerik').innerHTML = `<style>#isoIcerik summary::-webkit-details-marker{display:none}#isoAlt::-webkit-scrollbar{height:4px}</style><div class="space-y-4">
@@ -389,6 +389,7 @@
       <div id="isoP-ikiz" class="hidden"><section id="isoIkiz"></section></div>
       <div id="isoP-risk" class="hidden"><section id="isoRiskDB"></section><section id="isoRisk" class="hidden"></section><p id="isoRiskBos" class="hidden text-sm text-slate-400 p-6">Bu tesis için risk ve fırsat kaydı yok.</p></div>
       <div id="isoP-baglam" class="hidden"><section id="isoBaglam"></section></div>
+      <div id="isoP-bakim" class="hidden"><section id="isoBakim"></section></div>
       <div id="isoP-belge" class="hidden"><section id="isoBelge"></section></div>
       <div id="isoP-denetim" class="hidden space-y-4"><section id="isoTetkik"></section><section id="isoYgg"></section></div></div>`;
     // açılır bölümlerin durumunu hatırla; grafik içeren bölüm açılınca boyutu yenile
@@ -468,6 +469,7 @@
       }
     },
     baglam() { if (window.Baglam) Baglam.panel(tesis, document.getElementById('isoBaglam')); },
+    bakim() { if (window.Bakim) Bakim.panel(tesis, document.getElementById('isoBakim')); },
     belge() { if (window.Dys) Dys.panel(document.getElementById('isoBelge')); },
     denetim() { if (window.Enys) Enys.ciz(D, { tesis, yil }, 'denetim'); },
   };

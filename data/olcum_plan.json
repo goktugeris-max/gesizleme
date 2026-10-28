@@ -1,0 +1,161 @@
+{
+ "kaynak": "İBB-FRM-06-06 Enerji Ölçme ve İzleme (2026)",
+ "satirlar": [
+  {
+   "no": 1,
+   "tesis": "aassm",
+   "bolum": "Ana bina",
+   "kullanim": "Soğutma Sistemi - Chiller Aydınlatma ve Diğer Ekipmanlar",
+   "tur": "elektrik",
+   "birim": "kWh",
+   "degisken": "Çalışma gün sayısı",
+   "okuma": "osos",
+   "okuma_ad": "OSOS (GDZ Uzaktan İzleme)",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 2,
+   "tesis": "aassm",
+   "bolum": "Ana bina",
+   "kullanim": "Isıtma Sistemi - Kazan",
+   "tur": "dogalgaz",
+   "birim": "Sm3",
+   "degisken": "HDD",
+   "okuma": "manuel",
+   "okuma_ad": "Fatura & Sayaç Üzerinden Manuel",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 3,
+   "tesis": "buz",
+   "bolum": "Buz Sporları Salonu",
+   "kullanim": "Soğutma Sistemi - Chiller Aydınlatma ve Diğer Ekipmanlar Buz Sistemi",
+   "tur": "elektrik",
+   "birim": "kWh",
+   "degisken": "Çalışma gün sayısı CDD",
+   "okuma": "osos",
+   "okuma_ad": "OSOS (GDZ Uzaktan İzleme)",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 4,
+   "tesis": "buz",
+   "bolum": "Buz Sporları Salonu",
+   "kullanim": "Isıtma Kazan",
+   "tur": "dogalgaz",
+   "birim": "Sm3",
+   "degisken": "Çalışma gün sayısı",
+   "okuma": "manuel",
+   "okuma_ad": "Fatura & Sayaç Üzerinden Manuel",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 5,
+   "tesis": "buca",
+   "bolum": "Soğutma Sistemi",
+   "kullanim": "Soğutma Sistemi - Chiller",
+   "tur": "elektrik",
+   "birim": "kWh",
+   "degisken": "CDD",
+   "okuma": "osos",
+   "okuma_ad": "OSOS (GDZ Uzaktan İzleme)",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 6,
+   "tesis": "buca",
+   "bolum": "Huzurevi",
+   "kullanim": "Aydınlatma ve Diğer Ekipmanlar",
+   "tur": "elektrik",
+   "birim": "kWh",
+   "degisken": "Çalışma gün sayısı",
+   "okuma": "osos",
+   "okuma_ad": "OSOS (GDZ Uzaktan İzleme)",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 7,
+   "tesis": "buca",
+   "bolum": "Huzurevi",
+   "kullanim": "Isıtma Sistemi - Kazan",
+   "tur": "dogalgaz",
+   "birim": "Sm3",
+   "degisken": "HDD",
+   "okuma": "manuel",
+   "okuma_ad": "Fatura & Sayaç Üzerinden Manuel",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 8,
+   "tesis": "buca",
+   "bolum": "Aşevi",
+   "kullanim": "Aydınlatma ve Diğer Ekipmanlar",
+   "tur": "elektrik",
+   "birim": "kWh",
+   "degisken": "Çalışma gün sayısı",
+   "okuma": "osos",
+   "okuma_ad": "OSOS (GDZ Uzaktan İzleme)",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 9,
+   "tesis": "buca",
+   "bolum": "Aşevi",
+   "kullanim": "Isıtma Sistemi - Kazan",
+   "tur": "dogalgaz",
+   "birim": "Sm3",
+   "degisken": "HDD Yemek Sayısı",
+   "okuma": "manuel",
+   "okuma_ad": "Fatura & Sayaç Üzerinden Manuel",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 10,
+   "tesis": "buca",
+   "bolum": "Aşevi",
+   "kullanim": "Ocak - Fırın",
+   "tur": "dogalgaz",
+   "birim": "Sm3",
+   "degisken": "Çalışma gün sayısı",
+   "okuma": "manuel",
+   "okuma_ad": "Fatura & Sayaç Üzerinden Manuel",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 11,
+   "tesis": "buca",
+   "bolum": "Eşrefpaşa Semt Polikliniği",
+   "kullanim": "Aydınlatma ve Diğer Ekipmanlar",
+   "tur": "elektrik",
+   "birim": "kWh",
+   "degisken": "Çalışma gün sayısı CDD",
+   "okuma": "osos",
+   "okuma_ad": "OSOS (GDZ Uzaktan İzleme)",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 12,
+   "tesis": "buca",
+   "bolum": "Eşrefpaşa Semt Polikliniği",
+   "kullanim": "Isıtma Sistemi - Kazan",
+   "tur": "dogalgaz",
+   "birim": "Sm3",
+   "degisken": "Çalışma gün sayısı HDD Kullanıcı Sayısı",
+   "okuma": "manuel",
+   "okuma_ad": "Fatura & Sayaç Üzerinden Manuel",
+   "periyot": "Ayda bir"
+  },
+  {
+   "no": 13,
+   "tesis": "buca",
+   "bolum": "Kapalı Spor Salonu",
+   "kullanim": "Isıtma Sistemi - Kazan",
+   "tur": "dogalgaz",
+   "birim": "Sm3",
+   "degisken": "HDD Kazan Çalışma Süresi",
+   "okuma": "manuel",
+   "okuma_ad": "Fatura & Sayaç Üzerinden Manuel",
+   "periyot": "Ayda bir"
+  }
+ ]
+}

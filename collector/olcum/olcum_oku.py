@@ -114,7 +114,7 @@ class Supabase:
 
 class Toplayici:
     def __init__(self, ayar, sb=None):
-        self.noktalar = ayar['noktalar']
+        self.noktalar = [n for n in ayar['noktalar'] if n.get('host')]   # host'u boş nokta = cihazı henüz takılmamış plan satırı (noktalar.plan.json); okunmaz
         self.sb = sb
         self.istemciler, self.yok, self.ozet, self.hata_sayac = {}, {}, {}, {}
         self.son = {}
