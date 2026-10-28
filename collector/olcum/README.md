@@ -34,6 +34,10 @@ Her noktaya `tesis` (aassm | buz | buca), `iso_bolum` (ISO 50001 serisindeki bö
 `iso_bolum` doluysa panel, o bölümün noktalarının ay başından beri ölçülen elektriğini bölümün aylık referans çizgisi (EnRÇ) ve yıllık hedefiyle karşılaştırır (ISO → Ölçüm → "Canlı referans karşılaştırması").
 Gerekli SQL: `supabase/iso_kayit.sql` (olcum_nokta yeni kolonlar ve `olcum_ay_tuketim` fonksiyonu).
 
+## Ölçüm planı şablonu
+`noktalar.plan.json`, FRM.06.06 formundan üretilmiş 6 elektrik noktası şablonudur (`python3 ../olcum_plan_to_json.py "<FRM.06.06.xlsx>"`). `host` boş olan noktalar okunmaz.
+Cihaz takılınca ilgili noktanın `host`, `kat_mahal`, `pano` alanlarını (ve gerekirse `kod`'unu şartname madde 3.3'e göre) doldurup dosyayı `noktalar.yerel.json` adıyla kopyalayın.
+
 ## Yeni cihaz modeli eklemek
 `profiller/` altına aynı biçimde yeni JSON koyun (`anahtar` adları standarttır: `v_l1`, `i_l1`, `p_top`[W], `pf_top`, `thd_i_l1`, `e_tuketim_wh` …); nokta listesinde `"profil": "<dosya adı>"` yazın.
 Süzgeç sayaçlarda harmonik kayıtları yoktur: profilde olmayan anahtar panelde "—" görünür (şartname: yazılım bu durumu ayırt etmeden işlemeli).
