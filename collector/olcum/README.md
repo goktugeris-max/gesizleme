@@ -34,9 +34,13 @@ Her noktaya `tesis` (aassm | buz | buca), `iso_bolum` (ISO 50001 serisindeki bö
 `iso_bolum` doluysa panel, o bölümün noktalarının ay başından beri ölçülen elektriğini bölümün aylık referans çizgisi (EnRÇ) ve yıllık hedefiyle karşılaştırır (ISO → Ölçüm → "Canlı referans karşılaştırması").
 Gerekli SQL: `supabase/iso_kayit.sql` (olcum_nokta yeni kolonlar ve `olcum_ay_tuketim` fonksiyonu).
 
-## Ölçüm planı şablonu
-`noktalar.plan.json`, FRM.06.06 formundan üretilmiş 6 elektrik noktası şablonudur (`python3 ../olcum_plan_to_json.py "<FRM.06.06.xlsx>"`). `host` boş olan noktalar okunmaz.
-Cihaz takılınca ilgili noktanın `host`, `kat_mahal`, `pano` alanlarını (ve gerekirse `kod`'unu şartname madde 3.3'e göre) doldurup dosyayı `noktalar.yerel.json` adıyla kopyalayın.
+## Analizör montaj ve IP planı (önerilen yol: `--plan-db`)
+AASSM (14) ve Buz Sporları (20) için 34 akım trafolu analizör noktası `supabase/olcum_plan.sql` ile Supabase'e yüklenir (bir kez çalıştırın).
+IP adresi, port, Modbus adresi, CT oranı ve montaj durumu **panelden** girilir: ISO 50001 → tesis → Ölçüm → "Analizör montaj ve IP planı" ("Toplu IP ata" düğmesi boş noktalara art arda IP verir). IP'ler depoya yazılmaz.
+Okuyucu yalnızca ortam değişkenleriyle çalışır; nokta listesi ve IP'leri her 5 dakikada panelden alır (yeniden başlatmak gerekmez):
+`python3 olcum_oku.py --plan-db --surekli --aralik 60`
+IP'si boş olan nokta okunmaz. İsterseniz `--ayar noktalar.yerel.json` ile yerel nokta listesi de verilebilir; aynı kodlu nokta için yerel dosya önceliklidir.
+Her analizör için cihaz menüsünden IP/Modbus adresi ve CT oranı (primer/sekonder) ayarlanır; aynı değerler panelde girilir (CT oranı kayıt/doğrulama içindir, okuyucu cihazın verdiği değeri olduğu gibi alır).
 
 ## Yeni cihaz modeli eklemek
 `profiller/` altına aynı biçimde yeni JSON koyun (`anahtar` adları standarttır: `v_l1`, `i_l1`, `p_top`[W], `pf_top`, `thd_i_l1`, `e_tuketim_wh` …); nokta listesinde `"profil": "<dosya adı>"` yazın.

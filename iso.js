@@ -382,7 +382,7 @@
       <nav id="isoAlt" class="flex gap-1 overflow-x-auto border-b border-slate-800 pb-1"></nav>
       <div id="isoP-ozet"><section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section><section id="isoOzetSerit" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4"></section></div>
       <div id="isoP-ref" class="hidden space-y-4"><div id="isoBolumChips" class="flex flex-wrap gap-1"></div><section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoEk" class="space-y-4"></section><div id="isoNotlar"></div></div>
-      <div id="isoP-olcum" class="hidden"><section id="isoOlcum"></section></div>
+      <div id="isoP-olcum" class="hidden"><section id="isoOlcum"></section><section id="isoDonanim" class="mt-6"></section></div>
       <div id="isoP-hedef" class="hidden space-y-4"><section id="isoHedef"></section><section id="isoEnpg"></section></div>
       <div id="isoP-eylem" class="hidden"><section id="isoEylem"></section><section id="isoEylemDB" class="mt-6"></section></div>
       <div id="isoP-etut" class="hidden"><section id="isoEtutPanel"></section></div>
@@ -449,6 +449,7 @@
         return s ? { referans: s.yillar[yl].referans[ay], hedef: s.yillar[yl].hedef } : null;
       };
       Olcum.panel(tesis, document.getElementById('isoOlcum'), { seri });
+      if (window.OlcumPlan) OlcumPlan.panel(tesis, document.getElementById('isoDonanim'));
     },
     hedef() { if (window.Enys) Enys.ciz(D, { tesis, yil }, 'hedef'); },
     eylem() {

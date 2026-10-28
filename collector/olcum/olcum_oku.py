@@ -4,7 +4,8 @@ Binada (ya da Türkiye'den çıkan sürekli açık bir makinede) çalışır; Gi
 Her tur: noktaları oku → `olcum_son`'a anlık değer yaz → 15 dakikalık özet penceresi dolunca `olcum_15dk`'ya satır ekle.
 
 Kullanım:
-  python3 olcum_oku.py --ayar noktalar.yerel.json --surekli --aralik 60          # sürekli (Supabase'e)
+  python3 olcum_oku.py --plan-db --surekli --aralik 60                           # sürekli; nokta listesi/IP'ler panelden (Supabase olcum_plan)
+  python3 olcum_oku.py --ayar noktalar.yerel.json --surekli --aralik 60          # sürekli (Supabase'e), nokta listesi yerel dosyadan
   python3 olcum_oku.py --ayar noktalar.yerel.json --bir-tur --cikti son.json     # tek tur, dosyaya (deneme)
 Supabase için ortam değişkenleri (depoya/günlüğe YAZILMAZ):
   SUPABASE_URL, SUPABASE_ANON_KEY, OLCUM_EPOSTA, OLCUM_SIFRE   (toplayıcı hesabı; rolü 'toplayici')
@@ -22,6 +23,7 @@ from olcum_modbus import Istemci, ModbusHata, profil_oku
 
 KLASOR = os.path.dirname(os.path.abspath(__file__))
 PENCERE_DK = 15
+PLAN_ARALIK_SN = 300   # --plan-db: panelden girilen IP/ayar değişiklikleri en geç 5 dakikada alınır
 
 
 def profil_yukle(ad, onbellek={}):
@@ -104,6 +106,14 @@ class Supabase:
         self.jeton, self.bitis = y['access_token'], time.time() + int(y.get('expires_in', 3600))
         return self.jeton
 
+    def oku(self, yol):
+        r = urllib.request.Request(self.url + yol, headers={'apikey': self.anahtar, 'Authorization': 'Bearer ' + self._jeton()})
+        try:
+            with urllib.request.urlopen(r, timeout=20) as y:
+                return json.loads(y.read() or b'[]')
+        except urllib.error.HTTPError as e:
+            raise RuntimeError('Supabase %s → HTTP %d' % (yol.split('?')[0], e.code))
+
     def yaz(self, tablo, satirlar, cakisma=None):
         if not satirlar:
             return
@@ -113,9 +123,10 @@ class Supabase:
 
 
 class Toplayici:
-    def __init__(self, ayar, sb=None):
-        self.noktalar = [n for n in ayar['noktalar'] if n.get('host')]   # host'u boş nokta = cihazı henüz takılmamış plan satırı (noktalar.plan.json); okunmaz
-        self.sb = sb
+    def __init__(self, ayar, sb=None, plan_db=False):
+        self.sabit = [n for n in (ayar or {}).get('noktalar', []) if n.get('host')]   # host'u boş nokta = cihazı henüz takılmamış; okunmaz
+        self.noktalar = list(self.sabit)
+        self.sb, self.plan_db, self.plan_son, self.plan_imza = sb, plan_db and sb is not None, 0, None
         self.istemciler, self.yok, self.ozet, self.hata_sayac = {}, {}, {}, {}
         self.son = {}
         self.kayitli = False
@@ -128,7 +139,30 @@ class Toplayici:
                                      'kat_mahal': n.get('kat_mahal'), 'pano': n.get('pano')} for n in self.noktalar], 'kod')
         self.kayitli = True
 
+    def plani_yenile(self):
+        """Panelde (olcum_plan) IP'si girilmiş noktaları alır; liste/ayar değiştiyse noktaları yeniden kaydeder ve bağlantıları yeniler."""
+        self.plan_son = time.time()
+        try:
+            satirlar = self.sb.oku('/rest/v1/olcum_plan?select=kod,ad,tesis,profil,host,port,birim,iso_bolum,kat_mahal,pano&host=not.is.null&aktif=eq.true&order=kod')
+        except (RuntimeError, OSError, ValueError) as e:
+            print('Plan okunamadı (eski liste kullanılıyor):', e, file=sys.stderr)
+            return
+        db = {r['kod']: dict(r, cihaz_tipi='analizor', enerji_turu='elektrik') for r in satirlar if r.get('host')}
+        db.update({n['kod']: n for n in self.sabit})   # yerel dosyadaki nokta aynı kodlu plan satırının yerine geçer
+        yeni = sorted(db.values(), key=lambda n: n['kod'])
+        imza = json.dumps(yeni, sort_keys=True)
+        if imza == self.plan_imza:
+            return
+        for n in yeni:   # adresi/ayarı değişen noktanın eski bağlantısı atılır
+            eski = next((o for o in self.noktalar if o['kod'] == n['kod']), None)
+            if eski and (eski.get('host'), eski.get('port'), eski.get('birim')) != (n.get('host'), n.get('port'), n.get('birim')):
+                self.istemciler.pop(n['kod'], None)
+        self.noktalar, self.plan_imza, self.kayitli = yeni, imza, False
+        print('Plan güncellendi: %d nokta okunacak.' % len(yeni), file=sys.stderr)
+
     def tur(self):
+        if self.plan_db and time.time() - self.plan_son > PLAN_ARALIK_SN:
+            self.plani_yenile()
         t = simdi()
         son_satirlar, biten = [], []
         for n in self.noktalar:
@@ -165,19 +199,26 @@ class Toplayici:
 
 def ana():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--ayar', required=True, help='noktalar JSON (örnek: noktalar.ornek.json)')
+    ap.add_argument('--ayar', help='noktalar JSON (örnek: noktalar.ornek.json)')
+    ap.add_argument('--plan-db', action='store_true', help="nokta listesi ve IP'ler panelden (Supabase olcum_plan) okunur")
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument('--bir-tur', action='store_true')
     g.add_argument('--surekli', action='store_true')
     ap.add_argument('--aralik', type=int, default=60, help='sürekli modda okuma aralığı (sn)')
     ap.add_argument('--cikti', help='son turun sonucunu bu JSON dosyasına yaz (Supabase yerine deneme için)')
     a = ap.parse_args()
-    with open(a.ayar, encoding='utf-8') as f:
-        ayar = json.load(f)
+    if not a.ayar and not a.plan_db:
+        sys.exit('--ayar <dosya> ya da --plan-db verin.')
+    ayar = {'noktalar': []}
+    if a.ayar:
+        with open(a.ayar, encoding='utf-8') as f:
+            ayar = json.load(f)
     sb = Supabase() if (not a.cikti and os.environ.get('SUPABASE_URL')) else None
     if not a.cikti and not sb:
         sys.exit('Hedef yok: --cikti verin ya da SUPABASE_URL/SUPABASE_ANON_KEY/OLCUM_EPOSTA/OLCUM_SIFRE ortam değişkenlerini ayarlayın.')
-    top = Toplayici(ayar, sb)
+    if a.plan_db and not sb:
+        sys.exit('--plan-db için SUPABASE_URL/SUPABASE_ANON_KEY/OLCUM_EPOSTA/OLCUM_SIFRE ortam değişkenleri gerekir.')
+    top = Toplayici(ayar, sb, a.plan_db)
     while True:
         try:
             son, biten = top.tur()
