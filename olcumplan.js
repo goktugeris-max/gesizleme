@@ -1,5 +1,5 @@
 /* Analizör montaj ve IP planı (ISO 50001 → tesis → Ölçüm altında): AASSM'ye 14, Buz Sporları'na 20 adet akım trafolu analizör (toplam 34).
- * Her nokta için yük grubu, kat/pano, IP adresi + Modbus adresi, CT oranı ve devreye alma durumu panelden girilir (supabase/olcum_plan.sql; tablo anon'a KAPALI,
+ * Her nokta için yük grubu, kat/pano, cihazın kendi IP adresi (Ethernet/Modbus TCP), CT oranı ve devreye alma durumu panelden girilir (supabase/olcum_plan.sql; tablo anon'a KAPALI,
  * IP'ler depoya/GitHub'a yazılmaz). Okuyucu (collector/olcum/olcum_oku.py --plan-db) IP'si girilmiş noktaları buradan alır ve okumaya başlar.
  * Montajdan sonra IP ve CT ayarları cihazda yapılıp burada karşılığı girilir; "Çevrimiçi" sütunu okuyucunun son okumasından gelir.
  */
@@ -24,9 +24,9 @@
       { k: 'yuk_grubu', ad: 'Yük grubu', tip: 'text' },
       { k: 'kat_mahal', ad: 'Kat / mahal', tip: 'text' },
       { k: 'pano', ad: 'Pano no', tip: 'text' },
-      { k: 'host', ad: 'IP adresi (ağ geçidi)', tip: 'text', yardim: 'RS-485 hattındaki cihazlar ağ geçidinin IP\'sini paylaşır; Modbus adresi ile ayrılırlar.' },
+      { k: 'host', ad: 'IP adresi (cihazın kendi IP\'si)', tip: 'text', yardim: 'Analizörün Ethernet portuna verilecek sabit IP (Modbus TCP). Cihaz menüsünden de aynı IP ayarlanır.' },
       { k: 'port', ad: 'Port', tip: 'int', min: 1, max: 65535 },
-      { k: 'birim', ad: 'Modbus adresi (1–247)', tip: 'int', min: 1, max: 247 },
+      { k: 'birim', ad: 'Modbus adresi (genelde 1)', tip: 'int', min: 1, max: 247 },
       { k: 'ct_primer', ad: 'CT primer (A)', tip: 'int', min: 1, yardim: 'Ör. 400 (400/5 A)' },
       { k: 'ct_sekonder', ad: 'CT sekonder (A)', tip: 'sel', sec: [['5', '5 A'], ['1', '1 A']] },
       { k: 'durum', ad: 'Durum', tip: 'sel', sec: Object.entries(DURUM).map(([d, [e]]) => [d, e]) },
@@ -49,7 +49,7 @@
       { ad: 'Nokta', deger: (r) => `<div class="text-slate-100">${esc(r.ad)}</div><div class="text-[10px] text-slate-500 font-mono">${esc(r.kod)}</div>` },
       { ad: 'Yük grubu', deger: (r) => esc(r.yuk_grubu || '—') },
       { ad: 'Konum', deger: (r) => esc([r.kat_mahal, r.pano].filter(Boolean).join(' · ') || '—') },
-      { ad: 'IP : port / adres', deger: (r) => (r.host ? `<span class="font-mono">${esc(r.host)}:${r.port}</span> <span class="text-slate-500">/ ${r.birim}</span>` : '<span class="text-slate-500">atanmadı</span>') },
+      { ad: 'IP : port', deger: (r) => (r.host ? `<span class="font-mono">${esc(r.host)}:${r.port}</span>${r.birim && r.birim !== 1 ? ` <span class="text-slate-500">/ adres ${r.birim}</span>` : ''}` : '<span class="text-slate-500">atanmadı</span>') },
       { ad: 'CT', sinif: 'whitespace-nowrap', deger: (r) => ctYaz(r) },
       { ad: 'Durum', deger: (r) => `<span class="px-2 py-0.5 rounded-full text-[10px] ${DURUM[r.durum || 'planlandi'][1]}">${DURUM[r.durum || 'planlandi'][0]}</span>` },
       { ad: 'Canlı', sinif: 'text-center', deger: (r) => (cevrimici(r.kod) ? '<span class="text-emerald-400" title="Son 5 dk içinde okundu">●</span>' : r.host ? '<span class="text-slate-500" title="Okuma yok">○</span>' : '') },
