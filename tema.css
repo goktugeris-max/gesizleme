@@ -101,3 +101,11 @@ html:not(.dark) a.glass-card:hover, html:not(.dark) button.glass-card:hover { bo
 #tab-elektrik:has(#elGiris) > :not(#elKartlar) { display: none; }
 /* 6) Hareketi azalt */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+/* 7) Telefonda Özet: kent elektrik ve PTF bölümleri başlığa dokununca açılır (varsayılan kapalı) */
+@media (max-width: 639px) {
+  .ozet-kisalt > h3:first-child { cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .ozet-kisalt > h3:first-child::after { content: "＋"; font-weight: 400; opacity: .6; margin-left: auto; padding-left: .5rem; }
+  .ozet-kisalt.acik > h3:first-child::after { content: "−"; }
+  .ozet-kisalt:not(.acik) > :not(h3:first-child) { display: none; }
+}
