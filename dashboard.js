@@ -80,8 +80,8 @@
     const cubuk = (oran, dolgu, sol, sag) => `<div><div class="h-2 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full" style="width:${Math.max(0, Math.min(100, (oran || 0) * 100))}%;background:${dolgu}"></div></div>
       <div class="flex justify-between text-[11px] mt-1 gap-2"><span>${sol}</span><span class="font-mono text-right">${sag || ''}</span></div></div>`;
     const kart = (ikon, baslik, deger, govde, renk, vurgu, sinif) => `
-      <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col ${sinif || ''}" style="border-left:4px solid ${vurgu}">
-        <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400 font-semibold min-w-0"><i data-lucide="${ikon}" class="w-4 h-4 shrink-0"></i><span class="truncate">${baslik}</span></div>
+      <div class="glass-card p-4 sm:p-5 flex flex-col ${sinif || ''}">
+        <div class="text-sm text-slate-400 font-medium truncate">${baslik}</div>
         <div class="text-3xl font-extrabold mt-3 leading-none ${renk || 'text-white'}">${deger}</div>
         <div class="mt-4 text-xs text-slate-400 space-y-2 flex-1">${govde}</div>
       </div>`;
@@ -91,10 +91,10 @@
     const rozet = (v) => (v == null || isNaN(v) ? '' : `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${v >= 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">${v >= 0 ? '▲' : '▼'} ${fark(v).replace('+', '')}</span>`);
     document.getElementById('genelKartlar').innerHTML =
       kart('zap', 'Kurulu güç', tr0(kw) + birim('kW'), `<div>${PERF.santraller.length} santral devrede</div><div class="text-slate-500">${PERF.planlanan.length} santral planlanan</div>`, 'text-white', '#f5b301') +
-      kart('sun', `${yil} üretimi · Oca–${AY[ay - 1]}`, mwh(uretim).replace(' MWh', '') + birim('MWh'), cubuk(beklenen ? uretim / beklenen : null, verimSinifi(verim).dolgu, `Beklenene oran ${yuzde(verim)}`, `${(uretim / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} / ${mwh(beklenen)}`), 'text-white', TV()) +
+      kart('sun', `${yil} üretimi, Oca–${AY[ay - 1]}`, mwh(uretim).replace(' MWh', '') + birim('MWh'), cubuk(beklenen ? uretim / beklenen : null, verimSinifi(verim).dolgu, `Beklenene oran ${yuzde(verim)}`, `${(uretim / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} / ${mwh(beklenen)}`), 'text-white', TV()) +
       kart('gauge', 'Beklenene göre verim', yuzde(verim), cubuk(verim, verimSinifi(verim).dolgu, `${yil} Ocak–${AY_UZUN[ay - 1]}`, 'hedef %100') + '<div class="text-[11px] text-slate-500">≥%95 iyi · %85–95 dikkat · %70–85 düşük · altı kötü</div>', verimSinifi(verim).yazi, verimSinifi(verim).dolgu) +
       kart('calendar-days', `${AY_UZUN[ay - 1]} ayı`, mwh(sonU).replace(' MWh', '') + birim('MWh'), `<div class="flex items-center justify-between gap-2"><span>Verim <b class="${verimSinifi(sonOran).yazi}">${yuzde(sonOran)}</b></span>${rozet(sonBuyume)}</div><div class="text-slate-500">geçen yılın aynı ayına göre</div>`, 'text-white', '#3f8fd2') +
-      kart('radio', 'Canlı · şu an', tr1(anlik) + birim('kW'),
+      kart('radio', 'Canlı, şu an', tr1(anlik) + birim('kW'),
         canli.length ? `<div><div class="flex h-2 rounded-full overflow-hidden bg-slate-800">${parca(calisan, '#10b981')}${parca(bekle, '#38bdf8')}${parca(sorunlu, '#ef4444')}</div>
           <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] mt-1"><span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#10b981"></span>${calisan} çalışıyor</span>${bekle ? `<span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#38bdf8"></span>${bekle} beklemede</span>` : ''}${sorunlu ? `<span class="text-red-400"><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#ef4444"></span>${sorunlu} sorunlu</span>` : ''}</div></div>
           <div class="text-slate-500">Bugün ${tr0(bugun)} kWh · ${canli.length}/${M.length} santral canlı</div>` : '<div>Canlı veri henüz yok</div>', 'text-white', '#10b981', 'sm:col-span-2 xl:col-span-1');
@@ -136,6 +136,8 @@
       k('Verim', yuzde(verim), verimSinifi(verim).yazi);
     const ef = window.Karbon ? Karbon.efElek() : 0.479, kac = (topla(M.map((m) => m.uretim)) * ef) / 1000;
     document.getElementById('ozetKarbon').innerHTML = `<div class="text-[10px] uppercase tracking-wider text-slate-500">${yil} GES ile kaçınılan CO₂</div><div class="text-lg font-bold text-lime-300">${tr0(kac)} <span class="text-xs text-slate-400">t</span></div>`;
+    const cumle = document.getElementById('ozetCumle');
+    if (cumle) cumle.textContent = `${PERF.santraller.length} çatı santralinin kurulu gücü ${tr0(kw)} kW. ${yil} Ocak–${AY_UZUN[ay - 1]} döneminde üretim, beklenene göre ${yuzde(verim)} düzeyinde.${canli.length ? ` Canlı izlenen ${canli.length} santralden ${canli.length - sorunlu.length} tanesi sorunsuz, ${sorunlu.length} tanesinde sorun var.` : ''}`;
     const u = document.getElementById('ozetUyari');
     u.classList.toggle('hidden', !sorunlu.length);
     u.innerHTML = sorunlu.length ? `<a href="#canli" class="inline-flex items-center gap-2 text-xs font-semibold text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i> ${sorunlu.length} santralde sorun var: ${esc(sorunlu.slice(0, 3).map((c) => c.ad).join(', '))}${sorunlu.length > 3 ? '…' : ''}</a>` : '';
@@ -153,7 +155,7 @@
     const { yil, ay } = PERF.son_donem;
     Chart.defaults.color = koyuMu() ? '#94a3b8' : '#5b6b7e';
     Chart.defaults.borderColor = koyuMu() ? 'rgba(148,163,184,.12)' : 'rgba(91,107,126,.16)';
-    Chart.defaults.font.family = 'Inter, sans-serif';
+    Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) Chart.defaults.animation = false;
 
     // 1) Aylık toplam üretim: son 3 yıl + beklenen
