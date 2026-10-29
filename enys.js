@@ -67,6 +67,7 @@
   function bolum(key, baslik, ozet, icerik) {
     return `<details data-k="${key}" ${acik.has(key) ? 'open' : ''} ontoggle="Enys.tog('${key}', this.open)" class="group glass-card rounded-xl overflow-hidden"><summary class="cursor-pointer select-none p-4 flex flex-wrap items-center gap-x-3 gap-y-2 hover:bg-slate-800/40" style="list-style:none"><span class="text-slate-400 inline-block transition-transform group-open:rotate-90">▸</span><h2 class="text-sm font-semibold text-white">${baslik}</h2><div class="ml-auto flex flex-wrap items-center gap-3 text-[11px] text-slate-400">${ozet || ''}</div></summary><div class="border-t border-slate-800">${icerik}</div></details>`;
   }
+  const enerjiEt = (e) => `<span class="inline-flex items-center gap-1.5 whitespace-nowrap"><span class="inline-block w-2 h-2 rounded-full" style="background:${e === 'Elektrik' ? '#f5b301' : '#3f8fd2'}"></span>${e2(e)}</span>`;
   const sel = 'bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-xs text-slate-100';
 
   // ---------- 1) hedefler ----------
@@ -82,13 +83,13 @@
     const tablo = satirlar.map(({ h, k, r }) => {
       const d = r && r.durum ? DURUM_ET[r.durum] : DURUM_ET.yok;
       const ilerleme = r && r.n ? Math.max(0, Math.min(1.5, -r.degisim / k.oran)) : 0;
-      return `<tr class="border-t border-slate-800/70 align-top"><td class="px-3 py-2 text-slate-100 min-w-[200px]">${e2(hedefAd(h))}<div class="text-[10px] text-slate-500">${e2(h.sorumlu || '')}</div></td>
-        <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${k.enerji === 'Elektrik' ? 'bg-amber-500/15 text-amber-300' : 'bg-cyan-500/15 text-cyan-300'}">${e2(k.enerji)}</span></td>
-        <td class="px-3 py-2 text-slate-400 whitespace-nowrap">${r && r.n ? e2(r.donem) : '—'}</td>
-        <td class="px-3 py-2 text-right font-mono">${r && r.n ? tr0(r.b) : '—'}</td><td class="px-3 py-2 text-right font-mono">${r && r.n ? tr0(r.g) : '—'} <span class="text-[10px] text-slate-500">${e2(r ? r.birim : '')}</span></td>
-        <td class="px-3 py-2 text-right font-mono" style="color:${d[1]}">${r && r.n ? yz(r.degisim) : '—'}</td><td class="px-3 py-2 text-right font-mono text-slate-300">−%${(k.oran * 100).toLocaleString('tr-TR')}</td>
-        <td class="px-3 py-2 min-w-[150px]"><div class="h-1.5 rounded-full bg-slate-800 overflow-hidden"><div style="width:${Math.min(100, ilerleme * 100 / 1.5)}%;background:${d[1]}" class="h-full"></div></div><div class="text-[10px] mt-1" style="color:${d[1]}">${d[0]}</div></td>
-        <td class="px-3 py-2 text-right font-mono text-slate-400">${r && r.gerekli != null ? yz(r.gerekli) : '—'}</td></tr>`;
+      return `<tr class="border-t border-slate-800/70 align-top"><td class="px-3 py-2 text-slate-100 sm:min-w-[200px]">${e2(hedefAd(h))}<div class="text-[10px] text-slate-500 sm:hidden mt-0.5">${enerjiEt(k.enerji)}</div><div class="text-[10px] text-slate-500 hidden sm:block">${e2(h.sorumlu || '')}</div></td>
+        <td class="px-3 py-2 hidden sm:table-cell">${enerjiEt(k.enerji)}</td>
+        <td class="px-3 py-2 text-slate-400 whitespace-nowrap hidden sm:table-cell">${r && r.n ? e2(r.donem) : '—'}</td>
+        <td class="px-3 py-2 text-right font-mono hidden sm:table-cell">${r && r.n ? tr0(r.b) : '—'}</td><td class="px-3 py-2 text-right font-mono hidden sm:table-cell">${r && r.n ? tr0(r.g) : '—'} <span class="text-[10px] text-slate-500">${e2(r ? r.birim : '')}</span></td>
+        <td class="px-3 py-2 text-right font-mono font-semibold" style="color:${d[1]}">${r && r.n ? yz(r.degisim) : '—'}</td><td class="px-3 py-2 text-right font-mono text-slate-300 hidden sm:table-cell">−%${(k.oran * 100).toLocaleString('tr-TR')}</td>
+        <td class="px-3 py-2 sm:min-w-[170px]"><div class="flex items-center gap-1.5 font-medium" style="color:${d[1]}"><span class="inline-block w-2 h-2 rounded-full shrink-0" style="background:${d[1]}"></span>${d[0]}</div><div class="h-1.5 rounded-full bg-slate-800 overflow-hidden mt-1.5" title="Hedefe ulaşma: %${Math.round(Math.min(ilerleme, 1.5) * 100)} (%100 = hedef tutturuldu)"><div style="width:${Math.min(100, ilerleme * 100)}%;background:${d[1]}" class="h-full"></div></div></td>
+        <td class="px-3 py-2 text-right font-mono text-slate-400 hidden sm:table-cell">${r && r.gerekli != null ? yz(r.gerekli) : '—'}</td></tr>`;
     }).join('');
     // nicel olmayan hedefler: elle takip
     const nitel = liste.filter((h) => h.tur === 'nitel').map((h) => {
@@ -99,9 +100,10 @@
           <input value="${e2(m.n || '')}" onchange="Enys.hd('${key}','n',this.value)" placeholder="Not" class="${sel} flex-1 min-w-[140px]"></div></div>`;
     }).join('');
     el.innerHTML = bolum('hedef', 'Enerji hedefleri ve ilerleme', `<span>${hedefYil} hedefleri</span><span class="text-emerald-300">${say.hedefte} hedefte</span><span class="text-amber-300">${say.geride} geride</span><span class="text-red-300">${say.riskte} riskte</span>`,
-      `<div class="p-4 space-y-3"><div class="flex flex-wrap items-center gap-3"><label class="text-[11px] text-slate-400">Hedef yılı <select onchange="Enys.hy(this.value)" class="${sel}">${yillar.map((y) => `<option ${y === hedefYil ? 'selected' : ''}>${y}</option>`).join('')}</select></label>
+      `<div class="p-4 space-y-4"><div class="olcum-seridi grid grid-cols-2 lg:grid-cols-4">${[['Hedefte', say.hedefte, '#10b981', 'azaltım hedefi tutturuldu'], ['Düşüş var', say.geride, '#d9822b', 'tüketim azaldı, hedefin gerisinde'], ['Artış var', say.riskte, '#ef4444', 'tüketim baz yılın üstünde'], ['Toplam hedef', satirlar.length, 'inherit', hedefYil + ' nicel hedefleri']].map(([b, n, r, a]) => `<div class="glass-card p-4"><div class="text-sm text-slate-400 font-medium">${b}</div><div class="text-3xl font-semibold mt-2 leading-none" style="color:${r}">${n}</div><div class="text-xs text-slate-500 mt-2">${a}</div></div>`).join('')}</div>
+        <div class="flex flex-wrap items-center gap-3"><label class="text-[11px] text-slate-400">Hedef yılı <select onchange="Enys.hy(this.value)" class="${sel}">${yillar.map((y) => `<option ${y === hedefYil ? 'selected' : ''}>${y}</option>`).join('')}</select></label>
         <span class="text-[11px] text-slate-500">Hedefler (FRM.06.02): bir önceki yılın aynı aylarına göre azaltım. Gerçekleşen, ISO şifreli verisindeki aylık tüketimden hesaplanır.</span></div>
-        <div class="overflow-x-auto"><table class="w-full text-xs" style="min-width:900px"><thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px]"><tr><th class="px-3 py-2 text-left">Amaç</th><th class="px-3 text-left">Enerji</th><th class="px-3 text-left">Dönem</th><th class="px-3 text-right">Baz (${(liste.find((h) => h.baz_yil) || {}).baz_yil || '—'})</th><th class="px-3 text-right">${hedefYil}</th><th class="px-3 text-right">Değişim</th><th class="px-3 text-right">Hedef</th><th class="px-3 text-left">Durum</th><th class="px-3 text-right" title="Yıl sonu hedefi için kalan aylarda bazın yüzde kaçı olmalı">Kalan aylarda gereken</th></tr></thead><tbody>${tablo || '<tr><td colspan="9" class="px-3 py-6 text-center text-slate-500">Bu yıl için hesaplanabilir hedef yok.</td></tr>'}</tbody></table></div>
+        <div class="overflow-x-auto"><table class="w-full text-xs sm:min-w-[900px]"><thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[10px]"><tr><th class="px-3 py-2 text-left">Amaç</th><th class="px-3 text-left hidden sm:table-cell">Enerji</th><th class="px-3 text-left hidden sm:table-cell">Dönem</th><th class="px-3 text-right hidden sm:table-cell">Baz (${(liste.find((h) => h.baz_yil) || {}).baz_yil || '—'})</th><th class="px-3 text-right hidden sm:table-cell">${hedefYil}</th><th class="px-3 text-right">Değişim</th><th class="px-3 text-right hidden sm:table-cell">Hedef</th><th class="px-3 text-left">Durum</th><th class="px-3 text-right hidden sm:table-cell" title="Yıl sonu hedefi için kalan aylarda bazın yüzde kaçı olmalı">Kalan aylarda gereken</th></tr></thead><tbody>${tablo || '<tr><td colspan="5" class="px-3 py-6 text-center text-slate-500">Bu yıl için hesaplanabilir hedef yok.</td></tr>'}</tbody></table></div>
         <p class="text-[11px] text-slate-500">Değişim = (${hedefYil} dönem toplamı ÷ baz yılın aynı ayları) − 1; hedefin altında (daha negatif) olması iyidir. "Kalan aylarda gereken" = yıl sonunda hedefe ulaşmak için bazın kalan aylarına göre gereken değişim (veri tamamlanmamış aylar için).</p>
         ${nitel ? `<div class="text-xs font-semibold text-white pt-1">Kurum geneli, nicel olmayan hedefler (elle takip, yalnız bu tarayıcıda)</div><div class="grid grid-cols-1 lg:grid-cols-2 gap-3">${nitel}</div>` : ''}</div>`);
   }
@@ -119,8 +121,8 @@
       const o = om[anahtar(r)], f = o && o.deger ? r.deger / o.deger - 1 : null, ok = oekBy[r.no] || {};
       const birim = ((r.tanim || '').match(/\(([^)]+)\)\s*$/) || [])[1] || '';
       return `<tr class="border-t border-slate-800/70 align-top"><td class="px-3 py-2 text-slate-500">${r.no}</td><td class="px-3 py-2 text-slate-100 min-w-[160px]">${e2(r.bina)}<div class="text-[10px] text-slate-500">${e2(r.kullanim)}</div></td>
-        <td class="px-3 py-2"><span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${r.tur === 'Elektrik' ? 'bg-amber-500/15 text-amber-300' : 'bg-cyan-500/15 text-cyan-300'}">${e2(r.tur)}</span></td>
-        <td class="px-3 py-2 text-right font-mono">${tr0(r.kwh)}</td><td class="px-3 py-2 text-right font-mono text-slate-400">${ok.oran_pct != null ? '%' + tr1(ok.oran_pct) : '—'}</td>
+        <td class="px-3 py-2">${enerjiEt(r.tur)}</td>
+        <td class="px-3 py-2 text-right font-mono">${tr0(r.kwh)}</td><td class="px-3 py-2 text-right font-mono text-slate-400">${ok.oran_pct != null ? `%${tr1(ok.oran_pct)}<div class="h-1 rounded-full bg-slate-800 mt-1 ml-auto w-16 overflow-hidden"><div class="h-full bg-slate-500" style="width:${Math.min(100, ok.oran_pct * 3)}%"></div></div>` : '—'}</td>
         <td class="px-3 py-2 text-right font-mono text-cyan-300">${tr1(r.deger)} <span class="text-[10px] text-slate-500">${e2(birim)}</span></td>
         <td class="px-3 py-2 text-right font-mono ${f == null ? 'text-slate-600' : f > 0.02 ? 'text-red-400' : f < -0.02 ? 'text-emerald-400' : 'text-slate-300'}">${f == null ? '—' : yz(f)}</td>
         <td class="px-3 py-2 text-[11px] text-slate-400">${e2(ok.okuma || '')}${ok.periyot ? ' • ' + e2(ok.periyot) : ''}${ok.kayit_sorumlusu ? '<div class="text-slate-500">' + e2(ok.kayit_sorumlusu) + '</div>' : ''}</td></tr>`;
@@ -138,10 +140,17 @@
     if (!window.Chart || !document.getElementById('chEnpg')) return;
     if (grafikler.enpg) grafikler.enpg.destroy();
     const son = (E.enpg[yillar[yillar.length - 1]] || []).filter((r) => r.tesis === tesisKodu()), renkler = ['#211950', '#3f8fd2', '#d9822b', '#10b981', '#8b5cf6', '#ef4444', '#14b8a6', '#eab308', '#64748b', '#ec4899', '#0ea5e9', '#84cc16', '#f97316'];
-    const ds = son.filter((r) => (r.tanim || '').includes('m2')).map((r, i) => ({ label: r.bina + ' – ' + (r.tur === 'Elektrik' ? 'elek.' : 'gaz'), borderColor: renkler[i % renkler.length], backgroundColor: renkler[i % renkler.length], tension: 0.25,
-      data: yillar.map((y) => { const o = (E.enpg[y] || []).find((x) => anahtar(x) === anahtar(r)); return o ? Math.round(o.deger * 10) / 10 : null; }) }));
-    grafikler.enpg = new Chart(document.getElementById('chEnpg'), { type: 'line', data: { labels: yillar, datasets: ds }, options: { responsive: true, maintainAspectRatio: false, spanGaps: true,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }, title: { display: true, text: 'EnPG (kWh/m²) — yıllara göre', color: koyuMu() ? '#94a3b8' : '#5b6b7e', font: { size: 11, weight: 'normal' } } } } });
+    const seri = son.filter((r) => (r.tanim || '').includes('m2')).map((r, i) => {
+      const ham = yillar.map((y) => { const o = (E.enpg[y] || []).find((x) => anahtar(x) === anahtar(r)); return o && o.deger ? o.deger : null; });
+      const taban = ham.find((v) => v != null);
+      return { label: r.bina + (r.tur === 'Elektrik' ? ' (elektrik)' : ' (doğalgaz)'), borderColor: renkler[i % renkler.length], backgroundColor: renkler[i % renkler.length], tension: 0.2, borderWidth: 2, pointRadius: 3, ham,
+        data: ham.map((v) => (v != null && taban ? Math.round((v / taban) * 1000) / 10 : null)) };
+    });
+    // EnPG büyüklükleri çok farklı (10 ile 200 kWh/m²) olduğundan her seri ilk yılına göre endekslenir: eğimler karşılaştırılabilir
+    grafikler.enpg = new Chart(document.getElementById('chEnpg'), { type: 'line', data: { labels: yillar, datasets: seri }, options: { responsive: true, maintainAspectRatio: false, spanGaps: true, interaction: { mode: 'nearest', intersect: false },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }, title: { display: true, text: 'EnPG değişimi (her serinin ilk yılı = 100; aşağısı iyileşme)', color: koyuMu() ? '#94a3b8' : '#5b6b7e', font: { size: 12, weight: 'normal' } },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${tr1(c.parsed.y)} (EnPG ${tr1(c.dataset.ham[c.dataIndex])})` } } },
+      scales: { y: { ticks: { callback: (v) => v } } } } });
   }
 
   // ---------- 4) iç tetkik kontrol listesi ----------
