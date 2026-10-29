@@ -93,17 +93,20 @@
 
   // ---------- Özet: modüllerden gelen kart + uyarı kayıtları ----------
   const ozetModul = {};
+  let dikkatAcik = false;
   function ozetKaydet(ad, d) { ozetModul[ad] = d; ozetModulCiz(); }
   function ozetModulCiz() {
     ['elektrik', 'dogalgaz', 'kaynak', 'iso'].forEach((ad) => { const el = document.getElementById('ozet-' + ad); if (el && ozetModul[ad] && ozetModul[ad].kart) el.innerHTML = ozetModul[ad].kart; });
     const kutu = document.getElementById('ozetDikkat'); if (!kutu) return;
     const hepsi = Object.values(ozetModul).flatMap((m) => m.uyarilar || []).sort((a, b) => b.puan - a.puan);
-    kutu.innerHTML = hepsi.length ? hepsi.slice(0, 12).map((o) => `
+    const goster = dikkatAcik ? hepsi.slice(0, 12) : hepsi.slice(0, 6);
+    kutu.innerHTML = (hepsi.length ? goster.map((o) => `
       <a href="${o.href}" class="flex flex-col sm:flex-row sm:items-start gap-0.5 sm:gap-3 px-2 py-2 rounded-lg hover:bg-slate-800/70 transition">
         <span class="flex items-baseline gap-2 sm:contents">
           <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:w-16 sm:shrink-0 sm:mt-0.5">${esc(o.modul)}</span>
           <span class="text-[11px] font-semibold ${o.renk} sm:whitespace-nowrap sm:mt-0.5 sm:w-36 sm:shrink-0">${esc(o.etiket)}</span></span>
-        <span class="text-xs text-slate-300 min-w-0 break-words">${esc(o.metin)}</span></a>`).join('') : '<p class="px-2 py-4 text-center text-slate-500 text-sm">Şu an dikkat gerektiren bir durum yok.</p>';
+        <span class="text-xs sm:text-[13px] text-slate-300 min-w-0 break-words">${esc(o.metin)}</span></a>`).join('') : '<p class="px-2 py-4 text-center text-slate-500 text-sm">Şu an dikkat gerektiren bir durum yok.</p>')
+      + (hepsi.length > 6 ? `<button onclick="Dash.dikkatGenislet()" class="mt-2 w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-200 py-2 rounded-lg border border-dashed border-slate-700">${dikkatAcik ? 'Daha az göster' : 'Tümünü göster (' + Math.min(12, hepsi.length) + ')'}</button>` : '');
   }
 
   // ---------- Özet (modül kartları) ----------
@@ -141,6 +144,7 @@
     Chart.defaults.color = koyuMu() ? '#94a3b8' : '#5b6b7e';
     Chart.defaults.borderColor = koyuMu() ? 'rgba(148,163,184,.12)' : 'rgba(91,107,126,.16)';
     Chart.defaults.font.family = 'Inter, sans-serif';
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) Chart.defaults.animation = false;
 
     // 1) Aylık toplam üretim: son 3 yıl + beklenen
     const yillar = [yil - 2, yil - 1, yil];
@@ -400,6 +404,7 @@
       setTimeout(() => { Object.values(grafik).forEach((g) => g && g.resize()); window.print(); }, 300);
     },
     sirala(k) { sirala = { anahtar: k, yon: sirala.anahtar === k ? -sirala.yon : (k === 'ad' ? 1 : -1) }; tabloCiz(); },
+    dikkatGenislet() { dikkatAcik = !dikkatAcik; ozetModulCiz(); },
     canliGuncelle() { if (PERF) { kartlar(); dikkat(); tabloCiz(); ozetCiz(); if (window.Harita) Harita.yenile(); } },
     veri() { return { PERF, M, canliBul }; },
   };

@@ -7,6 +7,7 @@
  */
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+  const refRenk = () => (typeof koyuMu === 'function' && koyuMu() ? '#e2e8f0' : '#334155');   // referans çizgisi: açık temada koyu
   const RENK = { Elektrik: TV(), 'Doğalgaz': '#3f8fd2' };
   let D = null, sifreli = null, tesis = 'aassm', yil = '2024', yuklendi = false, rfTur = 'hepsi', altSekme = 'ozet', bolumSec = 'hepsi';
   const grafik = {};
@@ -171,6 +172,7 @@
   const bolumAdi = (s) => s.bolum.split(' –')[0].trim();
   const seriler = () => tumSeri().filter((s) => bolumSec === 'hepsi' || bolumAdi(s) === bolumSec);
 
+  // Özet: tek satırda 4 gösterge (elektrik, doğalgaz, TEP, hedef), altında aylık tesis grafikleri ve en çok sapan seriler
   function ozetKartlari() {
     const gruplar = {};
     tumSeri().forEach((s) => {
@@ -178,17 +180,65 @@
       const g = (gruplar[s.enerji] = gruplar[s.enerji] || { birim: s.birim, takip: 0, kt: 0, kr: 0, ay: 0, sn: 0, sr: 0 });
       g.takip += topla(v.takip); g.kt += c.t; g.kr += c.r; g.ay = Math.max(g.ay, veriAy(v)); g.sn++; if (c.n) g.sr++;
     });
-    const kart = (b, d, alt, renk) => `<div class="glass-card rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400">${b}</div><div class="text-2xl font-bold mt-1 ${renk || 'text-white'}">${d}</div><div class="text-[11px] text-slate-500 mt-1">${alt}</div></div>`;
-    document.getElementById('isoKartlar').innerHTML = Object.entries(gruplar).map(([e, g]) => {
-      const sapma = g.kr ? g.kt / g.kr - 1 : null;
-      const donem = g.ay < 12 ? `Oca–${AY[g.ay - 1]} ${yil}` : yil;
-      return kart(`${e} (${donem})`, `${tr0(g.takip)} <span class="text-sm font-medium text-slate-400">${g.birim}</span>`,
-        g.kr ? `${g.sr < g.sn ? `Yalnızca referansı olan ${g.sr}/${g.sn} seride: ` : ''}Referans ${tr0(g.kr)} • <span class="${sinif(sapma)} font-semibold">${yuzde(sapma)}</span> ${sapma <= 0 ? '(referansın altında)' : '(referansın üstünde)'}` : 'Referans çizgisi yok (bkz. okuma notları)', e === 'Elektrik' ? 'text-amber-300' : 'text-cyan-300');
-    }).join('') + (() => {
-      const t = tepHesap(tumSeri()), ay = Math.max(0, ...tumSeri().map((x) => veriAy(x.yillar[yil])));
-      return kart(`Toplam enerji — TEP (${ay && ay < 12 ? 'Oca–' + AY[ay - 1] + ' ' + yil : yil})`, `${tr0(t.elek + t.gaz)} <span class="text-sm font-medium text-slate-400">TEP</span>`,
-        `Elektrik ${tr0(t.elek)} • Doğalgaz ${tr0(t.gaz)} TEP <span class="text-slate-500">(etüt raporlarıyla aynı dönüşüm; motorin dahil değil)</span>`, 'text-cyan-300');
-    })() + kart('Hedef', '%' + ((tumSeri()[0] && tumSeri()[0].yillar[yil].hedef || 0.02) * 100).toLocaleString('tr-TR'), 'Her enerji kullanımı için yıllık tasarruf hedefi (Excel\'deki HEDEF hücresi)');
+    const rozet = (sapma) => (sapma == null ? '' : `<span class="px-2 py-0.5 rounded-full text-xs font-bold ${sapma <= 0 ? 'bg-emerald-500/15 text-emerald-400' : sapma > 0.05 ? 'bg-red-500/15 text-red-400' : 'bg-amber-500/15 text-amber-300'}">${sapma <= 0 ? '▼' : '▲'} ${yuzde(sapma).replace('+', '')}</span>`);
+    const kart = (ikon, b, d, govde, renk, vurgu, sag) => `<div class="glass-card rounded-2xl p-5 flex flex-col" style="border-left:4px solid ${vurgu}">
+      <div class="flex items-center justify-between gap-2"><div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400 font-semibold min-w-0"><i data-lucide="${ikon}" class="w-4 h-4 shrink-0"></i><span class="truncate">${b}</span></div>${sag || ''}</div>
+      <div class="text-4xl font-extrabold mt-3 leading-none ${renk}">${d}</div><div class="mt-4 text-xs text-slate-400 space-y-2 flex-1">${govde}</div></div>`;
+    // referansa göre gerçekleşen: çubuk (%100 = referans çizgisi)
+    const olcek = (kt, kr) => { const o = kr ? kt / kr : null; return o == null ? '' : `<div><div class="relative h-2 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full ${o <= 1 ? 'bg-emerald-500' : o <= 1.05 ? 'bg-amber-400' : 'bg-red-500'}" style="width:${Math.min(100, o * 100)}%"></div></div>
+        <div class="flex justify-between text-[11px] mt-1"><span>Referansın %${(o * 100).toLocaleString('tr-TR', { maximumFractionDigits: 1 })}'i</span><span class="font-mono">${tr0(kt)} / ${tr0(kr)}</span></div></div>`; };
+    const birim = (b, ek) => `<span class="text-lg font-semibold text-slate-400 ml-1">${b}</span>`;
+    const kartlar = Object.entries(gruplar).map(([e, g]) => {
+      const sapma = g.kr ? g.kt / g.kr - 1 : null, donem = g.ay < 12 ? `Oca–${AY[g.ay - 1]} ${yil}` : yil, elek = e === 'Elektrik';
+      return kart(elek ? 'zap' : 'flame', `${e} · ${donem}`, tr0(g.takip) + birim(g.birim), (g.kr ? olcek(g.kt, g.kr) : '<div>Referans çizgisi yok (bkz. okuma notları)</div>') + (g.sr < g.sn ? `<div class="text-[11px] text-slate-500">Referansı olan ${g.sr}/${g.sn} seri karşılaştırıldı.</div>` : ''),
+        elek ? 'text-amber-300' : 'text-cyan-300', elek ? '#f5b301' : '#3f8fd2', rozet(sapma));
+    });
+    const t = tepHesap(tumSeri()), ay = Math.max(0, ...tumSeri().map((x) => veriAy(x.yillar[yil]))), top = t.elek + t.gaz, pay = top ? t.elek / top : 0;
+    kartlar.push(kart('gauge', `Toplam enerji · ${ay && ay < 12 ? 'Oca–' + AY[ay - 1] + ' ' + yil : yil}`, tr0(top) + birim('TEP'),
+      `<div><div class="flex h-2 rounded-full overflow-hidden bg-slate-800"><div style="width:${pay * 100}%;background:#f5b301"></div><div class="flex-1" style="background:#3f8fd2"></div></div>
+        <div class="flex justify-between text-[11px] mt-1"><span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#f5b301"></span>Elektrik ${tr0(t.elek)}</span><span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#3f8fd2"></span>Doğalgaz ${tr0(t.gaz)}</span></div></div>
+        <div class="text-[11px] text-slate-500">Etüt raporlarıyla aynı dönüşüm; motorin dahil değil.</div>`, 'text-white', TV()));
+    const hedef = (tumSeri()[0] && tumSeri()[0].yillar[yil].hedef) || 0.02, secili = tumSeri(), hedefte = secili.filter((x) => { const c = karsilastir(x.yillar[yil]); return c.r && c.t <= c.r; }).length, say = secili.filter((x) => karsilastir(x.yillar[yil]).r).length;
+    kartlar.push(kart('target', 'Yıllık tasarruf hedefi', '%' + (hedef * 100).toLocaleString('tr-TR') + '<span class="text-lg font-semibold text-slate-400 ml-1">azaltım</span>',
+      `<div><div class="flex gap-1">${secili.filter((x) => karsilastir(x.yillar[yil]).r).map((x) => { const c = karsilastir(x.yillar[yil]); return `<div class="h-2 flex-1 rounded-full ${c.t <= c.r ? 'bg-emerald-500' : 'bg-red-500'}" title="${esc(x.bolum)} (${esc(x.enerji)})"></div>`; }).join('')}</div>
+        <div class="text-[11px] mt-1">${say ? `<b class="${hedefte === say ? 'text-emerald-400' : 'text-amber-300'}">${hedefte}/${say}</b> seri referans çizgisinin altında` : 'Referanslı seri yok'}</div></div>
+        <div class="text-[11px] text-slate-500">Excel'deki HEDEF hücresi; her enerji kullanımı için geçerli.</div>`, hedefte === say && say ? 'text-emerald-400' : 'text-white', '#10b981'));
+    document.getElementById('isoKartlar').innerHTML = kartlar.join('');
+    if (window.lucide) lucide.createIcons();
+    ozetGrafik(gruplar); ozetSapma();
+  }
+
+  // tesis toplamı: aylık gerçekleşen ve referans (yalnız hem gerçekleşeni hem referansı olan aylar referansa katılır)
+  function ozetGrafik(gruplar) {
+    const el = document.getElementById('isoOzetGrafik'); if (!el) return;
+    const veri = Object.keys(gruplar).map((e) => {
+      const takip = Array(12).fill(null), ref = Array(12).fill(null);
+      tumSeri().filter((s) => s.enerji === e).forEach((s) => { const v = s.yillar[yil]; v.takip.forEach((x, a) => { if (x != null) takip[a] = (takip[a] || 0) + x; if (x != null && v.referans[a] != null) ref[a] = (ref[a] || 0) + v.referans[a]; }); });
+      return { e, birim: gruplar[e].birim, takip, ref };
+    });
+    el.innerHTML = veri.map((d, i) => `<div class="glass-card rounded-2xl p-5"><div class="flex items-center justify-between"><div class="text-sm font-bold text-white">${d.e} · aylık tüketim ve referans</div><div class="text-[11px] text-slate-500">${yil} • ${d.birim}</div></div><div class="h-60 mt-3"><canvas id="chOzet${i}"></canvas></div></div>`).join('');
+    veri.forEach((d, i) => cizGrafik('chOzet' + i, {
+      data: { labels: AY, datasets: [
+        { type: 'bar', label: 'Gerçekleşen', data: d.takip, backgroundColor: RENK[d.e] || '#3f8fd2', borderRadius: 4, order: 2, maxBarThickness: 34 },
+        { type: 'line', label: 'Referans çizgisi', data: d.ref, borderColor: refRenk(), backgroundColor: refRenk(), borderWidth: 2.5, tension: 0.3, pointRadius: 3, order: 1 },
+      ] },
+      options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${tr0(c.parsed.y)} ${d.birim}` } } },
+        scales: { y: { beginAtZero: true, ticks: { callback: (x) => (x >= 1000 ? (x / 1000).toLocaleString('tr-TR') + ' bin' : x) } } } },
+    }));
+  }
+
+  // en çok referans aşan / en çok altında kalan seriler (tıklayınca Referans çizgisi sekmesi)
+  function ozetSapma() {
+    const el = document.getElementById('isoOzetSapma'); if (!el) return;
+    const liste = tumSeri().map((s) => { const c = karsilastir(s.yillar[yil]); return { s, c, sapma: c.r ? c.t / c.r - 1 : null }; }).filter((x) => x.sapma != null).sort((a, b) => b.sapma - a.sapma);
+    if (!liste.length) { el.innerHTML = ''; return; }
+    const enb = Math.max(0.2, ...liste.map((x) => Math.abs(x.sapma)));
+    el.innerHTML = `<div class="glass-card rounded-2xl p-5"><div class="flex items-center justify-between mb-3"><div class="text-sm font-bold text-white">Referansa göre sapma — seri sırası</div><button onclick="Iso.alt('ref')" class="text-[11px] text-amber-300 hover:underline">Referans çizgisi sekmesi →</button></div>
+      <div class="space-y-2.5">${liste.map(({ s, c, sapma }) => `<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)_4.5rem] items-center gap-3 text-xs"><div class="truncate text-slate-200" title="${esc(s.bolum)}">${esc(s.bolum)}<span class="text-slate-500"> · ${esc(s.enerji)}</span></div>
+        <div class="relative h-2.5 rounded-full bg-slate-800"><div class="absolute inset-y-0 left-1/2 w-px bg-slate-500"></div><div class="absolute inset-y-0 rounded-full ${sapma > 0.05 ? 'bg-red-500' : sapma > 0 ? 'bg-amber-400' : 'bg-emerald-500'}" style="${sapma >= 0 ? `left:50%;width:${Math.min(50, sapma / enb * 50)}%` : `right:50%;width:${Math.min(50, -sapma / enb * 50)}%`}"></div></div>
+        <div class="text-right font-mono font-semibold ${sinif(sapma)}">${yuzde(sapma)}</div></div>`).join('')}</div>
+      <p class="text-[10px] text-slate-500 mt-3">Orta çizgi = referans çizgisi; sağ (kırmızı/turuncu) aşım, sol (yeşil) referansın altı. Yalnız verisi olan aylar karşılaştırılır.</p></div>`;
   }
 
   function seriKarti(s, i) {
@@ -219,7 +269,7 @@
       cizGrafik('chIso' + i, {
         data: { labels: AY, datasets: [
           { type: 'bar', label: 'Gerçekleşen', data: v.takip, backgroundColor: RENK[s.enerji], borderRadius: 3, order: 2 },
-          { type: 'line', label: 'Referans çizgisi', data: v.referans, borderColor: '#e2e8f0', backgroundColor: '#e2e8f0', borderWidth: 2, tension: 0.3, pointRadius: 0, order: 1 },
+          { type: 'line', label: 'Referans çizgisi', data: v.referans, borderColor: refRenk(), backgroundColor: refRenk(), borderWidth: 2, tension: 0.3, pointRadius: 0, order: 1 },
         ] },
         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
           plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${tr0(c.parsed.y)} ${s.birim}` } } },
@@ -383,7 +433,7 @@
       </div>
       <h2 id="isoBaslik" class="text-lg font-bold text-white"></h2>
       <nav id="isoAlt" class="flex gap-1 overflow-x-auto border-b border-slate-800 pb-1"></nav>
-      <div id="isoP-ozet"><section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section><section id="isoOzetSerit" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4"></section></div>
+      <div id="isoP-ozet" class="space-y-4"><section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"></section><section id="isoOzetGrafik" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoOzetSapma"></section><section id="isoOzetSerit" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></section></div>
       <div id="isoP-ref" class="hidden space-y-4"><div id="isoBolumChips" class="flex flex-wrap gap-1"></div><section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoEk" class="space-y-4"></section><div id="isoNotlar"></div></div>
       <div id="isoP-enb" class="hidden"><section id="isoEnb"></section></div>
       <div id="isoP-olcum" class="hidden"><section id="isoOlcum"></section><section id="isoDonanim" class="mt-6"></section></div>
@@ -419,7 +469,7 @@
   function ozetSerit() {
     const el = document.getElementById('isoOzetSerit'); if (!el) return;
     const c = sayilar(kayit(tesis)), oran = tamamlanma(c), riskler = (D.risk && D.risk[tesis]) || [], yRisk = riskler.filter((x) => x.tur === 'Risk' && (x.seviye || 0) >= 12).length;
-    const kart = (k, baslik, deger, alt, renk) => `<button onclick="Iso.alt('${k}')" class="glass-card rounded-xl p-3 text-left hover:border-amber-500/40 transition"><div class="text-[10px] uppercase tracking-wider text-slate-500">${baslik}</div><div class="text-lg font-bold mt-0.5 ${renk || 'text-white'}">${deger}</div><div class="text-[11px] text-slate-500 mt-0.5">${alt}</div></button>`;
+    const kart = (k, baslik, deger, alt, renk) => `<button onclick="Iso.alt('${k}')" class="glass-card rounded-2xl p-4 text-left hover:border-amber-500/40 transition"><div class="text-xs uppercase tracking-wider text-slate-400 font-semibold">${baslik}</div><div class="text-2xl font-extrabold mt-1.5 ${renk || 'text-white'}">${deger}</div><div class="text-xs text-slate-400 mt-1">${alt}</div></button>`;
     const ham = (h, e) => [
       kart('hedef', `${h ? h.yil : ''} hedefleri`, h && h.toplam ? `${h.hedefte}/${h.toplam} hedefte` : '—', h ? `${h.geride} geride • ${h.riskte} riskte` : 'yükleniyor…', h && h.riskte ? 'text-red-300' : 'text-emerald-300'),
       kart('eylem', 'Eylem planı', oran == null ? '—' : '%' + Math.round(oran * 100) + ' tamamlandı', `${c.gecikmis ? c.gecikmis + ' gecikmiş • ' : ''}${kayit(tesis).length} eylem`, c.gecikmis ? 'text-red-300' : 'text-white'),
