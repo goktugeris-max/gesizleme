@@ -77,7 +77,9 @@
     const t = SIRA.reduce((a, k) => a + c[k], 0) || 1;
     return `<div class="flex h-2 rounded-full overflow-hidden bg-slate-800 ${genislik || 'w-40'}">${SIRA.map((k) => (c[k] ? `<div title="${DURUMLAR[k].ad}: ${c[k]}" style="width:${(c[k] / t) * 100}%;background:${DURUMLAR[k].renk}"></div>` : '')).join('')}</div>`;
   };
-  const rozet = (k) => `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold whitespace-nowrap ${DURUMLAR[k].sinif}">${DURUMLAR[k].ad}</span>`;
+  const rozet = (k) => `<span class="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium ${k === 'gecikmis' ? 'text-red-500' : 'text-slate-200'}"><span class="inline-block w-2 h-2 rounded-full shrink-0" style="background:${DURUMLAR[k].renk}"></span>${DURUMLAR[k].ad}</span>`;
+  const enerjiNokta = (en) => `<span class="inline-flex items-center gap-1.5 whitespace-nowrap"><span class="inline-block w-2 h-2 rounded-full" style="background:${en === 'Elektrik' ? '#f5b301' : en === 'Doğalgaz' ? '#3f8fd2' : '#94a3b8'}"></span>${esc(en || '')}</span>`;
+  const gunFarki = (t) => (/^\d{4}-\d{2}-\d{2}$/.test(t || '') ? Math.floor((new Date() - new Date(t + 'T23:59:59')) / 86400000) : null);
 
   // ---- açılır bölüm kabuğu
   const bolum = (k, baslik, ozet, govde) => `<details data-k="${k}" ${acik.has(k) ? 'open' : ''} class="group glass-card rounded-xl overflow-hidden">
@@ -289,11 +291,11 @@
     const tesisSatirlari = [...D.tesisler.map((x) => ({ id: x.id, ad: x.ad })), { id: 'genel', ad: 'Genel (tüm tesisler)' }].map((x) => {
       const cc = sayilar(kayit(x.id)), o = tamamlanma(cc);
       const tikla = x.id === 'genel' ? '' : `onclick="Iso.tesis('${x.id}')" style="cursor:pointer"`;
-      return `<tr ${tikla} class="${x.id === tesis ? 'bg-amber-500/5' : ''} ${x.id === 'genel' ? '' : 'hover:bg-slate-800/40'}"><td class="px-3 py-2 text-slate-100">${esc(x.ad)}</td>
-        <td class="px-3 py-2 text-right font-mono">${SIRA.reduce((t, k) => t + cc[k], 0)}</td>${SIRA.map((k) => `<td class="px-3 py-2 text-right font-mono ${cc[k] ? '' : 'text-slate-600'}" style="${cc[k] ? 'color:' + DURUMLAR[k].renk : ''}">${cc[k]}</td>`).join('')}
-        <td class="px-3 py-2">${cubuk(cc, 'w-28')}</td><td class="px-3 py-2 text-right font-mono text-emerald-300">${o == null ? '—' : '%' + Math.round(o * 100)}</td></tr>`;
+      return `<tr ${tikla} class="${x.id === tesis ? 'bg-amber-500/5' : ''} ${x.id === 'genel' ? '' : 'hover:bg-slate-800/40'}"><td class="px-2 sm:px-3 py-2 text-slate-100">${esc(x.ad)}</td>
+        <td class="px-2 sm:px-3 py-2 text-right font-mono hidden sm:table-cell">${SIRA.reduce((t, k) => t + cc[k], 0)}</td>${SIRA.map((k) => `<td class="px-2 sm:px-3 py-2 text-right font-mono ${k === 'tamamlandi' || k === 'gecikmis' ? '' : 'hidden sm:table-cell'} ${cc[k] ? (k === 'gecikmis' ? 'text-red-500 font-semibold' : 'text-slate-200') : 'text-slate-600'}">${cc[k]}</td>`).join('')}
+        <td class="px-2 sm:px-3 py-2 hidden sm:table-cell">${cubuk(cc, 'w-28')}</td><td class="px-2 sm:px-3 py-2 text-right font-mono text-emerald-300">${o == null ? '—' : '%' + Math.round(o * 100)}</td></tr>`;
     }).join('');
-    const karsilastirma = `<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[11px]"><tr><th class="text-left px-3 py-2.5">Tesis</th><th class="text-right px-3">Toplam</th>${SIRA.map((k) => `<th class="text-right px-3">${DURUMLAR[k].ad.replace(' / yapılmayacak', '').replace(' faaliyet', '')}</th>`).join('')}<th class="px-3 text-left">İlerleme</th><th class="text-right px-3">Tamamlanma</th></tr></thead>
+    const karsilastirma = `<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[11px]"><tr><th class="text-left px-2 sm:px-3 py-2.5">Tesis</th><th class="text-right px-2 sm:px-3 hidden sm:table-cell">Toplam</th>${SIRA.map((k) => `<th class="text-right px-2 sm:px-3 ${k === 'tamamlandi' || k === 'gecikmis' ? '' : 'hidden sm:table-cell'}">${DURUMLAR[k].ad.replace(' / yapılmayacak', '').replace(' faaliyet', '')}</th>`).join('')}<th class="px-2 sm:px-3 text-left hidden sm:table-cell">İlerleme</th><th class="text-right px-2 sm:px-3">Tamamlanma</th></tr></thead>
       <tbody class="divide-y divide-slate-800/70">${tesisSatirlari}</tbody></table></div>
       <p class="px-4 py-2 text-[11px] text-slate-500">Tamamlanma = tamamlanan ÷ (tamamlanan + devam eden + planlı + gecikmiş). Sürekli faaliyetler ve iptaller hesaba katılmaz. Satıra tıklayarak tesisi seçebilirsiniz.</p>`;
 
@@ -304,6 +306,7 @@
     // satırlar
     kayitlar = [];
     const alan = (b, d) => (d ? `<div><div class="text-[10px] uppercase tracking-wider text-slate-500">${b}</div><div class="text-slate-200 whitespace-pre-line">${esc(d)}</div></div>` : '');
+    const terminMetni = (e) => (/^\d{4}-/.test(e.termin || '') ? e.termin : ((e.termin || '—').length > 18 ? (e.termin || '').slice(0, 18) + '…' : (e.termin || '—')));
     const satir = (k) => {
       const e = k.e, n = kayitlar.length; kayitlar.push(k);
       const m = tkOku(k.id), d = etkinDurum(k), oto = otoDurum(k.e), acikMi = acikSatir.has(k.id);
@@ -321,16 +324,16 @@
             ${ortak.yazabilir ? `<div class="flex gap-2"><input id="yorum${n}" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100" placeholder="Yorum yaz…" maxlength="1000" /><button onclick="Iso.yorum(${n})" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-900 hover:bg-amber-400">Gönder</button></div>` : ''}</div>` : ''}
         </div>`;
       return `<tr class="align-top cursor-pointer hover:bg-slate-800/40" onclick="Iso.satir(${n})"><td class="px-3 py-2 text-slate-400 whitespace-nowrap"><span id="esc${n}" class="inline-block w-3 text-slate-500">${acikMi ? '▾' : '▸'}</span> ${esc(e.no)}</td>
-        <td class="px-3 py-2"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${e.enerji === 'Elektrik' ? 'bg-amber-500/15 text-amber-300' : e.enerji === 'Doğalgaz' ? 'bg-cyan-500/15 text-cyan-300' : 'bg-slate-700 text-slate-300'}">${esc(e.enerji || '')}</span></td>
-        <td class="px-3 py-2 text-slate-100 w-[44%]">${esc(e.onlem || '—')}${m.not ? '<span class="ml-1 text-amber-300" title="Takip notu var">✎</span>' : ''}</td>
-        <td class="px-3 py-2 text-slate-400 whitespace-nowrap">${esc(/^\d{4}-/.test(e.termin || '') ? e.termin : ((e.termin || '—').length > 18 ? (e.termin || '').slice(0, 18) + '…' : (e.termin || '—')))}</td>
+        <td class="px-3 py-2 hidden sm:table-cell">${enerjiNokta(e.enerji)}</td>
+        <td class="px-3 py-2 text-slate-100 sm:w-[44%]">${esc(e.onlem || '—')}${m.not ? '<span class="ml-1 text-amber-300" title="Takip notu var">✎</span>' : ''}<div class="sm:hidden text-[11px] text-slate-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">${enerjiNokta(e.enerji)}<span>${esc(terminMetni(e))}</span></div></td>
+        <td class="px-3 py-2 whitespace-nowrap hidden sm:table-cell ${d === 'gecikmis' ? 'text-red-500' : 'text-slate-400'}">${esc(terminMetni(e))}${d === 'gecikmis' && gunFarki(e.termin) > 0 ? `<div class="text-[11px]">${gunFarki(e.termin)} gün gecikti</div>` : ''}</td>
         <td class="px-3 py-2">${rozet(d)}${m.durum && m.durum !== 'oto' ? '<div class="text-[10px] text-slate-500 mt-1">elle</div>' : ''}${yuzde}</td></tr>
         <tr id="es${n}" class="${acikMi ? '' : 'hidden'}"><td colspan="5" class="px-4 py-3 bg-slate-900/50">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">${alan('Gerçekleşme durumu (Excel)', e.durum)}${alan('Eylem planına giriş gerekçesi', e.gerekce)}${alan('Hedeflenen kazanç', e.hedef)}${alan('Planlama tarihi', e.planlama)}${alan('Termin', e.termin)}${alan('Gerçekleştirilme', e.gerceklesme_tarihi)}${alan('Sorumlu', e.sorumlu)}${alan('Geri ödeme süresi (yıl)', e.geri_odeme)}</div>${form}</td></tr>`;
     };
     const sec = (l) => l.filter((k) => eDurum === 'hepsi' || etkinDurum(k) === eDurum);
     const blok = (baslik, l) => (sec(l).length ? `<tr class="bg-slate-900/60"><td colspan="5" class="px-3 py-2 text-[11px] uppercase tracking-wider text-slate-400">${baslik} (${sec(l).length})</td></tr>${sec(l).map(satir).join('')}` : '');
-    const tablo = `<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[11px]"><tr><th class="text-left px-3 py-3">No</th><th class="text-left px-3">Enerji</th><th class="text-left px-3">Önlem / iyileştirme</th><th class="text-left px-3">Termin</th><th class="text-left px-3">Durum</th></tr></thead>
+    const tablo = `<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-slate-900/80 text-slate-400 uppercase tracking-wider text-[11px]"><tr><th class="text-left px-3 py-3">No</th><th class="text-left px-3 hidden sm:table-cell">Enerji</th><th class="text-left px-3">Önlem / iyileştirme</th><th class="text-left px-3 hidden sm:table-cell">Termin</th><th class="text-left px-3">Durum</th></tr></thead>
       <tbody class="divide-y divide-slate-800/70">${blok('Tesise özel eylemler', liste)}${blok('Genel eylemler', genel)}</tbody></table></div>`;
     const bos = sec(hepsi).length ? '' : '<p class="px-4 py-6 text-center text-xs text-slate-500">Bu süzgece uyan eylem yok.</p>';
 
@@ -346,7 +349,12 @@
         <button onclick="Iso.yedekle()" class="ml-auto px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold">Takip notlarını yedekle</button>
         <label class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold cursor-pointer">Yedeği yükle<input type="file" accept="application/json" class="hidden" onchange="Iso.yukleYedek(this)" /></label></div>`;
     el.innerHTML = bolum('eylem', 'Enerji eylem planı ve ilerleme takibi', ozet,
-      `${ortakCubuk}${karsilastirma}<div class="px-4 py-3 border-t border-slate-800 flex flex-wrap items-center gap-3"><span class="text-[11px] text-slate-400">Seçili tesis ve genel eylemler:</span>${suzgec}</div>${tablo}${bos}${alt}`);
+      `<div class="p-4 pb-0"><div class="olcum-seridi grid grid-cols-2 lg:grid-cols-4">${[
+        ['Tamamlanma', oran == null ? '—' : '%' + Math.round(oran * 100), 'text-white', `${c.tamamlandi} eylem tamamlandı (tesis ve genel eylemler)`],
+        ['Gecikmiş', c.gecikmis, c.gecikmis ? 'text-red-500' : 'text-emerald-500', c.gecikmis ? 'termini geçmiş, tamamlanmamış' : 'termini geçen eylem yok'],
+        ['Devam eden ve planlı', c.devam + c.planli, 'text-white', 'sürüyor ya da henüz başlamadı'],
+        ['Sürekli faaliyet', c.surekli, 'text-white', 'periyodik; tamamlanma hesabına girmez']].map(([b, n, r, a]) => `<div class="glass-card p-4"><div class="text-sm text-slate-400 font-medium">${b}</div><div class="text-3xl font-semibold mt-2 leading-none ${r}">${n}</div><div class="text-xs text-slate-500 mt-2">${a}</div></div>`).join('')}</div></div>
+      ${ortakCubuk}${karsilastirma}<div class="px-4 py-3 border-t border-slate-800 flex flex-wrap items-center gap-3"><span class="text-[11px] text-slate-400">Seçili tesis ve genel eylemler:</span>${suzgec}</div>${tablo}${bos}${alt}`);
   }
 
   function ekBolum() {
