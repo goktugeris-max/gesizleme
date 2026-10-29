@@ -1,0 +1,129 @@
+{
+ "olusturma": "2026-10-29",
+ "esikler": {
+  "r2_iyi": 0.75,
+  "r2_zayif": 0.5,
+  "p": 0.05
+ },
+ "seriler": [
+  {
+   "id": "aassm-1",
+   "yil": 2024,
+   "yontem": "regresyon",
+   "r2": 0.2557,
+   "r2_ayarli": 0.09029,
+   "n": 12,
+   "f_anlamlilik": 0.2648,
+   "degisken_sayisi": 2,
+   "p_en_buyuk": 0.1596,
+   "kalite": "zayif",
+   "aciklama": "R²=0,26: model tüketimin yarısından azını açıklıyor; model anlamlı değil (F anlamlılık 0,265 > 0,05); bir değişken anlamlı değil (p=0,160); gözlem sayısı az (12)"
+  },
+  {
+   "id": "aassm-2",
+   "yil": 2024,
+   "yontem": "regresyon",
+   "r2": 0.9439,
+   "r2_ayarli": 0.9383,
+   "n": 12,
+   "f_anlamlilik": 1.398e-07,
+   "degisken_sayisi": 1,
+   "p_en_buyuk": 1.398e-07,
+   "kalite": "iyi",
+   "aciklama": "R²=0,94: model tüketimi iyi açıklıyor"
+  },
+  {
+   "id": "buca-5",
+   "yil": 2024,
+   "yontem": "ortalama",
+   "kalite": "ortalama",
+   "aciklama": "Model istatistiği yok: baz dönem ortalaması kullanılıyor (değişkenden bağımsız)."
+  },
+  {
+   "id": "buca-6",
+   "yil": 2024,
+   "yontem": "regresyon",
+   "r2": 0.9207,
+   "r2_ayarli": 0.9128,
+   "n": 12,
+   "f_anlamlilik": 7.99e-07,
+   "degisken_sayisi": 1,
+   "p_en_buyuk": 7.99e-07,
+   "kalite": "iyi",
+   "aciklama": "R²=0,92: model tüketimi iyi açıklıyor"
+  },
+  {
+   "id": "buca-7",
+   "yil": 2024,
+   "yontem": "ortalama",
+   "kalite": "ortalama",
+   "aciklama": "Model istatistiği yok: baz dönem ortalaması kullanılıyor (değişkenden bağımsız)."
+  },
+  {
+   "id": "buca-8",
+   "yil": 2024,
+   "yontem": "regresyon",
+   "r2": 0.9363,
+   "r2_ayarli": 0.93,
+   "n": 12,
+   "f_anlamlilik": 2.642e-07,
+   "degisken_sayisi": 1,
+   "p_en_buyuk": 2.642e-07,
+   "kalite": "iyi",
+   "aciklama": "R²=0,94: model tüketimi iyi açıklıyor"
+  },
+  {
+   "id": "buca-9",
+   "yil": 2024,
+   "yontem": "ortalama",
+   "kalite": "ortalama",
+   "aciklama": "Model istatistiği yok: baz dönem ortalaması kullanılıyor (değişkenden bağımsız)."
+  },
+  {
+   "id": "buca-10",
+   "yil": 2024,
+   "yontem": "regresyon",
+   "r2": 0.864,
+   "r2_ayarli": 0.8504,
+   "n": 12,
+   "f_anlamlilik": 1.217e-05,
+   "degisken_sayisi": 1,
+   "p_en_buyuk": 1.217e-05,
+   "kalite": "iyi",
+   "aciklama": "R²=0,86: model tüketimi iyi açıklıyor"
+  },
+  {
+   "id": "buca-11",
+   "yil": 2024,
+   "yontem": "regresyon",
+   "r2": 0.9349,
+   "r2_ayarli": 0.9284,
+   "n": 12,
+   "f_anlamlilik": 2.952e-07,
+   "degisken_sayisi": 1,
+   "p_en_buyuk": 2.952e-07,
+   "kalite": "iyi",
+   "aciklama": "R²=0,93: model tüketimi iyi açıklıyor"
+  },
+  {
+   "id": "buz-3",
+   "yil": 2024,
+   "yontem": "regresyon",
+   "r2": 0.8932,
+   "r2_ayarli": 0.8825,
+   "n": 12,
+   "f_anlamlilik": 3.582e-06,
+   "degisken_sayisi": 1,
+   "p_en_buyuk": 3.582e-06,
+   "kalite": "iyi",
+   "aciklama": "R²=0,89: model tüketimi iyi açıklıyor"
+  },
+  {
+   "id": "buz-4",
+   "yil": 2024,
+   "yontem": "ortalama",
+   "kalite": "ortalama",
+   "aciklama": "Model istatistiği yok: baz dönem ortalaması kullanılıyor (değişkenden bağımsız)."
+  }
+ ]
+}

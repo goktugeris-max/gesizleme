@@ -123,7 +123,7 @@
   }
 
   async function parolaDene(p) {
-    try { D = await coz(p); if (window.Enys) { try { await Enys.yukle(); Enys.birlestir(D); } catch (e) { /* EnYS verisi yoksa ISO verisi olduğu gibi çalışır */ } } yuklendi = true; const yl = [...new Set(D.seriler.flatMap((x) => Object.keys(x.yillar)))].sort(); yil = yl.includes('2026') ? '2026' : (yl[yl.length - 1] || yil); ozetKayit(); return true; } catch (e) { return false; }
+    try { D = await coz(p); if (window.Enys) { try { await Enys.yukle(); Enys.birlestir(D); } catch (e) { /* EnYS verisi yoksa ISO verisi olduğu gibi çalışır */ } } if (window.Enb) { try { await Enb.yukle(); } catch (e) { /* model kalite dosyası yoksa rozetler görünmez */ } } yuklendi = true; const yl = [...new Set(D.seriler.flatMap((x) => Object.keys(x.yillar)))].sort(); yil = yl.includes('2026') ? '2026' : (yl[yl.length - 1] || yil); ozetKayit(); return true; } catch (e) { return false; }
   }
 
   function girisFormu(hata) {
@@ -194,17 +194,19 @@
   function seriKarti(s, i) {
     const v = s.yillar[yil], cid = 'chIso' + i;
     const c = karsilastir(v), t = topla(v.takip), sapma = c.r ? c.t / c.r - 1 : null;
+    const enbK = v.hedef ? 1 / (1 - v.hedef) : null;   // referans çizgisi hedefi ZATEN içerir; hedefsiz EnB = referans ÷ (1−hedef)
+    const sapmaEnb = enbK && c.r ? c.t / (c.r * enbK) - 1 : null;
     const yontem = v.yontem === 'regresyon' ? 'Referans: regresyon (2024 katsayıları)' : v.yontem === 'ortalama' ? 'Referans: 2022–2023 ortalaması' : '';
     const aylik = v.takip.map((x, a) => ({ x, r: v.referans[a], d: x != null && v.referans[a] ? x / v.referans[a] - 1 : null }));
     const degAd = Object.keys(v.degiskenler);
     const tablo = `<div class="overflow-x-auto"><table class="w-full text-[11px]">
-      <thead class="text-slate-400 uppercase tracking-wider"><tr><th class="text-left py-1.5">Ay</th><th class="text-right">Gerçekleşen</th><th class="text-right">Referans</th><th class="text-right">Sapma</th>${degAd.map((d) => `<th class="text-right">${esc(d)}</th>`).join('')}<th class="text-left pl-3">Sapma gerekçesi</th></tr></thead>
-      <tbody class="divide-y divide-slate-800/70">${aylik.map((m, a) => `<tr><td class="py-1.5 text-slate-200">${AY[a]}</td><td class="text-right font-mono">${tr0(m.x)}</td><td class="text-right font-mono text-slate-400">${tr0(m.r)}</td>
+      <thead class="text-slate-400 uppercase tracking-wider"><tr><th class="text-left py-1.5">Ay</th><th class="text-right">Gerçekleşen</th><th class="text-right">Referans (hedef dahil)</th>${enbK ? '<th class="text-right">EnB (hedefsiz)</th>' : ''}<th class="text-right">Sapma</th>${degAd.map((d) => `<th class="text-right">${esc(d)}</th>`).join('')}<th class="text-left pl-3">Sapma gerekçesi</th></tr></thead>
+      <tbody class="divide-y divide-slate-800/70">${aylik.map((m, a) => `<tr><td class="py-1.5 text-slate-200">${AY[a]}</td><td class="text-right font-mono">${tr0(m.x)}</td><td class="text-right font-mono text-slate-400">${tr0(m.r)}</td>${enbK ? `<td class="text-right font-mono text-slate-500">${m.r == null ? '—' : tr0(m.r * enbK)}</td>` : ''}
         <td class="text-right font-mono ${sinif(m.d)}">${yuzde(m.d)}</td>${degAd.map((d) => `<td class="text-right font-mono text-slate-400">${tr0(v.degiskenler[d][a])}</td>`).join('')}<td class="pl-3 text-slate-400">${esc(v.gerekce[a] || '')}</td></tr>`).join('')}</tbody></table></div>`;
     return `<div class="glass-card rounded-xl p-4">
       <div class="flex items-start justify-between gap-3">
-        <div><div class="text-sm font-semibold text-white">${esc(s.bolum)}</div><div class="text-[11px]" style="color:${RENK[s.enerji]}">${esc(s.enerji)} • ${esc(s.birim)}</div>${yontem ? `<div class="text-[10px] text-slate-500 mt-0.5">${yontem}</div>` : ''}</div>
-        <div class="text-right"><div class="text-lg font-bold ${sinif(sapma)}">${yuzde(sapma)}</div><div class="text-[11px] text-slate-500">${c.r ? `${tr0(c.t)} / ${tr0(c.r)}` : `${tr0(t)} • referans yok`}</div></div>
+        <div><div class="text-sm font-semibold text-white">${esc(s.bolum)}</div><div class="text-[11px]" style="color:${RENK[s.enerji]}">${esc(s.enerji)} • ${esc(s.birim)}</div>${yontem ? `<div class="text-[10px] text-slate-500 mt-0.5">${yontem} ${window.Enb ? Enb.rozet(s.id) : ''}</div>` : ''}</div>
+        <div class="text-right"><div class="text-lg font-bold ${sinif(sapma)}">${yuzde(sapma)}</div><div class="text-[11px] text-slate-500">${c.r ? `${tr0(c.t)} / ${tr0(c.r)}` : `${tr0(t)} • referans yok`}</div>${sapmaEnb != null ? `<div class="text-[10px] text-slate-500" title="Hedefsiz EnB: referans çizgisi ÷ (1 − hedef)">EnB'ye göre <span class="${sinif(sapmaEnb)}">${yuzde(sapmaEnb)}</span></div>` : ''}</div>
       </div>
       <div class="h-44 mt-3"><canvas id="${cid}"></canvas></div>
       <details class="mt-2 text-xs"><summary class="cursor-pointer text-slate-300">Aylık ayrıntı ve gerekçeler</summary><div class="mt-2">${tablo}</div></details>
@@ -360,6 +362,7 @@
     const n = D.veri_notlari || [];
     document.getElementById('isoNotlar').innerHTML = bolum('notlar', 'Okuma notları', n.length ? `<span>Excel'de ${n.length} tutarsızlık</span>` : '', `<ul class="p-4 list-disc pl-9 space-y-1 text-xs text-slate-400">
         <li><b class="text-slate-300">Sapma</b> = (gerçekleşen − referans) ÷ referans. Pozitif (kırmızı/turuncu) değer referans çizgisinin aşıldığını, negatif (yeşil) değer altında kaldığını gösterir.</li>
+        <li><b class="text-slate-300">Referans ve EnB:</b> Excel'deki referans çizgisi hedefi ZATEN içerir (baz dönem × (1 − hedef)). Hedefsiz EnB = referans ÷ (1 − hedef) olarak "EnB (hedefsiz)" sütununda ve kartta "EnB'ye göre" satırında ayrıca gösterilir: EnB'nin altı ama referansın üstü, tasarruf var ama hedefe ulaşılmadı demektir. Model güvenilirliği için "EnB, SEU ve M&V" sekmesine bakın.</li>
         <li>Referans çizgisi, Excel'deki EnRÇ hesabından (önceki yıl verisi, gerekirse HDD/CDD, etkinlik sayısı gibi değişkenlerle) aynen alınmıştır; burada yeniden hesaplanmaz. 2023 için referans yılı 2022'dir; 2024'te dosyaların çoğunda 2022–2023 ortalaması kullanılır.</li>
         <li><b class="text-slate-300">2025–2026</b> gerçekleşen tüketimler Verilerim.xlsx'ten alınmıştır (2023–2024 ile eşleşmesi EnRÇ dosyalarına göre doğrulanmıştır). Referans çizgisinde baz dönem (2022–2023) sabit tutulmuştur: elektrik ve benzeri serilerde 2024 dosyasındaki referans aynen; HDD/CDD'li serilerde 2024 dosyasındaki regresyon katsayıları × ilgili ayın HDD/CDD değeri. 2026 HDD/CDD değerleri MGM'nin İzmir gün-derece tablosundan alınmıştır (2024–2025 değerleriniz bu tabloyla birebir tutmaktadır); Eylül 2026 kısmi aydır. Kısmi yıllarda sapma yalnızca verisi olan aylar üzerinden hesaplanır.</li>
         <li><b class="text-slate-300">Eylem durumu</b> Excel'deki termin ve açıklama metinlerinden otomatik çıkarılır: tarihli gerçekleştirme veya "yapılmıştır" benzeri ifade = tamamlandı; "düzenli/periyodik/sürekli" = sürekli faaliyet; "iptal/yapılmayacak" = iptal; terminini geçmiş = gecikmiş. Yanlış çıkanı satırda elle düzeltin.</li>
@@ -369,7 +372,7 @@
   }
 
   // ---- alt sekmeler (tesis içinde tek seferde bir bölüm görünür; uzun sayfa yerine)
-  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['baglam', 'Bağlam ve taraflar'], ['bakim', 'Bakım ve yetkinlik'], ['belge', 'Belgeler']];
+  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['enb', 'EnB, SEU ve M&V'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['baglam', 'Bağlam ve taraflar'], ['bakim', 'Bakım ve yetkinlik'], ['belge', 'Belgeler']];
 
   function iskelet() {
     document.getElementById('isoIcerik').innerHTML = `<style>#isoIcerik summary::-webkit-details-marker{display:none}#isoAlt::-webkit-scrollbar{height:4px}</style><div class="space-y-4">
@@ -382,6 +385,7 @@
       <nav id="isoAlt" class="flex gap-1 overflow-x-auto border-b border-slate-800 pb-1"></nav>
       <div id="isoP-ozet"><section id="isoKartlar" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></section><section id="isoOzetSerit" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4"></section></div>
       <div id="isoP-ref" class="hidden space-y-4"><div id="isoBolumChips" class="flex flex-wrap gap-1"></div><section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoEk" class="space-y-4"></section><div id="isoNotlar"></div></div>
+      <div id="isoP-enb" class="hidden"><section id="isoEnb"></section></div>
       <div id="isoP-olcum" class="hidden"><section id="isoOlcum"></section><section id="isoDonanim" class="mt-6"></section></div>
       <div id="isoP-hedef" class="hidden space-y-4"><section id="isoHedef"></section><section id="isoEnpg"></section></div>
       <div id="isoP-eylem" class="hidden"><section id="isoEylem"></section><section id="isoEylemDB" class="mt-6"></section></div>
@@ -469,6 +473,7 @@
         riskBolumu(); document.getElementById('isoRiskBos').classList.toggle('hidden', !document.getElementById('isoRisk').classList.contains('hidden'));
       }
     },
+    enb() { if (window.Enb) Enb.panel(tesis, document.getElementById('isoEnb'), D.seriler); },
     baglam() { if (window.Baglam) Baglam.panel(tesis, document.getElementById('isoBaglam')); },
     bakim() { if (window.Bakim) Bakim.panel(tesis, document.getElementById('isoBakim')); },
     belge() { if (window.Dys) Dys.panel(document.getElementById('isoBelge')); },
