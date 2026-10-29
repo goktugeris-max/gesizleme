@@ -4,7 +4,7 @@
   --kurum: #211950;        /* ana kurumsal renk (İZBB logosunun lacivert tonu) */
   --kurum-koyu: #140f35;
   --kurum-acik: #ebeaf5;
-  --sayfa: #f3f5f8;
+  --sayfa: #eef0f3;
   --yuzey: #ffffff;
   --yuzey-2: #f8fafc;
   --cizgi: #dbe1e8;
@@ -109,3 +109,27 @@ html:not(.dark) a.glass-card:hover, html:not(.dark) button.glass-card:hover { bo
   .ozet-kisalt.acik > h3:first-child::after { content: "−"; }
   .ozet-kisalt:not(.acik) > :not(h3:first-child) { display: none; }
 }
+
+/* ---- Sayaç defteri görünümü (29.10.2026) ----
+   Şablon "SaaS" izlerini kaldırır: büyük harfli etiketler, gölgeli yuvarlak kart yığını, renkli sol şeritler, karışık yazı tipleri.
+   Yön: mühendislik raporu gibi düz paneller, ince çizgiler, IBM Plex Sans, tek vurgu rengi (kurum laciverti); turuncu/mavi/yeşil yalnız veri ve durum anlamında. */
+body { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+h1, h2, h3 { letter-spacing: -0.01em; }
+/* etiketler cümle düzeninde okunur; büyük harf ve açık harf aralığı yok */
+.uppercase { text-transform: none !important; }
+.tracking-wider, .tracking-widest, .tracking-wide { letter-spacing: 0 !important; }
+/* tek köşe ölçeği: panel 8 px, iç öğe 6 px (2xl/xl/lg karışımı yerine) */
+.rounded-2xl, .rounded-xl { border-radius: 8px !important; }
+.rounded-lg { border-radius: 6px !important; }
+/* paneller düz: gölge yok, ince çizgi */
+.glass-card { box-shadow: none !important; }
+html.dark .glass-card { backdrop-filter: none; background: #0f1623; border-color: #1f2a3a; }
+a.glass-card, button.glass-card { transition: none; }
+html:not(.dark) a.glass-card:hover, html:not(.dark) button.glass-card:hover { border-color: var(--kurum); box-shadow: none; background: var(--yuzey-2); }
+/* sayılar: Plex Sans, sabit genişlikli rakamlar; monospace yalnız kod/IP alanlarında */
+.font-mono { font-family: 'IBM Plex Sans', sans-serif; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+code, pre, kbd, input.font-mono, textarea.font-mono { font-family: 'IBM Plex Mono', monospace; }
+/* ölçüm şeridi: gösterge kartları tek çerçevede, ince ayırıcılarla (ayrı kart yığını değil) */
+.olcum-seridi { gap: 1px; background: var(--cizgi); border: 1px solid var(--cizgi); border-radius: 8px; overflow: hidden; }
+html.dark .olcum-seridi { background: #1f2a3a; border-color: #1f2a3a; }
+.olcum-seridi > .glass-card { border: 0 !important; border-radius: 0 !important; }
