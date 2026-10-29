@@ -8,8 +8,28 @@
   const TESIS = [['genel', 'Genel (kurum)'], ['aassm', 'AASSM'], ['buz', 'Buz Sporları'], ['buca', 'Buca SYK']];
   const TESIS_AD = Object.fromEntries(TESIS);
   const SEV = (s) => (s == null ? null : s >= 12 ? 'Yüksek' : s >= 6 ? 'Orta' : 'Düşük');
-  const SEV_SINIF = { 'Yüksek': 'bg-red-500/20 text-red-300', 'Orta': 'bg-amber-500/20 text-amber-300', 'Düşük': 'bg-emerald-500/20 text-emerald-300' };
-  const rozetSkor = (s) => (s == null ? '<span class="text-slate-600">—</span>' : `<span class="px-2 py-0.5 rounded-md font-mono text-[11px] font-semibold ${SEV_SINIF[SEV(s)]}" title="${SEV(s)}">${s}</span>`);
+  const SEV_RENK = { 'Yüksek': '#ef4444', 'Orta': '#f59e0b', 'Düşük': '#10b981' };
+  const rozetSkor = (s, tur) => (s == null ? '<span class="text-slate-600">—</span>' : tur === 'Fırsat' ? `<span class="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-slate-200" title="Fırsatta yüksek skor olumludur"><span class="inline-block w-2 h-2 rounded-full shrink-0" style="background:#38bdf8"></span><span class="font-semibold">${s}</span></span>` : `<span class="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-slate-200" title="${SEV(s)}"><span class="inline-block w-2 h-2 rounded-full shrink-0" style="background:${SEV_RENK[SEV(s)]}"></span><span class="font-semibold">${s}</span><span class="text-slate-500 font-normal hidden sm:inline">${SEV(s)}</span></span>`);
+  const turEt = (t) => `<span class="inline-flex items-center gap-1.5 whitespace-nowrap"><span class="inline-block w-2 h-2 rounded-full" style="background:${t === 'Risk' ? '#ef4444' : '#38bdf8'}"></span>${esc(t)}</span>`;
+  const durumEt = (ad, renk) => `<span class="inline-flex items-center gap-1.5 whitespace-nowrap text-xs"><span class="inline-block w-2 h-2 rounded-full shrink-0" style="background:${renk}"></span>${ad}</span>`;
+  const R_RENK = { acik: '#ef4444', izlemede: '#f59e0b', kapali: '#10b981' }, E_RENK = { planli: '#94a3b8', devam: '#3f8fd2', tamamlandi: '#10b981', iptal: '#475569' };
+
+  // Ortak özet: ölçüm şeridi + 5x5 olasılık/etki matrisi + öncelikli riskler. items: [{ tur, o, e, skor, tanim, no, eylemsiz }]
+  function ozetHtml(items, ek) {
+    const riskler = items.filter((x) => x.tur === 'Risk'), yuksek = riskler.filter((x) => (x.skor || 0) >= 12), orta = riskler.filter((x) => (x.skor || 0) >= 6 && (x.skor || 0) < 12), dusuk = riskler.filter((x) => x.skor != null && x.skor < 6);
+    const eylemsiz = yuksek.filter((x) => x.eylemsiz);
+    const hucre = [['Risk', riskler.length, 'text-white', 'fırsatlar hariç'], ['Yüksek seviyeli', yuksek.length, yuksek.length ? 'text-red-500' : 'text-emerald-500', 'skor 12 ve üzeri'], ['Orta ve düşük', orta.length + dusuk.length, 'text-white', orta.length + ' orta, ' + dusuk.length + ' düşük'],
+      ek === 'db' ? ['Yüksek, eylemi olmayan', eylemsiz.length, eylemsiz.length ? 'text-red-500' : 'text-emerald-500', 'bağlı eylem açılmalı'] : ['Fırsat', items.length - riskler.length, 'text-white', 'değerlendirilecek fırsatlar']];
+    const sayi = {}; riskler.forEach((x) => { if (x.o && x.e) sayi[x.o + '_' + x.e] = (sayi[x.o + '_' + x.e] || 0) + 1; });
+    const renk = (sk) => (sk >= 12 ? 'rgba(239,68,68,.20)' : sk >= 6 ? 'rgba(245,158,11,.20)' : 'rgba(16,185,129,.18)');
+    const satir = [5, 4, 3, 2, 1].map((o) => `<tr><th class="text-[11px] text-slate-400 font-medium pr-2 text-right">${o}</th>${[1, 2, 3, 4, 5].map((e) => { const n = sayi[o + '_' + e]; return `<td class="p-0.5"><div class="w-11 h-11 sm:w-12 sm:h-12 rounded flex items-center justify-center" style="background:${renk(o * e)}" title="Olasılık ${o} × etki ${e} = ${o * e}${n ? ', ' + n + ' risk' : ''}">${n ? `<span class="text-base font-bold text-slate-100">${n}</span>` : `<span class="text-[10px] text-slate-500/70">${o * e}</span>`}</div></td>`; }).join('')}</tr>`).join('');
+    const oncelik = [...yuksek].sort((a, b) => b.skor - a.skor).slice(0, 5);
+    return `<div class="space-y-4"><div class="olcum-seridi grid grid-cols-2 lg:grid-cols-4">${hucre.map(([b, n, r, a]) => `<div class="glass-card p-4"><div class="text-sm text-slate-400 font-medium">${b}</div><div class="text-3xl font-semibold mt-2 leading-none ${r}">${n}</div><div class="text-xs text-slate-500 mt-2">${a}</div></div>`).join('')}</div>
+      <div class="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-4"><div class="glass-card p-4"><div class="text-sm font-bold text-white mb-3">Risk matrisi</div>
+        <div class="flex items-center gap-2"><div class="text-[11px] text-slate-400 -rotate-90 whitespace-nowrap w-4">Olasılık</div><table><tbody>${satir}<tr><td></td>${[1, 2, 3, 4, 5].map((e) => `<th class="text-[11px] text-slate-400 font-medium pt-1">${e}</th>`).join('')}</tr></tbody></table></div>
+        <div class="text-[11px] text-slate-400 text-center mt-1">Etki</div><div class="text-[11px] text-slate-500 mt-2 max-w-[22rem]">Kutudaki sayı: o hücredeki risk adedi; boş kutuda skor (olasılık × etki) silik yazılır.</div></div>
+        <div class="glass-card p-4"><div class="text-sm font-bold text-white mb-3">Öncelikli riskler</div>${oncelik.length ? `<ul class="divide-y divide-slate-800/70">${oncelik.map((x) => `<li class="py-2.5 flex items-start gap-3"><span class="text-xl font-semibold text-red-500 w-8 shrink-0 text-right">${x.skor}</span><div class="min-w-0 text-sm text-slate-200">${kisa(x.tanim, 110)}<div class="text-xs text-slate-500 mt-0.5">${esc(x.no || '')}${x.eylemsiz ? ' <span class="text-red-500 font-medium">Bağlı eylem yok</span>' : ''}</div></div></li>`).join('')}</ul>` : '<p class="text-sm text-slate-400">Skoru 12 ve üzeri risk yok.</p>'}</div></div></div>`;
+  }
   const DURUM_R = { acik: ['Açık', 'bg-rose-500/15 text-rose-300'], izlemede: ['İzlemede', 'bg-amber-500/15 text-amber-300'], kapali: ['Kapalı', 'bg-emerald-500/15 text-emerald-300'] };
   const DURUM_E = { planli: ['Planlı', 'bg-slate-500/15 text-slate-300'], devam: ['Devam ediyor', 'bg-sky-500/15 text-sky-300'], tamamlandi: ['Tamamlandı', 'bg-emerald-500/15 text-emerald-300'], iptal: ['İptal', 'bg-slate-500/15 text-slate-500'] };
   const kisa = (s, n) => { s = String(s || ''); return s.length > n ? esc(s.slice(0, n)) + '…' : esc(s); };
@@ -46,7 +66,7 @@
       { ad: 'Sorumlu', deger: (e) => esc(e.sorumlu || '—') },
       { ad: 'Termin', deger: (e) => tarih(e.termin) + (eylemAcik(e) && e.durum !== 'tamamlandi' && e.termin && e.termin < bugun() ? ' <span class="text-rose-400" title="Termin geçti">⏱</span>' : '') },
       { ad: 'Bütçe', sinif: 'text-right', deger: (e) => (e.butce_tl == null ? '—' : Number(e.butce_tl).toLocaleString('tr-TR', { maximumFractionDigits: 0 }) + ' TL') },
-      { ad: 'Durum', deger: (e) => `<span class="px-2 py-0.5 rounded-full text-[10px] ${DURUM_E[e.durum][1]}">${DURUM_E[e.durum][0]}</span>` },
+      { ad: 'Durum', deger: (e) => durumEt(DURUM_E[e.durum][0], E_RENK[e.durum]) },
       { ad: 'İlerleme', deger: (e) => `<div class="w-24 h-1.5 rounded bg-slate-700 overflow-hidden"><div class="h-full ${e.durum === 'tamamlandi' ? 'bg-emerald-500' : 'bg-sky-500'}" style="width:${e.yuzde || 0}%"></div></div><div class="text-[10px] text-slate-500 mt-0.5">%${e.yuzde || 0}</div>` },
     ],
     ust: (liste) => {
@@ -102,20 +122,19 @@
       return `<div class="flex gap-1 bg-slate-900/80 rounded-lg p-0.5">${butonlar}</div>${aktar}`;
     },
     ust: (liste) => {
-      const a = liste.filter((r) => tesisSuz(r) && r.aktif !== false), riskler = a.filter((r) => r.tur === 'Risk'), yuksek = riskler.filter((r) => (r.skor || 0) >= 12 && r.durum !== 'kapali');
-      const eylemsiz = yuksek.filter((r) => !eylem.satirlar.some((e) => e.risk_id === r.id && eylemAcik(e)));
-      return `<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 text-xs">${[['Risk', riskler.length, 'text-rose-300'], ['Fırsat', a.length - riskler.length, 'text-sky-300'], ['Yüksek seviyeli', yuksek.length, yuksek.length ? 'text-red-300' : 'text-emerald-400'], ['Yüksek, eylemi olmayan', eylemsiz.length, eylemsiz.length ? 'text-red-300' : 'text-emerald-400']].map(([b, n, r]) => `<div class="glass-card rounded-lg p-2"><div class="text-[10px] uppercase tracking-wider text-slate-500">${b}</div><div class="text-lg font-bold ${r}">${n}</div></div>`).join('')}</div>`;
+      const a = liste.filter((r) => tesisSuz(r) && r.aktif !== false && !(r.tur === 'Risk' && r.durum === 'kapali'));
+      return `<div class="mt-3">${ozetHtml(a.map((r) => ({ tur: r.tur, o: r.olasilik, e: r.etki, skor: r.skor, tanim: r.tanim, no: r.no, eylemsiz: r.tur === 'Risk' && !eylem.satirlar.some((e) => e.risk_id === r.id && eylemAcik(e)) })), 'db')}</div>`;
     },
     minGenislik: 780,
     kolonlar: [
       { ad: 'No / proses', deger: (r) => `<div class="font-mono">${esc(r.no || '')}</div><div class="text-[10px] text-slate-500">${esc(r.proses || '')}</div><div class="text-[10px] text-slate-500">${esc(TESIS_AD[r.tesis])}</div>` },
-      { ad: 'Tür', deger: (r) => `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${r.tur === 'Risk' ? 'bg-rose-500/15 text-rose-300' : 'bg-sky-500/15 text-sky-300'}">${esc(r.tur)}</span>` },
+      { ad: 'Tür', deger: (r) => `${turEt(r.tur)}` },
       { ad: 'Tanım', deger: (r) => kisa(r.tanim, 160) + (r.tur === 'Risk' && (r.skor || 0) >= 12 && r.durum !== 'kapali' && !eylem.satirlar.some((e) => e.risk_id === r.id && eylemAcik(e)) ? ' <span class="text-red-400" title="Yüksek risk — bağlı eylem yok">⚠</span>' : '') },
       { ad: 'O×E', sinif: 'text-center', deger: (r) => (r.olasilik && r.etki ? `${r.olasilik}×${r.etki}` : '—') },
-      { ad: 'Skor', sinif: 'text-center', deger: (r) => rozetSkor(r.skor) },
-      { ad: 'Sonra', sinif: 'text-center', deger: (r) => rozetSkor(r.sonra_skor) },
+      { ad: 'Skor', sinif: 'text-center', deger: (r) => rozetSkor(r.skor, r.tur) },
+      { ad: 'Sonra', sinif: 'text-center', deger: (r) => rozetSkor(r.sonra_skor, r.tur) },
       { ad: 'Sorumlu', deger: (r) => esc(r.sorumlu || '—') },
-      { ad: 'Durum', deger: (r) => `<span class="px-2 py-0.5 rounded-full text-[10px] ${DURUM_R[r.durum][1]}">${DURUM_R[r.durum][0]}</span>` },
+      { ad: 'Durum', deger: (r) => durumEt(DURUM_R[r.durum][0], R_RENK[r.durum]) },
     ],
   });
 
@@ -142,7 +161,7 @@
     },
     eylemPanel(tesisId, el) { tesis = tesisId; eylem.ciz(el); },
     tur(t) { tur = t; risk.yenile(); },
-    excelAktar,
+    excelAktar, ozetHtml, ozetRozet: (s, t) => rozetSkor(s, t),
     eylemAc(riskId) {
       const r = risk.satir(riskId); if (!r) return;
       risk.kapat();
