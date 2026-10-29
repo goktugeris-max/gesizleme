@@ -76,19 +76,29 @@
     const sorunlu = canli.filter((c) => c.durum === 'Arızalı' || c.durum === 'Haberleşme Yok').length;
     const calisan = canli.filter((c) => c.durum === 'Çalışıyor').length;
 
-    const kart = (baslik, deger, alt, renk) => `
-      <div class="glass-card rounded-xl p-4">
-        <div class="text-[11px] uppercase tracking-wider text-slate-400">${baslik}</div>
-        <div class="text-2xl font-bold mt-1 ${renk || 'text-white'}">${deger}</div>
-        <div class="text-[11px] text-slate-500 mt-1">${alt}</div>
+    const birim = (b) => `<span class="text-base font-semibold text-slate-400 ml-1">${b}</span>`;
+    const cubuk = (oran, dolgu, sol, sag) => `<div><div class="h-2 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full" style="width:${Math.max(0, Math.min(100, (oran || 0) * 100))}%;background:${dolgu}"></div></div>
+      <div class="flex justify-between text-[11px] mt-1 gap-2"><span>${sol}</span><span class="font-mono text-right">${sag || ''}</span></div></div>`;
+    const kart = (ikon, baslik, deger, govde, renk, vurgu, sinif) => `
+      <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col ${sinif || ''}" style="border-left:4px solid ${vurgu}">
+        <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-400 font-semibold min-w-0"><i data-lucide="${ikon}" class="w-4 h-4 shrink-0"></i><span class="truncate">${baslik}</span></div>
+        <div class="text-3xl font-extrabold mt-3 leading-none ${renk || 'text-white'}">${deger}</div>
+        <div class="mt-4 text-xs text-slate-400 space-y-2 flex-1">${govde}</div>
       </div>`;
+    const sonOran = sonB ? sonU / sonB : null, sonBuyume = onceki ? sonU / onceki - 1 : null;
+    const bekle = canli.filter((c) => c.durum === 'Beklemede').length;
+    const parca = (n, renk) => (n ? `<div style="width:${(n / (canli.length || 1)) * 100}%;background:${renk}"></div>` : '');
+    const rozet = (v) => (v == null || isNaN(v) ? '' : `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${v >= 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">${v >= 0 ? '▲' : '▼'} ${fark(v).replace('+', '')}</span>`);
     document.getElementById('genelKartlar').innerHTML =
-      kart('Kurulu güç', tr0(kw) + ' <span class="text-sm font-medium text-slate-400">kW</span>', `${PERF.santraller.length} santral devrede, ${PERF.planlanan.length} planlanan`) +
-      kart(`${yil} üretimi (Oca–${AY[ay - 1]})`, mwh(uretim), `Beklenen ${mwh(beklenen)}`) +
-      kart('Beklenene göre verim', yuzde(verim), `${yil} Ocak–${AY_UZUN[ay - 1]}`, verimSinifi(verim).yazi) +
-      kart(`${AY_UZUN[ay - 1]} ayı`, mwh(sonU), `Verim ${yuzde(sonB ? sonU / sonB : null)} • geçen yıl ${fark(onceki ? sonU / onceki - 1 : null)}`, verimSinifi(sonB ? sonU / sonB : null).yazi) +
-      kart('Canlı (şu an)', tr1(anlik) + ' <span class="text-sm font-medium text-slate-400">kW</span>',
-        canli.length ? `Bugün ${tr0(bugun)} kWh • ${calisan} çalışıyor${sorunlu ? ` • <span class="text-red-400">${sorunlu} sorunlu</span>` : ''} • ${canli.length}/${M.length} santral canlı` : 'Canlı veri henüz yok');
+      kart('zap', 'Kurulu güç', tr0(kw) + birim('kW'), `<div>${PERF.santraller.length} santral devrede</div><div class="text-slate-500">${PERF.planlanan.length} santral planlanan</div>`, 'text-white', '#f5b301') +
+      kart('sun', `${yil} üretimi · Oca–${AY[ay - 1]}`, mwh(uretim).replace(' MWh', '') + birim('MWh'), cubuk(beklenen ? uretim / beklenen : null, verimSinifi(verim).dolgu, `Beklenene oran ${yuzde(verim)}`, `${(uretim / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} / ${mwh(beklenen)}`), 'text-white', TV()) +
+      kart('gauge', 'Beklenene göre verim', yuzde(verim), cubuk(verim, verimSinifi(verim).dolgu, `${yil} Ocak–${AY_UZUN[ay - 1]}`, 'hedef %100') + '<div class="text-[11px] text-slate-500">≥%95 iyi · %85–95 dikkat · %70–85 düşük · altı kötü</div>', verimSinifi(verim).yazi, verimSinifi(verim).dolgu) +
+      kart('calendar-days', `${AY_UZUN[ay - 1]} ayı`, mwh(sonU).replace(' MWh', '') + birim('MWh'), `<div class="flex items-center justify-between gap-2"><span>Verim <b class="${verimSinifi(sonOran).yazi}">${yuzde(sonOran)}</b></span>${rozet(sonBuyume)}</div><div class="text-slate-500">geçen yılın aynı ayına göre</div>`, 'text-white', '#3f8fd2') +
+      kart('radio', 'Canlı · şu an', tr1(anlik) + birim('kW'),
+        canli.length ? `<div><div class="flex h-2 rounded-full overflow-hidden bg-slate-800">${parca(calisan, '#10b981')}${parca(bekle, '#38bdf8')}${parca(sorunlu, '#ef4444')}</div>
+          <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] mt-1"><span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#10b981"></span>${calisan} çalışıyor</span>${bekle ? `<span><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#38bdf8"></span>${bekle} beklemede</span>` : ''}${sorunlu ? `<span class="text-red-400"><span class="inline-block w-2 h-2 rounded-full mr-1" style="background:#ef4444"></span>${sorunlu} sorunlu</span>` : ''}</div></div>
+          <div class="text-slate-500">Bugün ${tr0(bugun)} kWh · ${canli.length}/${M.length} santral canlı</div>` : '<div>Canlı veri henüz yok</div>', 'text-white', '#10b981', 'sm:col-span-2 xl:col-span-1');
+    if (window.lucide) lucide.createIcons();
   }
 
   // ---------- Özet: modüllerden gelen kart + uyarı kayıtları ----------
@@ -176,7 +186,7 @@
     const sira = M.filter((m) => m.verim != null).sort((a, b) => a.verim - b.verim);
     document.getElementById('chVerimKap').style.height = Math.max(280, sira.length * 26 + 40) + 'px';
     grafikOlustur('chVerim', {
-      type: 'bar', data: { labels: sira.map((m) => (m.ad.length > 26 ? m.ad.slice(0, 25) + '…' : m.ad)), datasets: [{ data: sira.map((m) => Math.round(m.verim * 100)), backgroundColor: sira.map((m) => verimSinifi(m.verim).dolgu), borderRadius: 3 }] },
+      type: 'bar', data: { labels: sira.map((m) => { const k = window.innerWidth < 640 ? 16 : 26; return m.ad.length > k ? m.ad.slice(0, k - 1) + '…' : m.ad; }), datasets: [{ data: sira.map((m) => Math.round(m.verim * 100)), backgroundColor: sira.map((m) => verimSinifi(m.verim).dolgu), borderRadius: 3 }] },
       options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `Verim: %${c.parsed.x}` } } },
         scales: { x: { min: 0, suggestedMax: 130, ticks: { callback: (v) => '%' + v } } } },
     });
