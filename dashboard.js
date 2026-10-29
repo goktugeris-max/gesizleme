@@ -387,6 +387,18 @@
     }
   }
 
+  // Telefonda kısaltılan Özet bölümleri: başlık düğme gibi çalışır (tıklama + Enter/Boşluk); başlık yeniden çizilince özellikler yenilenir
+  (function () {
+    const duzenle = (k) => { const b = k.firstElementChild; if (b && b.tagName === 'H3') { b.setAttribute('role', 'button'); b.tabIndex = 0; b.setAttribute('aria-expanded', k.classList.contains('acik') ? 'true' : 'false'); } };
+    const degis = (k) => { k.classList.toggle('acik'); duzenle(k); };
+    document.querySelectorAll('.ozet-kisalt').forEach((k) => {
+      new MutationObserver(() => duzenle(k)).observe(k, { childList: true });
+      k.addEventListener('click', (e) => { if (e.target.closest('h3') === k.firstElementChild) degis(k); });
+      k.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === k.firstElementChild) { e.preventDefault(); degis(k); } });
+      duzenle(k);
+    });
+  })();
+
   window.Dash = {
     sekme: sekmeGoster,
     yenidenYukle: veriYukle,
