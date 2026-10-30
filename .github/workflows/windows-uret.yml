@@ -1,0 +1,35 @@
+name: Windows Uygulaması Üret
+
+# Panel sitesini açan Windows uygulaması (Electron kabuğu): kurulum dosyası (.exe) ve kurulumsuz taşınabilir .exe üretir.
+# Elle çalıştırılır: Actions -> Windows Uygulaması Üret -> Run workflow. Dosyalar "Artifacts" bölümünden inilir.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: masaustu
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Bağımlılıkları kur
+        run: npm install --no-audit --no-fund
+
+      - name: Windows paketini derle
+        run: npx electron-builder --win nsis portable --publish never
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: enerji-paneli-windows
+          path: masaustu/dist/*.exe
+          retention-days: 30

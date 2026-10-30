@@ -1,0 +1,19 @@
+{
+  "name": "enerji-paneli",
+  "productName": "Enerji Paneli",
+  "version": "1.0.0",
+  "description": "İZBB Enerji Yönetim Merkezi - masaüstü kabuğu",
+  "author": "İZBB İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü",
+  "main": "main.js",
+  "private": true,
+  "scripts": { "start": "electron ." },
+  "devDependencies": { "electron": "33.2.1", "electron-builder": "25.1.8" },
+  "build": {
+    "appId": "tr.bel.izmir.enerjipaneli",
+    "productName": "Enerji Paneli",
+    "files": ["main.js", "hata.html", "icon.png"],
+    "win": { "target": ["nsis", "portable"], "icon": "icon.png" },
+    "nsis": { "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "shortcutName": "Enerji Paneli" },
+    "artifactName": "Enerji-Paneli-${version}-${target}.${ext}"
+  }
+}
