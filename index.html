@@ -45,6 +45,9 @@
     #anaNav > button, #altNav > button { flex: 1 1 auto; text-align: center; white-space: nowrap; }
     #anaNav > button { font-size: 14px !important; padding: 11px 16px !important; }
     #altNav > button { font-size: 13.5px !important; padding: 9px 14px !important; }
+    /* modül içi alt sekmeler (Elektrik, Doğalgaz, Su, ISO) GES alt sekmeleriyle aynı boyda */
+    #elAlt, #dgAlt, #kyAlt, #isoAlt { gap: 8px !important; padding-bottom: 8px !important; }
+    #elAlt > button, #dgAlt > button, #kyAlt > button, #isoAlt > button { flex: 1 1 auto; text-align: center; white-space: nowrap; font-size: 13.5px !important; padding: 9px 14px !important; }
     #anaNav > button svg, #anaNav > button i { width: 17px; height: 17px; }
     /* telefon: kompakt üst bar, sekmeler tek satırda yana kaydırılır */
     @media (max-width: 639px) {
@@ -52,6 +55,7 @@
       #anaNav::-webkit-scrollbar, #altNav::-webkit-scrollbar { display: none; }
       #anaNav > button, #altNav > button { flex: 0 0 auto !important; font-size: 13px !important; padding: 7px 12px !important; }
       #altNav { padding-top: 6px !important; padding-bottom: 6px !important; }
+      #elAlt > button, #dgAlt > button, #kyAlt > button, #isoAlt > button { flex: 0 0 auto !important; font-size: 13px !important; padding: 7px 12px !important; }
       #anaNav > button svg, #anaNav > button i { width: 15px; height: 15px; }
     }
     /* tablolarda ilk (ad) ve uzun açıklama sütunları ezilmesin; tablo kendi kutusunda yana kayar */
