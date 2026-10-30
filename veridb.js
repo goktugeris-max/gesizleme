@@ -63,13 +63,14 @@
     try {
       const satirlar = await ham('/rest/v1/ges_aylik_uretim?select=santral_id,yil,ay,uretim_kwh&limit=20000', { zamanasimi: 7000 });
       if (!Array.isArray(satirlar) || !satirlar.length) return PERF;
-      const harita = new Map(PERF.santraller.map((s) => [s.id, s])), yillar = new Set();
+      const harita = new Map(PERF.santraller.map((s) => [s.id, s])), yillar = new Set(), degisen = new Map();
       satirlar.forEach((r) => {
-        const s = harita.get(r.santral_id); if (!s) return;
+        const s = harita.get(r.santral_id), ay = Number(r.ay), kwh = Number(r.uretim_kwh);
+        if (!s || !Number.isInteger(ay) || ay < 1 || ay > 12 || !Number.isFinite(kwh)) return;
         const y = String(r.yil); if (!s.aylik[y]) s.aylik[y] = Array(12).fill(null);
-        s.aylik[y][r.ay - 1] = Number(r.uretim_kwh); yillar.add(y);
+        s.aylik[y][ay - 1] = kwh; yillar.add(y); degisen.set(s.id + '|' + y, [s, y]);
       });
-      yillar.forEach((y) => PERF.santraller.forEach((s) => { if (s.aylik[y]) { s.yillik = s.yillik || {}; s.yillik[y] = s.aylik[y].reduce((t, v) => t + (v || 0), 0); } }));
+      degisen.forEach(([s, y]) => { s.yillik = s.yillik || {}; s.yillik[y] = s.aylik[y].reduce((t, v) => t + (v || 0), 0); });
       // Son dönem: santrallerin en az %70'inde verisi olan en son ay (Excel'in son dönemini yalnızca ileri taşır)
       const esik = Math.ceil(PERF.santraller.length * 0.7);
       let en = PERF.son_donem.yil * 12 + PERF.son_donem.ay - 1;
@@ -80,7 +81,7 @@
       try {
         const ins = await ham(`/rest/v1/ges_aylik_inceleme?select=*&yil=eq.${PERF.son_donem.yil}&ay=eq.${PERF.son_donem.ay}`, { zamanasimi: 7000 });
         if (Array.isArray(ins) && ins.length && PERF.ariza) {
-          PERF.ariza.satirlar = ins.map((r) => ({ id: r.santral_id, ad: (harita.get(r.santral_id) || {}).ad || r.santral_id, hataya_dusme: r.hataya_dusme, bekleme: r.bekleme, izleme_disi: r.izleme_disi, uretimsiz_gun: r.uretimsiz_gun, tarih: r.tarih, neden: r.neden }));
+          PERF.ariza.satirlar = ins.filter((r) => harita.has(r.santral_id)).map((r) => ({ id: r.santral_id, ad: harita.get(r.santral_id).ad, hataya_dusme: r.hataya_dusme, bekleme: r.bekleme, izleme_disi: r.izleme_disi, uretimsiz_gun: r.uretimsiz_gun, tarih: r.tarih, neden: r.neden }));
           PERF.ariza.donem = `${AY_UST[PERF.son_donem.ay - 1]} (${PERF.son_donem.yil})`;
         }
       } catch (e) { /* inceleme tablosu yoksa yok say */ }

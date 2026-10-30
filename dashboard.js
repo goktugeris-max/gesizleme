@@ -141,7 +141,7 @@
     const u = document.getElementById('ozetUyari');
     u.classList.toggle('hidden', !sorunlu.length);
     u.innerHTML = sorunlu.length ? `<a href="#canli" class="inline-flex items-center gap-2 text-xs font-semibold text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i> ${sorunlu.length} santralde sorun var: ${esc(sorunlu.slice(0, 3).map((c) => c.ad).join(', '))}${sorunlu.length > 3 ? '…' : ''}</a>` : '';
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
   }
 
   function grafikOlustur(id, yapi) {
@@ -375,7 +375,7 @@
     if (!PERF) return;
     kartlar(); dikkat(); tabloCiz(); arizaCiz(); ozetCiz(); if (window.Harita) Harita.yenile(); if (window.Ptf) Ptf.ciz();
     if (window.Chart) genelGrafikler();
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
   }
 
   async function veriYukle() {

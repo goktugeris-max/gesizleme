@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Enerji Yönetim Merkezi | İZBB</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@1.65.0"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -626,7 +626,7 @@
           </td>
         </tr>`;
       }).join('');
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
     }
 
     function updateField(id, field, value) {
@@ -771,12 +771,12 @@
       toastTimer = setTimeout(() => t.classList.add('hidden'), 2200);
     }
 
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); lucide.createIcons(); }
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); if (window.lucide) lucide.createIcons(); }
     function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') ['addModal','gdzModal','reportModal'].forEach(closeModal); });
     document.querySelectorAll('.modal-bg').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.add('hidden'); }));
 
-    function renderAll() { renderSummary(); renderTable(); lucide.createIcons(); }
+    function renderAll() { renderSummary(); renderTable(); if (window.lucide) lucide.createIcons(); }
 
     // ================== OTOMATİK VERİ (GitHub Actions -> data/durum.json) ==================
     // Huawei verisini durum.json santral biçimine çevirir. Ad, panelde kayıtlı Huawei santral adına eşlenir (Türkçe karakter/TR- ön eki farkı yok sayılır).
@@ -828,7 +828,7 @@
       if (d) window.CANLI = d;
       if (!d) {
         bar.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="cloud-off" class="w-3.5 h-3.5"></i> Otomatik veri henüz yok — tablo elle girilen bilgilerle gösteriliyor.</span>`;
-        lucide.createIcons();
+        if (window.lucide) lucide.createIcons();
         return;
       }
 
@@ -859,7 +859,7 @@
         : `<span class="text-red-400" title="${esc(v.hata || '')}">● ${esc(k)}: hata</span>`).join('');
       bar.innerHTML = `<span class="flex items-center gap-1.5"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Son otomatik veri: <b class="text-slate-200">${t}</b></span>${src}
         ${added ? `<span class="text-cyan-400">${added} yeni santral eklendi</span>` : ''}`;
-      lucide.createIcons();
+      if (window.lucide) lucide.createIcons();
     }
 
     // ================== BAŞLAT ==================

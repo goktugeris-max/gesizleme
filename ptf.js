@@ -53,7 +53,7 @@
       if (window.lucide) lucide.createIcons(); return;
     }
     if (!D) return;
-    const o = ozetHesapla(), bugun = new Date().toISOString().slice(0, 10), yarin = gunTop(bugun, 1);
+    const o = ozetHesapla(), bugun = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Istanbul' }), yarin = gunTop(bugun, 1);
     const sa = D.saatlik || {}, hedef = sa[yarin] ? yarin : sa[bugun] ? bugun : Object.keys(sa).sort().pop();
     const saat = hedef ? sa[hedef].filter((x) => x != null) : [];
     const mx = saat.length ? Math.max(...saat) : null, mn = saat.length ? Math.min(...saat) : null;

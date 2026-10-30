@@ -316,7 +316,10 @@
   }
 
   async function ac_dene(parola) {
-    try { E = await coz(parola); yuklendi = true; ozetSerit(); ozetKayit(); return true; } catch (e) { return false; }
+    try { E = await coz(parola); } catch (e) { return false; }
+    yuklendi = true;
+    try { ozetSerit(); ozetKayit(); } catch (e) { console.error('Elektrik özeti çizilemedi:', e); }
+    return true;
   }
 
   async function yukle() {

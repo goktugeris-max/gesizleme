@@ -71,4 +71,5 @@ jobs:
           git add data/durum.json
           if [ -f data/alarm_durum.json ]; then git add data/alarm_durum.json; fi
           git diff --staged --quiet || git commit -m "Veri güncellendi"
-          git push
+          for i in 1 2 3; do git pull --rebase origin main && git push && exit 0; sleep 5; done
+          exit 1

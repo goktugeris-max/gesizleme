@@ -111,7 +111,7 @@
         <thead class="text-slate-400 uppercase tracking-wider text-[10px]"><tr><th class="px-3 py-2 text-left">Kod</th><th class="px-3 text-left">Doküman adı</th><th class="px-3 text-left">Tür</th><th class="px-3 text-center">Rev</th><th class="px-3 text-left">Revizyon tarihi</th><th class="px-3 text-left">Durum</th><th class="px-3 text-center">İmzalı PDF</th></tr></thead>
         <tbody>${liste.map((b) => {
           const d = gosterDurum(b), g = guncel(b.kod);
-          return `<tr onclick="Dys.ac('${esc(b.kod).replace(/'/g, '&#39;')}')" class="border-t border-slate-800/70 hover:bg-slate-800/40 cursor-pointer">
+          return `<tr data-kod="${esc(b.kod)}" onclick="Dys.ac(this.dataset.kod)" class="border-t border-slate-800/70 hover:bg-slate-800/40 cursor-pointer">
             <td class="px-3 py-2 font-mono whitespace-nowrap">${esc(b.kod)}</td><td class="px-3 py-2 text-slate-100">${esc(b.ad)}${gozdenGecirmeGec(b) ? ' <span class="text-[10px] text-rose-400" title="12 aydır gözden geçirilmedi">⏱</span>' : ''}</td>
             <td class="px-3 text-slate-400">${esc(b.tur)}</td><td class="px-3 text-center">${esc(b.guncel_rev || '—')}</td><td class="px-3 whitespace-nowrap">${tarih(b.revizyon_tarihi || b.yayin_tarihi)}</td>
             <td class="px-3">${rozet(d.k, d.ad)}${d.ek ? ` <span class="text-[10px] text-slate-500">· ${esc(d.ek)}</span>` : ''}</td>

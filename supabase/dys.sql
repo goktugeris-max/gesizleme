@@ -84,6 +84,7 @@ create or replace function public.dys_olay_yaz(p_kod text, p_rev text, p_olay te
 language sql security definer set search_path = public as $$
   insert into public.dys_olay (belge_kod, rev_no, olay, aciklama, kim, kim_ad) values (p_kod, p_rev, p_olay, p_aciklama, auth.uid(), public.dys_kim_ad())
 $$;
+revoke all on function public.dys_olay_yaz(text, text, text, text) from public, anon, authenticated;
 
 -- Not düşme: istemci yalnız 'not' olayı ekleyebilir (dosya, durum, yürürlük kayıtlarını sunucu yazar)
 create or replace function public.dys_olay_ekle() returns trigger

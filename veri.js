@@ -10,7 +10,7 @@
 
   const esc2 = (s) => (typeof esc === 'function' ? esc(s) : String(s ?? ''));
   const norm2 = (s) => String(s || '').toLocaleLowerCase('tr').replace(/[^a-z0-9ğüşıöç]+/g, ' ').trim();
-  const sayi = (t) => { const s = String(t ?? '').trim(); if (s === '') return null; const x = s.replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'); const n = Number(x); return isNaN(n) ? NaN : n; };
+  const sayi = (t) => { const s = String(t ?? '').trim(); if (s === '') return null; const t2 = s.replace(/\s/g, ''); const x = t2.includes(',') ? t2.replace(/\./g, '').replace(',', '.') : /^-?[1-9]\d{0,2}(\.\d{3})+$/.test(t2) ? t2.replace(/\./g, '') : t2; const n = Number(x); return isNaN(n) ? NaN : n; };
   const goster = (n) => (n == null ? '' : n.toLocaleString('tr-TR', { maximumFractionDigits: 1, useGrouping: false }).replace('.', ','));
   const veri = () => (window.Dash && Dash.veri() && Dash.veri().PERF) || null;
   const girdi = 'bg-slate-900 border border-slate-700 rounded-md px-2 py-1 text-xs text-slate-200';
@@ -153,14 +153,15 @@
     cikis() { VeriDB.cikis(); rolBilgi = null; dirty = {}; mesaj = null; ciz(); },
     async yilSec(v) { if (Object.keys(dirty).length && !confirm('Kaydedilmemiş değişiklikler silinecek. Devam edilsin mi?')) { ciz(); return; } yil = Number(v); dirty = {}; mesaj = null; await yukleDb(); ciz(); },
     yapistir() {
-      const P = veri(), metin = document.getElementById('veriYapistir').value, bulunamayan = []; let aktarilan = 0;
+      const P = veri(), metin = document.getElementById('veriYapistir').value, bulunamayan = [], reddedilen = []; let aktarilan = 0;
       metin.split(/\r?\n/).forEach((satir) => {
         if (!satir.trim()) return;
         const p = satir.split('\t'); const s = P.santraller.find((x) => norm2(x.ad) === norm2(p[0]) || norm2(x.id.replace(/-/g, ' ')) === norm2(p[0]));
         if (!s) { bulunamayan.push(p[0]); return; }
-        p.slice(1, 13).forEach((h, i) => { const n = sayi(h); if (n != null && !Number.isNaN(n) && n >= 0) { dirty[s.id + '|' + (i + 1)] = n; aktarilan++; } });
+        const sinir = s.kw * 24 * 31 * 0.5;
+        p.slice(1, 13).forEach((h, i) => { const n = sayi(h); if (n == null) return; if (Number.isNaN(n) || n < 0 || n > sinir) { reddedilen.push(`${s.ad} ${AY[i]}`); return; } dirty[s.id + '|' + (i + 1)] = n; aktarilan++; });
       });
-      mesaj = { tur: bulunamayan.length ? 'hata' : 'ok', metin: `${aktarilan} hücre tabloya aktarıldı. ${bulunamayan.length ? 'Eşleşmeyen santral adı: ' + bulunamayan.join(', ') + '. ' : ''}Kaydet'e basarak veritabanına yazın.` };
+      mesaj = { tur: bulunamayan.length || reddedilen.length ? 'hata' : 'ok', metin: `${aktarilan} hücre tabloya aktarıldı. ${bulunamayan.length ? 'Eşleşmeyen santral adı: ' + bulunamayan.join(', ') + '. ' : ''}${reddedilen.length ? 'Geçersiz ya da fiziksel sınırı aşan değer (aktarılmadı): ' + reddedilen.join(', ') + '. ' : ''}Kaydet'e basarak veritabanına yazın.` };
       ciz();
     },
     async kaydet() {
