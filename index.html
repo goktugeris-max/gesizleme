@@ -740,7 +740,7 @@
       r.onload = () => {
         try {
           const d = JSON.parse(r.result);
-          if (!Array.isArray(d)) throw 0;
+          if (!Array.isArray(d) || d.some((p) => !p || !/^[\w.-]+$/.test(String(p.id)))) throw 0;   // kimlikler satır içi olay kodlarına girer
           plants = d; save(); renderAll(); toast('Yedek yüklendi');
         } catch (err) { toast('Geçersiz yedek dosyası'); }
       };

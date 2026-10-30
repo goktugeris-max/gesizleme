@@ -112,6 +112,12 @@ begin
     return new;
   end if;
   new.guncelleme := now();
+  if new.kod is distinct from old.kod then
+    raise exception 'Doküman kodu değiştirilemez (olay geçmişi koda bağlıdır); yeni kodla yeni doküman açın' using errcode = '42501';
+  end if;
+  if old.durum = 'yururlukte' and new.durum = 'taslak' and not public.yonetici() and not public.dys_rpc_mi() then
+    raise exception 'Yürürlükteki doküman taslağa yalnız yönetici tarafından çevrilebilir' using errcode = '42501';
+  end if;
   if (new.durum = 'yururlukte' and old.durum is distinct from 'yururlukte' or new.guncel_rev is distinct from old.guncel_rev) and not public.dys_rpc_mi() then
     raise exception 'Yürürlüğe alma yalnız dys_yururluge_al() ile yapılır (imzalı PDF ve EBYS sayısı gerekir)' using errcode = '42501';
   end if;
@@ -145,6 +151,14 @@ begin
   end if;
   if old.dosya_yolu is not null and new.dosya_yolu is distinct from old.dosya_yolu then
     raise exception 'Yüklenmiş imzalı dosya değiştirilemez; yeni revizyon açın' using errcode = '42501';
+  end if;
+  -- imzalı dosyası olan yürürlük/arşiv revizyonunun künyesi sonradan değiştirilemez (PR.07.01 4.10); dosyası henüz yüklenmemiş aktarım kaydı tamamlanabilir
+  if old.durum <> 'taslak' and old.dosya_yolu is not null and not public.dys_rpc_mi() and (
+       new.ebys_sayi is distinct from old.ebys_sayi or new.ebys_tarih is distinct from old.ebys_tarih or new.onaylayan is distinct from old.onaylayan
+       or new.kontrol_eden is distinct from old.kontrol_eden or new.hazirlayan is distinct from old.hazirlayan or new.degisiklik is distinct from old.degisiklik
+       or new.dosya_ad is distinct from old.dosya_ad or new.dosya_sha256 is distinct from old.dosya_sha256 or new.dosya_boyut is distinct from old.dosya_boyut
+       or new.yayin_tarihi is distinct from old.yayin_tarihi or new.revizyon_tarihi is distinct from old.revizyon_tarihi or new.rev_no is distinct from old.rev_no) then
+    raise exception 'Yürürlükteki/arşivdeki imzalı revizyonun bilgileri değiştirilemez; yeni revizyon açın' using errcode = '42501';
   end if;
   if new.surec is distinct from old.surec then
     if old.durum <> 'taslak' then

@@ -58,6 +58,16 @@ create table if not exists public.degisiklik_gecmisi (
   yeni      jsonb
 );
 
+-- Kim/ne zaman damgası BEFORE'da, geçmiş kaydı AFTER'da yazılır: "INSERT ... ON CONFLICT DO UPDATE" (upsert) önce BEFORE INSERT tetikleyicisini
+-- çalıştırır, çakışma varsa sonra UPDATE'e döner; geçmişi BEFORE'da yazmak her düzenlemede sahte bir INSERT kaydı üretirdi.
+create or replace function public.gecmis_damga() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  new.guncelleyen := auth.uid();
+  new.guncelleme  := now();
+  return new;
+end $$;
+
 create or replace function public.gecmis_yaz() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare k text;
@@ -67,8 +77,6 @@ begin
     insert into public.degisiklik_gecmisi (kullanici, tablo, islem, anahtar, eski) values (auth.uid(), tg_table_name, tg_op, k, to_jsonb(old));
     return old;
   end if;
-  new.guncelleyen := auth.uid();
-  new.guncelleme  := now();
   k := new.santral_id || '/' || new.yil || '/' || new.ay;
   insert into public.degisiklik_gecmisi (kullanici, tablo, islem, anahtar, eski, yeni)
     values (auth.uid(), tg_table_name, tg_op, k, case when tg_op = 'UPDATE' then to_jsonb(old) end, to_jsonb(new));
@@ -76,9 +84,13 @@ begin
 end $$;
 
 drop trigger if exists uretim_gecmis on public.ges_aylik_uretim;
-create trigger uretim_gecmis before insert or update or delete on public.ges_aylik_uretim for each row execute function public.gecmis_yaz();
 drop trigger if exists inceleme_gecmis on public.ges_aylik_inceleme;
-create trigger inceleme_gecmis before insert or update or delete on public.ges_aylik_inceleme for each row execute function public.gecmis_yaz();
+drop trigger if exists uretim_damga on public.ges_aylik_uretim;
+drop trigger if exists inceleme_damga on public.ges_aylik_inceleme;
+create trigger uretim_damga before insert or update on public.ges_aylik_uretim for each row execute function public.gecmis_damga();
+create trigger inceleme_damga before insert or update on public.ges_aylik_inceleme for each row execute function public.gecmis_damga();
+create trigger uretim_gecmis after insert or update or delete on public.ges_aylik_uretim for each row execute function public.gecmis_yaz();
+create trigger inceleme_gecmis after insert or update or delete on public.ges_aylik_inceleme for each row execute function public.gecmis_yaz();
 
 -- 5) Satır bazlı yetki
 alter table public.ges_aylik_uretim   enable row level security;
