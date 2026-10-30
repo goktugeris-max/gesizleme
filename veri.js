@@ -178,16 +178,19 @@
     },
     async incDonem(y, a) { if (y) yilInc = Number(y); if (a) ayInc = Number(a); mesaj = null; await yukleDb(); ciz(); },
     async incKaydet() {
-      const P = veri(), satirlar = P.santraller.map((s) => {
+      if (yukleniyor) return;
+      const P = veri(); if (!P) return;
+      const satirlar = P.santraller.map((s) => {
         const al = (a, n) => { const el = document.querySelector(`[data-inc="${s.id}|${a}"]`); return n ? Math.max(0, parseInt(el.value) || 0) : (el.value.trim() || null); };
         return { santral_id: s.id, yil: yilInc, ay: ayInc, hataya_dusme: al('hataya_dusme', 1), bekleme: al('bekleme', 1), izleme_disi: al('izleme_disi', 1), uretimsiz_gun: Math.min(31, al('uretimsiz_gun', 1)), tarih: al('tarih'), neden: al('neden') };
       });
+      yukleniyor = true;
       try {
         await VeriDB.istek('/rest/v1/ges_aylik_inceleme?on_conflict=santral_id,yil,ay', { method: 'POST', body: satirlar, prefer: 'resolution=merge-duplicates,return=minimal' });
         mesaj = { tur: 'ok', metin: `${AY_UZUN[ayInc - 1]} ${yilInc} incelemesi kaydedildi (${satirlar.length} santral).` };
         await yukleDb(); if (window.Dash) await Dash.yenidenYukle();
       } catch (e) { mesaj = { tur: 'hata', metin: 'Kaydedilemedi: ' + e.message }; }
-      ciz();
+      yukleniyor = false; ciz();
     },
     yenile() { if (kokEl() && kokEl().children.length) ciz(); },
   };

@@ -134,7 +134,7 @@
   window.Analiz = {
     ac,
     yenile() { if (yuklendi) ciz(); },
-    ayar(k, v) { const p = oku(); p[k] = k === 'mod' ? v : parseFloat(v); yaz(p); ciz(); },
+    ayar(k, v) { const p = oku(); const n = parseFloat(v); if (k !== 'mod' && !(Number.isFinite(n) && n > 0)) { ciz(); return; } p[k] = k === 'mod' ? v : n; yaz(p); ciz(); },
     sirala(k) { sirala = { k, y: sirala.k === k ? -sirala.y : 1 }; ciz(); },
     sec(id) { secili = secili === id ? null : id; ciz(); },
   };

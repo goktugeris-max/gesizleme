@@ -30,7 +30,7 @@
   // ---------- gösterge kartları ----------
   function kartlar() {
     const { yil, ay } = E.son_donem;
-    const A = E.aylik[String(yil)], O = E.aylik[String(yil - 1)];
+    const A = E.aylik[String(yil)], O = E.aylik[String(yil - 1)] || {};
     const fat = topla(A.faturali, ay), ofat = topla(O.faturali, ay);
     const ger = topla(A.gercek, ay), oger = topla(O.gercek, ay);
     const ges = topla(A.ges_net, ay), oges = topla(O.ges_net, ay);

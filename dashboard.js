@@ -69,7 +69,8 @@
     const beklenen = topla(M.map((m) => m.beklenen));
     const verim = beklenen ? uretim / beklenen : null;
     const sonU = topla(M.map((m) => m.sonUretim)), sonB = topla(M.map((m) => m.sonBeklenen));
-    const onceki = topla(PERF.santraller.map((s) => (s.aylik[String(yil - 1)] || [])[ay - 1]));
+    const oncekiAy = (m) => (m.s.aylik[String(yil - 1)] || [])[ay - 1] || 0;   // geçen yıl verisi olmayan (yeni) santraller büyümeyi şişirmesin
+    const ortak = M.filter((m) => oncekiAy(m) > 0), onceki = topla(ortak.map(oncekiAy));
 
     const canli = M.map((m) => canliBul(m.s)).filter(Boolean);
     const anlik = topla(canli.map((c) => c.anlik_kw)), bugun = topla(canli.map((c) => c.bugun_kwh));
@@ -85,7 +86,7 @@
         <div class="text-3xl font-extrabold mt-3 leading-none ${renk || 'text-white'}">${deger}</div>
         <div class="mt-4 text-xs text-slate-400 space-y-2 flex-1">${govde}</div>
       </div>`;
-    const sonOran = sonB ? sonU / sonB : null, sonBuyume = onceki ? sonU / onceki - 1 : null;
+    const sonOran = sonB ? sonU / sonB : null, sonBuyume = onceki ? topla(ortak.map((m) => m.sonUretim)) / onceki - 1 : null;
     const bekle = canli.filter((c) => c.durum === 'Beklemede').length;
     const parca = (n, renk) => (n ? `<div style="width:${(n / (canli.length || 1)) * 100}%;background:${renk}"></div>` : '');
     const rozet = (v) => (v == null || isNaN(v) ? '' : `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${v >= 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">${v >= 0 ? '▲' : '▼'} ${fark(v).replace('+', '')}</span>`);
