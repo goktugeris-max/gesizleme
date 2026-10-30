@@ -99,6 +99,7 @@
     });
     S.pasif = S.satirlar.filter((s) => !(s.donem > 0 || s.onDonem > 0 || s.onYillik > 0)).length;   // son iki yıldır tüketimi olmayan (kapalı/sıfır) aboneler tablodan çıkarılır
     S.satirlar = S.satirlar.filter((s) => s.donem > 0 || s.onDonem > 0 || s.onYillik > 0);
+    S.kapali = S.satirlar.filter((s) => s.a.durum === 'kapali').length;
     S.toplamDonem = S.satirlar.reduce((t, s) => t + s.donem, 0);
     S.toplamOnDonem = S.satirlar.reduce((t, s) => t + s.onDonem, 0);
     S.onYillik = S.satirlar.reduce((t, s) => t + s.onYillik, 0);
@@ -106,6 +107,7 @@
   function adGoster(a) {
     if (adlar[a.id]) return adlar[a.id];
     if (!a.genel) return a.ad.replace(/^T\.?C\.?\s*/i, '').replace(/İZMİR (BÜYÜK ?ŞEHİR|B\.ŞEHİR|BŞEHİR) BELEDİYESİ/i, 'İzBB').trim();
+    if (a.bina) return a.bina;
     return `${a.ilce} — ${a.ic || 'abone ' + (a.no || '')} (adsız)`;
   }
   const aylikToplam = (yil) => Array.from({ length: 12 }, (_, i) => {
@@ -146,7 +148,7 @@
         kayit('Yaz tabanı yüksek', `Haz–${AY[Math.min(ay, 9) - 1]} aylık ort. ${tr0(s.yazOrt)} m³ (kış ort. ${tr0(s.kisOrt)} m³'ün %${Math.round((s.yazOrt / s.kisOrt) * 100)}'i): havuz/mutfak/sıcak su ya da kazan kaybı olabilir.`, 20 + Math.min(30, s.yazOrt / 400), 'text-sky-400');
       // 4) tüketim görünmüyor
       const son2 = [s.c[ay - 1], ay > 1 ? s.c[ay - 2] : 0], onSon2 = [s.p[ay - 1], ay > 1 ? s.p[ay - 2] : 0];
-      if (s.onYillik / 12 >= 300 && son2.every((v) => !v) && onSon2.reduce((t, v) => t + (v || 0), 0) >= 400)
+      if (s.a.durum !== 'kapali' && s.onYillik / 12 >= 300 && son2.every((v) => !v) && onSon2.reduce((t, v) => t + (v || 0), 0) >= 400)
         kayit('Tüketim görünmüyor', `Son 2 ay 0/okuma yok; geçen yıl aynı aylar ${tr0(onSon2.reduce((t, v) => t + (v || 0), 0))} m³. Okuma gecikmesi ya da abonelik değişikliği olabilir.`, 45, 'text-orange-400');
     });
     uyariCache = u.sort((x, y) => y.puan - x.puan);
@@ -159,9 +161,9 @@
     const d = S.toplamOnDonem > 0 ? S.toplamDonem / S.toplamOnDonem - 1 : null, t = tahminYilSonu();
     Dash.ozetKaydet('dogalgaz', {
       kart: `<div class="grid grid-cols-2 gap-3 text-xs text-slate-500">
-        <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Oca–${AY[S.ay - 1]} ${S.yil}</div><div class="text-lg font-bold text-white">${tr0(S.toplamDonem / 1000)} <span class="text-xs text-slate-400">bin m³</span></div></div>
-        <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Geçen yıla göre</div><div class="text-lg font-bold ${renkFark(d)}">${fark(d)}</div></div>
-        <div class="col-span-2"><div class="text-[10px] uppercase tracking-wider text-slate-500">Yıl sonu tahmini</div><div class="text-sm font-semibold text-slate-200">${tr0(t / 1000)} bin m³ <span class="text-xs text-slate-500">(${S.onceki}: ${tr0(S.onYillik / 1000)} bin m³)</span></div></div></div>`,
+        <div><div class="text-[11px] text-slate-500">Oca–${AY[S.ay - 1]} ${S.yil}</div><div class="text-lg font-bold text-white">${tr0(S.toplamDonem / 1000)} <span class="text-xs text-slate-400">bin m³</span></div></div>
+        <div><div class="text-[11px] text-slate-500">Geçen yıla göre</div><div class="text-lg font-bold ${renkFark(d)}">${fark(d)}</div></div>
+        <div class="col-span-2"><div class="text-[11px] text-slate-500">Yıl sonu tahmini</div><div class="text-sm font-semibold text-slate-200">${tr0(t / 1000)} bin m³ <span class="text-xs text-slate-500">(${S.onceki}: ${tr0(S.onYillik / 1000)} bin m³)</span></div></div></div>`,
       uyarilar: uyarilariHesapla().slice(0, 6).map((x) => ({ modul: 'Doğalgaz', etiket: x.tur, metin: `${x.ad} — ${x.metin}`, renk: x.renk, href: '#dogalgaz', puan: x.puan })),
     });
   }
@@ -172,12 +174,12 @@
     const aktif = S.satirlar.filter((s) => s.donem > 0).length;
     const sirali = [...S.satirlar].sort((a, b) => b.donem - a.donem);
     const ilk5 = sirali.slice(0, 5).reduce((x, s) => x + s.donem, 0);
-    const kart = (b, v, alt, renk) => `<div class="glass-card rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400">${b}</div><div class="text-2xl font-bold mt-1 ${renk || 'text-white'}">${v}</div><div class="text-[11px] text-slate-500 mt-1">${alt}</div></div>`;
+    const kart = (b, v, alt, renk) => `<div class="glass-card p-4"><div class="text-[11px] text-slate-400">${b}</div><div class="text-2xl font-bold mt-1 ${renk || 'text-white'}">${v}</div><div class="text-[11px] text-slate-500 mt-1">${alt}</div></div>`;
     document.getElementById('dgKartlar').innerHTML =
       kart(`Tüketim (Oca–${AY[S.ay - 1]} ${S.yil})`, `${tr0(S.toplamDonem)} <span class="text-sm font-medium text-slate-400">m³</span>`, `Geçen yıl aynı dönem ${tr0(S.toplamOnDonem)} m³ • <span class="${renkFark(d)} font-semibold">${fark(d)}</span>`) +
       kart('Yıl sonu tahmini', `${tr0(t)} <span class="text-sm font-medium text-slate-400">m³</span>`, `${S.onceki} yılı ${tr0(S.onYillik)} m³ (geçen yılın aynı dönem oranıyla)`) +
       kart('Sera gazı (dönem)', `${tr0(co2(S.toplamDonem))} <span class="text-sm font-medium text-slate-400">tCO₂e</span>`, `${param.kg_m3.toLocaleString('tr-TR')} kg/m³ (kurum raporundan geri hesaplandı)`, 'text-amber-300') +
-      kart('Tüketimi olan abone', `${aktif} <span class="text-sm font-medium text-slate-400">/ ${S.satirlar.length}</span>`, `Dönemde tüketim kaydı olanlar${S.pasif ? ' • ' + S.pasif + ' pasif abone gizli' : ''}`) +
+      kart('Tüketimi olan abone', `${aktif} <span class="text-sm font-medium text-slate-400">/ ${S.satirlar.length}</span>`, `Dönemde tüketim kaydı olanlar${S.pasif ? ' • ' + S.pasif + ' pasif abone gizli' : ''}${S.kapali ? ' • ' + S.kapali + ' sözleşmesi kapanmış' : ''}`) +
       kart('En yüksek 5 abone', `%${S.toplamDonem ? Math.round((ilk5 / S.toplamDonem) * 100) : 0}`, `Toplam tüketimin payı • ${adGoster(sirali[0].a)} ilk sırada`, 'text-emerald-400');
   }
 
@@ -228,9 +230,9 @@
     let satir = S.satirlar.filter((s) => !ara || (adGoster(s.a) + ' ' + s.a.ilce).toLowerCase().includes(ara));
     satir = [...satir].sort((a, b) => { const x = kol[2](a), y = kol[2](b); const k = typeof x === 'string' ? x.localeCompare(y, 'tr') : x - y; return sirala.ters ? -k : k; });
     const b = (k) => (typeof k[1] === 'function' ? k[1]() : k[1]);
-    document.getElementById('dgTablo').innerHTML = `<thead class="text-[11px] uppercase tracking-wider text-slate-400"><tr>${KOLON.map((k) => `<th onclick="Dogalgaz.sirala('${k[0]}')" class="px-3 py-3 ${k[3] === 'r' ? 'text-right' : 'text-left'} whitespace-nowrap cursor-pointer select-none">${esc(b(k))}${sirala.k === k[0] ? (sirala.ters ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead>
+    document.getElementById('dgTablo').innerHTML = `<thead class="text-[11px] text-slate-400"><tr>${KOLON.map((k) => `<th onclick="Dogalgaz.sirala('${k[0]}')" class="px-3 py-3 ${k[3] === 'r' ? 'text-right' : 'text-left'} whitespace-nowrap cursor-pointer select-none">${esc(b(k))}${sirala.k === k[0] ? (sirala.ters ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead>
       <tbody class="divide-y divide-slate-800/70">${satir.map((s) => `<tr id="dg-${s.a.id}" class="hover:bg-slate-800/40">
-        <td class="px-3 py-2 text-slate-100">${uyarili.has(s.a.id) ? '<span class="text-amber-400" title="Uyarı var">▲</span> ' : ''}<button onclick="Dogalgaz.adla('${s.a.id}')" class="hover:underline text-left" title="Adı değiştirmek için tıklayın">${esc(adGoster(s.a))}</button>${adlar[s.a.id] ? '' : s.a.genel ? ' <span class="text-[10px] text-slate-500">(ad ver)</span>' : ''}</td>
+        <td class="px-3 py-2 text-slate-100">${uyarili.has(s.a.id) ? '<span class="text-amber-400" title="Uyarı var">▲</span> ' : ''}<button onclick="Dogalgaz.adla('${s.a.id}')" class="hover:underline text-left" title="Adı değiştirmek için tıklayın">${esc(adGoster(s.a))}</button>${s.a.durum === 'kapali' ? ' <span class="text-[11px] text-slate-500" title="Sözleşme kapanış: ' + esc(s.a.bitis || '') + '">(kapalı)</span>' : adlar[s.a.id] ? '' : s.a.genel && !s.a.bina ? ' <span class="text-[11px] text-slate-500">(ad ver)</span>' : ''}</td>
         <td class="px-3 py-2 text-slate-400">${esc(s.a.ilce)}</td>
         <td class="px-3 py-2 text-right font-mono">${tr0(s.donem)}</td><td class="px-3 py-2 text-right font-mono text-slate-400">${tr0(s.onDonem)}</td>
         <td class="px-3 py-2 text-right font-mono ${renkFark(s.fark)}">${fark(s.fark)}</td><td class="px-3 py-2 text-right font-mono text-slate-400">${tr0(s.onYillik)}</td>
@@ -248,36 +250,58 @@
     document.body.appendChild(a); a.click(); a.remove();
   }
 
+  // Alt sekmeler (ISO ve Elektrik'teki gibi): tek seferde bir bölüm görünür
+  const ALT = [['ozet', 'Özet'], ['abone', 'Aboneler'], ['dagilim', 'Dağılım ve harita'], ['not', 'Parametreler ve notlar']];
+  let altSekme = 'ozet', haritaCizildi = false;
+  function altGoster() {
+    const nav = document.getElementById('dgAlt'); if (!nav) return;
+    nav.innerHTML = ALT.map(([k, ad]) => `<button onclick="Dogalgaz.alt('${k}')" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${k === altSekme ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-slate-200'}">${ad}</button>`).join('');
+    ALT.forEach(([k]) => { const p = document.getElementById('dgP-' + k); if (p) p.classList.toggle('hidden', k !== altSekme); });
+    if (altSekme === 'dagilim' && !haritaCizildi) { haritaCizildi = true; harita(); }   // harita görünür olunca kurulur (gizli kutuda boyutu bozulur)
+    setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);   // gizliyken çizilen grafikler görününce boyutlansın
+  }
   function iskelet() {
+    haritaCizildi = false;
     document.getElementById('dgIcerik').innerHTML = `
-      <p class="text-xs text-slate-400 mb-3">Kurumsal doğalgaz aboneleri (m³). Kaynak: İklim Değişikliği ve Sıfır Atık Dairesi Başkanlığı doğalgaz tüketim çizelgesi • veri dönemi ${AY_UZUN[S.ay - 1]} ${S.yil}. Adres, hesap no ve TL tutarları panelde tutulmaz.</p>
-      <div id="dgKartlar" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6"></div>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <div class="glass-card rounded-xl p-4 lg:col-span-2"><h3 class="text-sm font-semibold text-white mb-3">Aylık toplam tüketim (m³)</h3><div class="h-72"><canvas id="chDgAylik"></canvas></div></div>
-        <div class="glass-card rounded-xl p-4"><h3 class="text-sm font-semibold text-white mb-3 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i> Dikkat gerektirenler</h3><div id="dgUyari" class="max-h-72 overflow-y-auto -mx-1"></div></div>
-      </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <div class="glass-card rounded-xl p-4"><h3 class="text-sm font-semibold text-white mb-3">En yüksek 10 abone (dönem)</h3><div class="h-80"><canvas id="chDgTop"></canvas></div></div>
-        <div class="glass-card rounded-xl p-4"><h3 class="text-sm font-semibold text-white mb-3">İlçelere göre (dönem)</h3><div class="h-80"><canvas id="chDgIlce"></canvas></div></div>
-      </div>
-      <div class="glass-card rounded-xl p-4 mb-6">
-        <h3 class="text-sm font-semibold text-white mb-1 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-orange-400"></i> En yüksek tüketimli 20 abone — harita</h3>
-        <p class="text-[11px] text-slate-500 mb-3">Dönem tüketimine göre ilk 20. Adres tutulmadığı için işaretçiler <b>ilçe merkezine yakın, yaklaşık</b> konumdadır; numara sıralamayı, daire boyutu m³'ü gösterir. Gizli tesisler haritaya konmaz.</p>
-        <div id="dgHarita" class="h-[480px] rounded-lg overflow-hidden border border-slate-800"></div>
-      </div>
-      <div class="glass-card rounded-xl overflow-hidden">
-        <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-800">
-          <h3 class="text-sm font-semibold text-white">Abone tablosu</h3>
-          <div class="flex items-center gap-2"><input id="dgAra" oninput="Dogalgaz.ara(this.value)" placeholder="Abone/ilçe ara..." class="px-3 py-1.5 rounded-lg text-xs bg-slate-900 border border-slate-700 text-slate-200 w-44" />
-            <button onclick="Dogalgaz.csv()" class="px-3 py-1.5 rounded-lg text-xs border border-slate-700 text-slate-300 hover:text-white flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> CSV</button></div>
+      <div class="space-y-4">
+      <p class="text-xs text-slate-400">Kurumsal doğalgaz aboneleri (m³). Kaynak: İklim Değişikliği ve Sıfır Atık Dairesi Başkanlığı doğalgaz tüketim çizelgesi; abone türü ve bina adı abone bilgi listesinden • veri dönemi ${AY_UZUN[S.ay - 1]} ${S.yil}. Adres, hesap no ve TL tutarları panelde tutulmaz.</p>
+      <nav id="dgAlt" class="flex gap-1 overflow-x-auto border-b border-slate-800 pb-1"></nav>
+      <div id="dgP-ozet" class="space-y-4">
+        <section id="dgKartlar" class="olcum-seridi grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5"></section>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="glass-card rounded-xl p-4 lg:col-span-2"><h3 class="text-sm font-semibold text-white mb-3">Aylık toplam tüketim (m³)</h3><div class="h-72"><canvas id="chDgAylik"></canvas></div></div>
+          <div class="glass-card rounded-xl p-4"><h3 class="text-sm font-semibold text-white mb-3">Dikkat gerektirenler</h3><div id="dgUyari" class="max-h-72 overflow-y-auto -mx-1"></div></div>
         </div>
-        <div class="overflow-x-auto"><table id="dgTablo" class="w-full text-xs"></table></div>
       </div>
-      <details class="glass-card rounded-xl p-4 mt-6 text-xs text-slate-400" id="dgParam"><summary class="cursor-pointer text-slate-200 font-semibold">Parametreler ve notlar</summary>
-        <div class="mt-3 space-y-2"><label>Emisyon faktörü (kg CO₂e / m³) <input id="dgFaktor" type="number" step="0.001" value="${param.kg_m3}" onchange="Dogalgaz.faktor(this.value)" class="ml-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 w-24 text-slate-100" /></label>
-        <p>Varsayılan 1,994: 2026 ilk 6 ay kurum raporundaki doğalgaz emisyonu (1.970 tCO₂e) ÷ tüketim (987.899 m³). ETKB resmî tablosuyla doğrulanmalıdır.</p>
-        <p>Uyarı kuralları: dönem artışı (≥%25 ve ≥500 m³), son ay sıçraması (≥%50 ve ≥400 m³), geçmiş yıllara göre aykırı ay (ort.+2σ), yaz tabanı (kış ortalamasının ≥%35'i), tüketim görünmüyor. Eşikler tipik değerlerdir.</p>
-        ${(G.veri_notlari || []).length ? `<p class="text-amber-300">Veri notları: ${G.veri_notlari.map(esc).join(' • ')}</p>` : ''}</div></details>`;
+      <div id="dgP-abone" class="hidden">
+        <div class="glass-card rounded-xl overflow-hidden">
+          <div class="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-slate-800">
+            <h3 class="text-sm font-semibold text-white">Abone tablosu</h3>
+            <div class="flex items-center gap-2"><input id="dgAra" oninput="Dogalgaz.ara(this.value)" placeholder="Abone/ilçe ara..." class="px-3 py-1.5 rounded-lg text-xs bg-slate-900 border border-slate-700 text-slate-200 w-44" />
+              <button onclick="Dogalgaz.csv()" class="px-3 py-1.5 rounded-lg text-xs border border-slate-700 text-slate-300 hover:text-white flex items-center gap-1.5"><i data-lucide="download" class="w-3.5 h-3.5"></i> CSV</button></div>
+          </div>
+          <div class="overflow-x-auto"><table id="dgTablo" class="w-full text-xs"></table></div>
+        </div>
+      </div>
+      <div id="dgP-dagilim" class="hidden space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="glass-card rounded-xl p-4"><h3 class="text-sm font-semibold text-white mb-3">En yüksek 10 abone (dönem)</h3><div class="h-80"><canvas id="chDgTop"></canvas></div></div>
+          <div class="glass-card rounded-xl p-4"><h3 class="text-sm font-semibold text-white mb-3">İlçelere göre (dönem)</h3><div class="h-80"><canvas id="chDgIlce"></canvas></div></div>
+        </div>
+        <div class="glass-card rounded-xl p-4">
+          <h3 class="text-sm font-semibold text-white mb-1">En yüksek tüketimli 20 abone: harita</h3>
+          <p class="text-[11px] text-slate-500 mb-3">Dönem tüketimine göre ilk 20. Adres tutulmadığı için işaretçiler <b>ilçe merkezine yakın, yaklaşık</b> konumdadır; numara sıralamayı, daire boyutu m³'ü gösterir. Gizli tesisler haritaya konmaz.</p>
+          <div id="dgHarita" class="h-[480px] rounded-lg overflow-hidden border border-slate-800"></div>
+        </div>
+      </div>
+      <div id="dgP-not" class="hidden">
+        <div class="glass-card rounded-xl p-4 text-xs text-slate-400">
+          <div class="space-y-2"><label>Emisyon faktörü (kg CO₂e / m³) <input id="dgFaktor" type="number" step="0.001" value="${param.kg_m3}" onchange="Dogalgaz.faktor(this.value)" class="ml-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 w-24 text-slate-100" /></label>
+          <p>Varsayılan 1,994: 2026 ilk 6 ay kurum raporundaki doğalgaz emisyonu (1.970 tCO₂e) ÷ tüketim (987.899 m³). ETKB resmî tablosuyla doğrulanmalıdır.</p>
+          <p>Uyarı kuralları: dönem artışı (≥%25 ve ≥500 m³), son ay sıçraması (≥%50 ve ≥400 m³), geçmiş yıllara göre aykırı ay (ort.+2σ), yaz tabanı (kış ortalamasının ≥%35'i), tüketim görünmüyor (sözleşmesi kapanmış abonelerde uygulanmaz). Eşikler tipik değerlerdir.</p>
+          <p>Abone adları: genel adlı ("T.C. İzmir Büyükşehir Belediyesi") aboneler için abone bilgi listesindeki bina adı kullanılır; listede karşılığı olmayan abonelere tabloda tıklayarak bu tarayıcıda ad verilebilir.</p>
+          ${(G.veri_notlari || []).length ? `<p class="text-amber-300">Veri notları: ${G.veri_notlari.map(esc).join(' • ')}</p>` : ''}</div></div>
+      </div></div>`;
   }
 
   function harita() {
@@ -286,15 +310,15 @@
       ad: adGoster(s.a), ilce: s.a.ilce, deger: s.donem, etiket: `${tr0(s.donem)} m³ (Oca–${AY[S.ay - 1]} ${S.yil})`, alt: `Geçen yıl aynı dönem ${tr0(s.onDonem)} m³ • ${fark(s.fark)}` })), { renk: '#e0662c' });
   }
 
-  function ciz() { iskelet(); kartlar(); grafikler(); uyariListesi(); tablo(); harita(); if (window.lucide) lucide.createIcons(); cizildi = true; }
+  function ciz() { iskelet(); kartlar(); grafikler(); uyariListesi(); tablo(); altGoster(); if (window.lucide) lucide.createIcons(); cizildi = true; }
 
   window.Dogalgaz = {
     async ac() {
       if (!yuklendi) await yukle();
       if (!yuklendi) { if (sifreli) girisFormu(); return; }
-      if (!cizildi) ciz();
-      setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);
+      if (!cizildi) ciz(); else altGoster();
     },
+    alt(k) { if (!ALT.some((x) => x[0] === k)) return; altSekme = k; altGoster(); },
     sirala(k) { sirala = { k, ters: sirala.k === k ? !sirala.ters : k !== 'ad' && k !== 'ilce' }; tablo(); },
     ara(v) { ara = String(v || '').toLowerCase(); tablo(); },
     csv: csvIndir,
@@ -305,7 +329,7 @@
       if (yeni.trim()) adlar[id] = yeni.trim(); else delete adlar[id];
       yaz(AD_ANAHTAR, adlar); uyariCache = null; ciz(); ozetKayit();
     },
-    git(id) { const el = document.getElementById('dg-' + id); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('bg-amber-500/15'); setTimeout(() => el.classList.remove('bg-amber-500/15'), 2500); } },
+    git(id) { altSekme = 'abone'; altGoster(); const el = document.getElementById('dg-' + id); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('bg-amber-500/15'); setTimeout(() => el.classList.remove('bg-amber-500/15'), 2500); } },
     faktor(v) { const n = parseFloat(String(v).replace(',', '.')); if (n > 0) { param.kg_m3 = n; yaz(PARAM_ANAHTAR, param); kartlar(); } },
     // başka modüller (Karbon vb.) için
     kgM3: () => param.kg_m3,
