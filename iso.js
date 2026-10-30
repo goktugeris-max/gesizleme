@@ -430,7 +430,7 @@
   }
 
   // ---- alt sekmeler (tesis içinde tek seferde bir bölüm görünür; uzun sayfa yerine)
-  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['enb', 'EnB, SEU ve M&V'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['baglam', 'Bağlam ve taraflar'], ['bakim', 'Bakım ve yetkinlik'], ['belge', 'Belgeler']];
+  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['baz', 'Baz yük'], ['enb', 'EnB, SEU ve M&V'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['baglam', 'Bağlam ve taraflar'], ['bakim', 'Bakım ve yetkinlik'], ['belge', 'Belgeler']];
 
   function iskelet() {
     document.getElementById('isoIcerik').innerHTML = `<style>#isoIcerik summary::-webkit-details-marker{display:none}#isoAlt::-webkit-scrollbar{height:4px}</style><div class="space-y-4">
@@ -443,6 +443,7 @@
       <nav id="isoAlt" class="flex gap-1 overflow-x-auto border-b border-slate-800 pb-1"></nav>
       <div id="isoP-ozet" class="space-y-4"><section id="isoKartlar" class="olcum-seridi grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"></section><section id="isoOzetGrafik" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoOzetSapma"></section><section id="isoOzetSerit" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></section></div>
       <div id="isoP-ref" class="hidden space-y-4"><section id="isoRefOzet"></section><div id="isoBolumChips" class="flex flex-wrap gap-1"></div><section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoEk" class="space-y-4"></section><div id="isoNotlar"></div></div>
+      <div id="isoP-baz" class="hidden"><section id="isoBaz"></section></div>
       <div id="isoP-enb" class="hidden"><section id="isoEnb"></section></div>
       <div id="isoP-olcum" class="hidden"><section id="isoOlcum"></section><section id="isoDonanim" class="mt-6"></section></div>
       <div id="isoP-hedef" class="hidden space-y-4"><section id="isoHedef"></section><section id="isoEnpg"></section></div>
@@ -547,6 +548,7 @@
         riskBolumu(); document.getElementById('isoRiskBos').classList.toggle('hidden', !document.getElementById('isoRisk').classList.contains('hidden'));
       }
     },
+    baz() { if (window.Baz) Baz.panel(tesis, document.getElementById('isoBaz'), D.seriler, yil); },
     enb() { if (window.Enb) Enb.panel(tesis, document.getElementById('isoEnb'), D.seriler); },
     baglam() { if (window.Baglam) Baglam.panel(tesis, document.getElementById('isoBaglam')); },
     bakim() { if (window.Bakim) Bakim.panel(tesis, document.getElementById('isoBakim')); },
