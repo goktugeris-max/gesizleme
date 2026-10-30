@@ -5,6 +5,7 @@ Kullanım:
   ELEKTRIK_PAROLA="..." python3 collector/dogalgaz_to_json.py "<Dogalgaz_Tuketim_Cizelgesi.xlsx>"   (parola Elektrik/ISO ile aynı, ≥12 karakter)
   python3 collector/dogalgaz_to_json.py "<xlsx>" --acik               (ŞİFRESİZ data/dogalgaz.json; HERKESE AÇIK depoda herkes görür)
   python3 collector/dogalgaz_to_json.py "<xlsx>" --kontrol            (şifrelemeden yalnızca okur, özet yazar; dosya üretmez)
+  ... --abone-bilgi "<Abone_Bilgileri.xlsx>"                            (gaz dağıtım şirketinin abone listesi: bina adı + sözleşme durumu eklenir)
   python3 collector/dogalgaz_to_json.py "<xlsx>" --duz <yol.json>     (TEST: düz metin JSON; depo DIŞINA yazın)
 
 Excel düzeni: her yıl bir sayfa ("2022".."2026"); 5. satır başlık, 6. satırdan itibaren abone satırları;
@@ -49,6 +50,61 @@ def sifrele(veri, parola):
     sifreli = AESGCM(anahtar).encrypt(iv, json.dumps(veri, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), None)
     b64 = lambda b: base64.b64encode(b).decode("ascii")
     return {"v": 1, "iter": PBKDF2_TUR, "salt": b64(salt), "iv": b64(iv), "data": b64(sifreli)}
+
+
+def turkce_baslik(ad):
+    ad = re.sub(r"\s+", " ", ad).strip()
+    if not ad.isupper():
+        return ad
+    def kelime(w):
+        w = w.replace("İ", "i").replace("I", "ı").lower()
+        return {"i": "İ", "ı": "I"}.get(w[:1], w[:1].upper()) + w[1:]
+    return " ".join("-".join(kelime(x) for x in w.split("-")) for w in ad.split(" "))
+
+
+def abone_bilgisi(yol):
+    """Abone_Bilgileri.xlsx -> {kimlik: {bina, durum, bitis, sektor}}. Eşleşme: 'Hesap No' (hesap no SHA-256 kimliği).
+    Aynı hesapta birden çok sözleşme satırı olabilir (eski kapatılmış + yeni etkin): etkin olan, yoksa en geç tarihli seçilir.
+    ALINMAZ: TCKN/VKN, telefon, adres (mahalle/cadde/kapı), sayaç/tesisat/abone numaraları, abone unvanı.
+    Yalnız bina adı ('Site Apartman'), sözleşme durumu, kapanış ayı ve sektör alt tipi."""
+    ws = openpyxl.load_workbook(yol, data_only=True).active
+    satirlar = list(ws.iter_rows(values_only=True))
+    bas = [str(c or "").strip() for c in satirlar[0]]
+    ix = {a: i for i, a in enumerate(bas)}
+    hesap_i, bina_i, durum_i, bit_i, basl_i, sek_i = ix["Hesap No"], ix["Site Apartman"], ix["Hizmet Anlaşması Durum"], ix["Hizmet Anlaşması Bitis Tarihi"], ix["Hizmet Anlaşması Baslangic Tarihi"], ix["Sektör Alt Tipi"]
+    DURUM = {"etkin": "etkin", "kapatıldı": "kapali", "iptal edildi": "iptal"}
+    secim = {}
+    for r in satirlar[1:]:
+        if r[hesap_i] in (None, ""):
+            continue
+        kimlik = hashlib.sha256(("izbb-dg1|" + str(r[hesap_i]).strip()).encode()).hexdigest()[:8]
+        durum = DURUM.get(str(r[durum_i] or "").strip().lower().replace("İ", "i"), "diger")
+        sira = (durum == "etkin", str(r[basl_i] or ""))
+        if kimlik not in secim or sira > secim[kimlik][0]:
+            secim[kimlik] = (sira, r)
+    out = {}
+    for kimlik, (_, r) in secim.items():
+        parcalar = [p.strip() for p in str(r[bina_i] or "").split(",") if p.strip() and not p.strip().isdigit() and p.strip() != "---"]
+        bina = turkce_baslik(" ".join(parcalar))
+        if HASSAS.search(bina):
+            bina = "Gizli tesis"
+        durum = DURUM.get(str(r[durum_i] or "").strip().lower().replace("İ", "i"), "diger")
+        bit = r[bit_i]
+        out[kimlik] = {"bina": bina, "durum": durum, "bitis": bit.strftime("%Y-%m") if hasattr(bit, "strftime") and durum != "etkin" else "", "sektor": str(r[sek_i] or "").strip()}
+    return out
+
+
+def zenginlestir(c, bilgi):
+    n = 0
+    for a in c["aboneler"]:
+        b = bilgi.get(a["id"])
+        if not b:
+            continue
+        n += 1
+        a["durum"], a["bitis"], a["sektor"] = b["durum"], b["bitis"], b["sektor"]
+        if b["bina"]:
+            a["bina"] = b["bina"]
+    print(f"abone bilgisi: {n}/{len(c['aboneler'])} abone eşleşti; durum dağılımı:", {d: sum(1 for a in c['aboneler'] if a.get('durum') == d) for d in ("etkin", "kapali", "iptal")})
 
 
 def oku(yol):
@@ -114,6 +170,8 @@ def main():
         print(__doc__)
         return 1
     c = oku(args[0])
+    if "--abone-bilgi" in sys.argv:
+        zenginlestir(c, abone_bilgisi(sys.argv[sys.argv.index("--abone-bilgi") + 1]))
     ozet(c)
     if "--kontrol" in sys.argv:
         return 0

@@ -97,8 +97,7 @@ html.dark a:focus-visible, html.dark button:focus-visible, html.dark summary:foc
 /* 4) Tıklanabilir kartlar: üzerine gelince belirginleşir */
 a.glass-card, button.glass-card { transition: border-color .15s, box-shadow .15s; }
 html:not(.dark) a.glass-card:hover, html:not(.dark) button.glass-card:hover { border-color: var(--kurum); box-shadow: 0 2px 10px rgba(33,25,80,.10); }
-/* 5) Kilitliyken (parola istenirken) altındaki boş grafik çerçeveleri gizlenir */
-#tab-elektrik:has(#elGiris) > :not(#elKartlar) { display: none; }
+/* 5) Elektrik parola ekranı: içerik (#elIcerik) giriş yapılana kadar gizli tutulur (elektrik.js) */
 /* 6) Hareketi azalt */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
 

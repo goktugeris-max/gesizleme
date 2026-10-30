@@ -38,14 +38,14 @@
     const pay = ger ? ges / ger : null, opay = oger ? oges / oger : null;
     const aboneler = (E.abone_sayisi[String(yil)] || [])[ay - 1];
     const donem = `Oca–${AY[ay - 1]} ${yil}`;
-    const kart = (b, d, alt, renk) => `<div class="glass-card rounded-xl p-4"><div class="text-[11px] uppercase tracking-wider text-slate-400">${b}</div><div class="text-2xl font-bold mt-1 ${renk || 'text-white'}">${d}</div><div class="text-[11px] text-slate-500 mt-1">${alt}</div></div>`;
+    const kart = (b, d, alt, renk) => `<div class="glass-card p-5"><div class="text-sm text-slate-400 font-medium">${b}</div><div class="text-3xl font-semibold mt-2 leading-none ${renk || 'text-white'}">${d}</div><div class="text-xs text-slate-500 mt-3">${alt}</div></div>`;
     const degisim = (a, b) => (b ? fark(a / b - 1) : '—');
     document.getElementById('elKartlar').innerHTML =
-      kart(`Faturalı tüketim (${donem})`, gwh(fat) + ' <span class="text-sm font-medium text-slate-400">GWh</span>', `Geçen yıl aynı dönem ${degisim(fat, ofat)} • ${tr0(aboneler)} abone`) +
-      kart('Gerçek tüketim', gwh(ger) + ' <span class="text-sm font-medium text-slate-400">GWh</span>', `Geçen yıl aynı dönem ${degisim(ger, oger)}`) +
-      kart('GES net üretimi', gwh(ges) + ' <span class="text-sm font-medium text-slate-400">GWh</span>', `Geçen yıl aynı dönem ${degisim(ges, oges)}`, 'text-amber-300') +
-      kart('GES\'in tüketimdeki payı', yuzde(pay, 1), `Geçen yıl aynı dönem ${yuzde(opay, 1)}`, 'text-emerald-400') +
-      kart('Üretim fazlası', tr0(fazla / 1000) + ' <span class="text-sm font-medium text-slate-400">MWh</span>', `GES üretiminin ${yuzde(ges ? fazla / ges : null, 1)}'i şebekeye verildi`);
+      kart(`Faturalı tüketim, ${donem}`, gwh(fat) + ' <span class="text-base font-semibold text-slate-400">GWh</span>', `Geçen yıl aynı dönem ${degisim(fat, ofat)} • ${tr0(aboneler)} abone`) +
+      kart('Gerçek tüketim', gwh(ger) + ' <span class="text-base font-semibold text-slate-400">GWh</span>', `Geçen yıl aynı dönem ${degisim(ger, oger)}`) +
+      kart('GES net üretimi', gwh(ges) + ' <span class="text-base font-semibold text-slate-400">GWh</span>', `Geçen yıl aynı dönem ${degisim(ges, oges)}`, 'text-amber-300') +
+      kart('GES\'in tüketimdeki payı', yuzde(pay, 1), `Geçen yıl aynı dönem ${yuzde(opay, 1)}`, 'text-emerald-500') +
+      kart('Üretim fazlası', tr0(fazla / 1000) + ' <span class="text-base font-semibold text-slate-400">MWh</span>', `GES üretiminin ${yuzde(ges ? fazla / ges : null, 1)} kadarı şebekeye verildi`);
   }
 
   // ---------- grafikler ----------
@@ -299,7 +299,8 @@
   }
 
   function girisFormu(hata) {
-    document.getElementById('elKartlar').innerHTML = `<form id="elGiris" class="col-span-full max-w-sm mx-auto my-10 bg-slate-800/60 border border-slate-700 rounded-xl p-5 space-y-3">
+    document.getElementById('elIcerik').classList.add('hidden');
+    document.getElementById('elGirisKap').innerHTML = `<form id="elGiris" class="max-w-sm mx-auto my-10 bg-slate-800/60 border border-slate-700 rounded-xl p-5 space-y-3">
       <div class="flex items-center gap-2 text-amber-300 font-semibold"><i data-lucide="lock" class="w-4 h-4"></i> Yönetici girişi</div>
       <p class="text-xs text-slate-400">Elektrik tüketim verileri şifreli saklanır. Görmek için parolayı girin.</p>
       <input id="elParola" type="password" autocomplete="current-password" class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm" placeholder="Parola" />
@@ -329,18 +330,30 @@
       if (kayitli && await ac_dene(kayitli)) return;
       oturum('elp', null);
     } catch (e) {
-      document.getElementById('elKartlar').innerHTML = '<p class="col-span-full text-sm text-slate-400">Elektrik verisi yüklenemedi.</p>';
+      document.getElementById('elGirisKap').innerHTML = '<p class="text-sm text-slate-400 p-6">Elektrik verisi yüklenemedi.</p>';
       sifreli = null;
     }
+  }
+
+  // Alt sekmeler (ISO sekmesindeki gibi): tek seferde bir bölüm görünür
+  const ALT = [['ozet', 'Özet'], ['db', 'Daire başkanlıkları'], ['tarife', 'Tarife ve tedarikçi'], ['rapor', 'Raporlar']];
+  let altSekme = 'ozet';
+  function altGoster() {
+    document.getElementById('elAlt').innerHTML = ALT.map(([k, ad]) => `<button onclick="Elek.alt('${k}')" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${k === altSekme ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-slate-200'}">${ad}</button>`).join('');
+    ALT.forEach(([k]) => { const p = document.getElementById('elP-' + k); if (p) p.classList.toggle('hidden', k !== altSekme); });
+    setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);   // gizliyken çizilen grafikler görününce boyutlansın
   }
 
   window.Elek = {
     async ac() {
       if (!yuklendi) await yukle();
       if (!yuklendi) { if (sifreli) girisFormu(); return; }
+      document.getElementById('elGirisKap').innerHTML = '';
+      document.getElementById('elIcerik').classList.remove('hidden');
       if (!cizildi) ciz();
-      setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);
+      altGoster();
     },
+    alt(k) { if (!ALT.some((x) => x[0] === k)) return; altSekme = k; altGoster(); },
     csv: csvIndir,
     sec(k) { secim = k; if (yuklendi) aylikGrafik(); },
   };
