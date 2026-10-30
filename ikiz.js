@@ -1,7 +1,8 @@
 /* ISO 50001 tesisleri için dijital ikiz ve yatırım senaryoları (ISO sekmesinde, şifreli verinin içinde çalışır).
  *
  * İkiz = tesisin son tam yıl aylık elektrik (kWh) ve doğalgaz (Sm³) tüketim profili + binaları; senaryo = açılıp kapanan yatırım kaldıraçları.
- * Sıra: yalıtım → kazan/kaskad → ısı pompası → bina otomasyonu → LED → soğutma verimi (çarpımsal), en son çatı GES (aylık mahsuplaşma: min(GES, kalan talep)).
+ * Sıra: yalıtım → kazan/kaskad → ısı pompası → bina otomasyonu → LED → soğutma verimi → baz yük azaltımı (çarpımsal), en son çatı GES (aylık mahsuplaşma: min(GES, kalan talep)).
+ * Baz yük azaltımı: Baz.hesapla (baz.js) ile bulunan aylık taban tüketimin (hava ve etkinlikten bağımsız) yüzde kaç azaltılacağı; önceki kaldıraçlarla çifte sayımı önlemek için o ana kadar kalan baz payına uygulanır.
  * Çatı GES verimi: panelin kendi 21 santralinin (2023-2025) gerçek aylık kWh/kWp değerlerinden. Tasarruf oranları TİPİK DEĞER VARSAYIMIDIR (ISO planında ölçülmüş değer varsa onu girin).
  * TL (fiyat, yatırım) YALNIZCA tarayıcıda hesaplanır/saklanır (localStorage `iso_ikiz_v1`); siteye ve depoya yazılmaz.
  * iso.js `Ikiz.ciz({D, tesis, eylemler, acik})` çağırır. esc() (index.html) ve Karbon.faktorler() (karbon.js) kullanılır.
@@ -37,6 +38,7 @@
       bms: { on: false, tas: 5, tl: null },
       led: { on: false, pay: 20, tas: 50, tl: null },
       sogutma: { on: false, pay: 25, tas: 15, tl: null },
+      baz: { on: false, tas: 10, tasg: 5, tl: null },
     };
   }
   function durum() {
@@ -59,7 +61,16 @@
       const ad = s.bolum.split(' –')[0].trim(), b = (binalar[ad] = binalar[ad] || { ad, kwh: 0, sm3: 0 });
       const t = topla(s.yillar[yil].takip); if (s.birim === 'kWh') b.kwh += t; else b.sm3 += t;
     });
-    return { yil, E: dizi('kWh'), G: dizi('Sm³'), binalar: Object.values(binalar), tamYil: tam(yil, 'kWh') && tam(yil, 'Sm³') };
+    // baz yük (hava ve etkinlikten bağımsız taban tüketim) aylık: Baz.hesapla'nın bulduğu günlük baz × ay günü, aylık tüketimi aşamaz
+    const bazDizi = (birim) => {
+      const a = Array(12).fill(0); let var_ = false;
+      seriler.filter((s) => s.birim === birim && s.yillar[yil]).forEach((s) => {
+        const r = window.Baz && Baz.hesapla(s, Number(yil)); if (!r) return;
+        var_ = true; r.ay.forEach((p) => { a[p.a] += Math.min(p.v, r.gunluk * p.gun); });
+      });
+      return var_ ? a : null;
+    };
+    return { yil, E: dizi('kWh'), G: dizi('Sm³'), BE: bazDizi('kWh'), BG: bazDizi('Sm³'), binalar: Object.values(binalar), tamYil: tam(yil, 'kWh') && tam(yil, 'Sm³') };
   }
 
   // ---------- GES verimi: panelin gerçek santralleri ----------
@@ -100,6 +111,13 @@
     if (d.bms.on) { const ye = carp(E, d.bms.tas / 100), yg = carp(G, d.bms.tas / 100); ekle('Bina otomasyonu / enerji izleme', 'bms', topla(E) - topla(ye), topla(G) - topla(yg), { yatirim: d.bms.tl }); E = ye; G = yg; }
     if (d.led.on) { const ye = carp(E, (d.led.pay / 100) * (d.led.tas / 100)); ekle('LED aydınlatma dönüşümü', 'led', topla(E) - topla(ye), 0, { yatirim: d.led.tl }); E = ye; }
     if (d.sogutma.on) { const ye = carp(E, (d.sogutma.pay / 100) * (d.sogutma.tas / 100)); ekle('Soğutma sistemi verimliliği', 'sogutma', topla(E) - topla(ye), 0, { yatirim: d.sogutma.tl }); E = ye; }
+    if (d.baz.on && (T.BE || T.BG)) {
+      // baz yükün o ana kadar kalan payı: önceki kaldıraçlar aylık tüketimi ne kadar azalttıysa baz da o oranda azalmış sayılır
+      const kalan = (arr, ilk, baz) => arr.map((x, i) => (baz && ilk[i] ? baz[i] * (x / ilk[i]) : 0));
+      const be = kalan(E, T.E, T.BE).map((x) => x * ((d.baz.tas || 0) / 100)), bg = kalan(G, T.G, T.BG).map((x) => x * ((d.baz.tasg || 0) / 100));
+      ekle('Baz yük azaltımı (boşta çalışan yük)', 'baz', topla(be), topla(bg), { yatirim: d.baz.tl });
+      E = E.map((x, i) => x - be[i]); G = G.map((x, i) => x - bg[i]);
+    }
     let ges = { kw: 0, uretim: 0, mahsup: 0, fazla: 0 };
     if (d.ges.on) {
       const kw = topla(d.ges.birimler.map((b) => b.kw || 0)), uretim = V.aylik.map((x) => x * kw), mahsup = uretim.map((u, i) => Math.min(u, E[i]));
@@ -123,8 +141,8 @@
     // tüketim serisi olmayan GES birimleri (ör. Geriatri Merkezi) ek kutu olarak gösterilir
     const ekler = d.ges.on ? d.ges.birimler.filter((g) => g.kw > 0 && !bn0.some((b) => b.ad === g.ad) && bn0.length > 1).map((g) => ({ ad: g.ad, kwh: 0, sm3: 0, veriYok: true })) : [];
     const bn = bn0.concat(ekler), w = 170, bosluk = 18, W = Math.max(520, bn.length * (w + bosluk) + bosluk), H = 300;
-    const aktif = ['kabuk', 'kazan', 'pompa', 'bms', 'led', 'sogutma'].filter((k) => d[k].on);
-    const ad = { kabuk: 'Yalıtım', kazan: 'Kazan/kaskad', pompa: 'Isı pompası', bms: 'Otomasyon', led: 'LED', sogutma: 'Soğutma' };
+    const aktif = ['kabuk', 'kazan', 'pompa', 'bms', 'led', 'sogutma', 'baz'].filter((k) => d[k].on);
+    const ad = { kabuk: 'Yalıtım', kazan: 'Kazan/kaskad', pompa: 'Isı pompası', bms: 'Otomasyon', led: 'LED', sogutma: 'Soğutma', baz: 'Baz yük' };
     const gesKw = (b) => (d.ges.on ? topla(d.ges.birimler.filter((g) => g.ad === b.ad || bn.length === 1).map((g) => g.kw || 0)) : 0);
     const kutular = bn.map((b, i) => {
       const x = bosluk + i * (w + bosluk), kw = gesKw(b), cati = kw > 0
@@ -190,6 +208,14 @@
       <p class="text-[10px] text-slate-500 mt-1">Bu değerler Excel'deki planlanan tasarruflardır; yukarıdaki kaldıraçlarla çakışabilir (LED, yalıtım, kazan). Çifte sayımı önlemek için kaldıraç oranlarını bu değerlerle uyumlu girin.</p></details>`;
   }
 
+  // Baz yük satırının açıklaması: tesisin hesaplanan baz yükü (Baz yük sekmesiyle aynı hesap)
+  function bazAciklama(T) {
+    if (!T.BE && !T.BG) return 'Baz yük hesaplanamadı (aylık veri yetersiz); önce ISO → Baz yük sekmesini kontrol edin';
+    const pay = (b, t) => (topla(t) ? Math.round((topla(b) / topla(t)) * 100) : 0);
+    const e = T.BE ? `elektrik ${tr1(topla(T.BE) / 8760)} kW (tüketimde pay %${pay(T.BE, T.E)})` : '', g = T.BG ? `doğalgaz ${tr0(topla(T.BG) / 365)} Sm³/gün (tüketimde pay %${pay(T.BG, T.G)})` : '';
+    return `Hava ve etkinlikten bağımsız taban tüketim: ${[e, g].filter(Boolean).join(', ')}. Aydınlatma, pompa, bekleme ve zamanlama düzeltmeleriyle azaltılır. <a href="#" onclick="Iso.alt('baz');return false" class="underline">Baz yük sekmesi</a>`;
+  }
+
   function ciz(c) {
     ctx = c;
     const el = document.getElementById('isoIkiz'); if (!el) return;
@@ -217,7 +243,8 @@
         ${kaldiracSatiri('pompa', 'Isı pompası', d, [['tas', 'Isıtma yükü payı %'], ['cop', 'COP', '', '0.1']], S, 'Doğalgaz yükünün bir kısmını elektrikli ısı pompasına kaydırır (elektrik artar)')}
         ${kaldiracSatiri('bms', 'Bina otomasyonu / enerji izleme', d, [['tas', 'Tasarruf %']], S, 'Zamanlama, set-nokta ve izleme ile elektrik ve gazda ortak tasarruf')}
         ${kaldiracSatiri('led', 'LED aydınlatma dönüşümü', d, [['pay', 'Aydınlatma payı %'], ['tas', 'LED tasarrufu %']], S, 'Aydınlatma payı: elektriğin ne kadarı aydınlatma')}
-        ${kaldiracSatiri('sogutma', 'Soğutma sistemi verimliliği', d, [['pay', 'Soğutma payı %'], ['tas', 'Tasarruf %']], S, 'Chiller / soğutma kulesi / evaporatif soğutma')}</tbody>
+        ${kaldiracSatiri('sogutma', 'Soğutma sistemi verimliliği', d, [['pay', 'Soğutma payı %'], ['tas', 'Tasarruf %']], S, 'Chiller / soğutma kulesi / evaporatif soğutma')}
+        ${kaldiracSatiri('baz', 'Baz yük azaltımı (boşta çalışan yük)', d, [['tas', 'Elektrik baz azaltımı %'], ['tasg', 'Doğalgaz baz azaltımı %']], S, bazAciklama(T))}</tbody>
         <tfoot class="border-t-2 border-slate-700 font-semibold text-white"><tr><td class="px-3 py-2" colspan="2">Toplam</td><td class="px-3 py-2 text-right font-mono">${tr0(S.toplamDE)}</td><td class="px-3 py-2 text-right font-mono">${tr0(S.toplamDG)}</td><td class="px-3 py-2 text-right font-mono text-emerald-300">${tr1(S.toplamCo2)}</td><td class="px-3 py-2 font-mono text-slate-400">${S.yatirim != null ? tr0(S.yatirim) : '—'}</td><td class="px-3 py-2 text-right font-mono">${S.geriOdeme != null ? tr1(S.geriOdeme) + ' yıl' : '—'}</td></tr></tfoot></table></div>
       <div class="flex flex-wrap items-end gap-4 text-xs">
         <label class="text-[11px] text-slate-400">Elektrik birim fiyatı (TL/kWh) <input type="number" step="0.01" value="${f.elek ?? ''}" onchange="Ikiz.ayar('fiyat.elek', this.value)" class="${girdi} w-24 ml-1"></label>
