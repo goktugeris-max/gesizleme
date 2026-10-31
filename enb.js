@@ -28,6 +28,14 @@
     return `<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold ${sin}" title="${esc(m.aciklama || '')}">${m.yontem === 'regresyon' ? 'Model R² ' + tr(m.r2, 2) + ' · ' : ''}${ad}</span>`;
   };
 
+  // Modellenebilirlik sayacı: verilen seri kimlikleri için model kalitesi dağılımı
+  function sayac(idler) {
+    if (!model) return null;
+    const c = { n: 0, regresyon: 0, iyi: 0, orta: 0, zayif: 0, ortalama: 0 };
+    idler.forEach((id) => { const m = model[id]; if (!m) return; c.n++; if (m.yontem === 'regresyon') c.regresyon++; if (m.kalite === 'iyi') c.iyi++; else if (m.kalite === 'orta') c.orta++; else if (m.kalite === 'zayif') c.zayif++; else if (m.kalite === 'ortalama') c.ortalama++; });
+    return c.n ? c : null;
+  }
+
   const modelBolumu = {
     async ciz(el) {
       await yukle();
@@ -201,5 +209,5 @@
     document.getElementById('enbNav').innerHTML = Object.entries(BOLUMLER).map(([b, [ad]]) => `<button onclick="Enb.bolum('${b}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold ${b === bolum ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30' : 'border border-slate-700 text-slate-400 hover:text-slate-200'}">${ad}</button>`).join('');
     BOLUMLER[bolum][1].ciz(document.getElementById('enbIcerik'));
   }
-  window.Enb = { panel, yukle, rozet, bolum(b) { bolum = b; goster(); } };
+  window.Enb = { panel, yukle, rozet, sayac, bolum(b) { bolum = b; goster(); } };
 })();

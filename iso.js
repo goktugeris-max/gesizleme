@@ -115,7 +115,11 @@
     const tepT = tepHesap(secili);
     const tesisAd = (id) => ((D.tesisler.find((t) => t.id === id) || {}).ad || id);
     const uyarilar = liste.filter((x) => x.sapma > 0.05 && x.ay >= 3).map((x) => ({ modul: 'ISO 50001', etiket: 'Referans aşımı', metin: `${tesisAd(x.s.tesis)} / ${x.s.bolum} (${x.s.enerji}, ${yil}): referansın ${(x.sapma * 100).toLocaleString('tr-TR', { maximumFractionDigits: 1 })}% üstünde.`, renk: x.sapma > 0.15 ? 'text-red-400' : 'text-amber-300', href: '#iso', puan: 25 + Math.min(55, x.sapma * 200) }));
+    // Fayda defteri için: referansa göre net fark (referans − gerçekleşen), yalnız verisi olan aylar
+    const fark = { elek: 0, gaz: 0, seri: 0 };
+    liste.forEach((x) => { const o = TEP_ORAN[x.s.birim]; if (!o || !x.c.n) return; const d = x.c.r - x.c.t; if (x.s.birim === 'kWh') fark.elek += d; else fark.gaz += d; fark.seri++; });
     Dash.ozetKaydet('iso', {
+      fayda: { yil, ...fark },
       kart: `<div class="grid grid-cols-2 gap-3 text-xs text-slate-500">
         <div><div class="text-[10px] uppercase tracking-wider text-slate-500">${yil} izlenen seri</div><div class="text-lg font-bold text-white">${liste.length}</div></div>
         <div><div class="text-[10px] uppercase tracking-wider text-slate-500">Referans aşımı</div><div class="text-lg font-bold ${asan.length ? 'text-amber-300' : 'text-emerald-400'}">${asan.length} <span class="text-xs text-slate-400">seri</span></div></div>
@@ -430,7 +434,7 @@
   }
 
   // ---- alt sekmeler (tesis içinde tek seferde bir bölüm görünür; uzun sayfa yerine)
-  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['baz', 'Baz yük'], ['enb', 'EnB, SEU ve M&V'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['baglam', 'Bağlam ve taraflar'], ['bakim', 'Bakım ve yetkinlik'], ['belge', 'Belgeler']];
+  const ALT = [['ozet', 'Özet'], ['ref', 'Referans çizgisi'], ['baz', 'Baz yük'], ['regres', 'Regresyon'], ['enb', 'EnB, SEU ve M&V'], ['olcum', 'Ölçüm'], ['hedef', 'Hedefler ve EnPG'], ['eylem', 'Eylem planı'], ['etut', 'Enerji etüdü'], ['ikiz', 'Dijital ikiz'], ['risk', 'Risk ve fırsat'], ['denetim', 'Denetim'], ['baglam', 'Bağlam ve taraflar'], ['bakim', 'Bakım ve yetkinlik'], ['belge', 'Belgeler']];
 
   function iskelet() {
     document.getElementById('isoIcerik').innerHTML = `<style>#isoIcerik summary::-webkit-details-marker{display:none}#isoAlt::-webkit-scrollbar{height:4px}</style><div class="space-y-4">
@@ -441,9 +445,10 @@
       </div>
       <h2 id="isoBaslik" class="text-lg font-bold text-white"></h2>
       <nav id="isoAlt" class="flex gap-1 overflow-x-auto border-b border-slate-800 pb-1"></nav>
-      <div id="isoP-ozet" class="space-y-4"><section id="isoKartlar" class="olcum-seridi grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"></section><section id="isoOzetGrafik" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoOzetSapma"></section><section id="isoOzetSerit" class="grid grid-cols-2 lg:grid-cols-4 gap-4"></section></div>
+      <div id="isoP-ozet" class="space-y-4"><section id="isoKartlar" class="olcum-seridi grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"></section><section id="isoOzetGrafik" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoOzetSapma"></section><section id="isoOzetSerit" class="grid grid-cols-2 lg:grid-cols-5 gap-4"></section></div>
       <div id="isoP-ref" class="hidden space-y-4"><section id="isoRefOzet"></section><div id="isoBolumChips" class="flex flex-wrap gap-1"></div><section id="isoSeriler" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></section><section id="isoEk" class="space-y-4"></section><div id="isoNotlar"></div></div>
       <div id="isoP-baz" class="hidden"><section id="isoBaz"></section></div>
+      <div id="isoP-regres" class="hidden"><section id="isoRegres"></section></div>
       <div id="isoP-enb" class="hidden"><section id="isoEnb"></section></div>
       <div id="isoP-olcum" class="hidden"><section id="isoOlcum"></section><section id="isoDonanim" class="mt-6"></section></div>
       <div id="isoP-hedef" class="hidden space-y-4"><section id="isoHedef"></section><section id="isoEnpg"></section></div>
@@ -479,11 +484,14 @@
     const el = document.getElementById('isoOzetSerit'); if (!el) return;
     const c = sayilar(kayit(tesis)), oran = tamamlanma(c), riskler = (D.risk && D.risk[tesis]) || [], yRisk = riskler.filter((x) => x.tur === 'Risk' && (x.seviye || 0) >= 12).length;
     const kart = (k, baslik, deger, alt, renk) => `<button onclick="Iso.alt('${k}')" class="glass-card rounded-2xl p-4 text-left hover:border-amber-500/40 transition"><div class="text-xs uppercase tracking-wider text-slate-400 font-semibold">${baslik}</div><div class="text-2xl font-extrabold mt-1.5 ${renk || 'text-white'}">${deger}</div><div class="text-xs text-slate-400 mt-1">${alt}</div></button>`;
+    const mc = window.Enb && Enb.sayac ? Enb.sayac(tumSeri().map((x) => x.id)) : null;
+    const modelKart = mc ? kart('ref', 'Modellenebilir seri', `${mc.regresyon}/${mc.n} seri`, `${mc.iyi} iyi, ${mc.zayif} zayıf, ${mc.ortalama} modelsiz (baz dönem ortalaması)`, mc.zayif ? 'text-amber-300' : 'text-emerald-300') : '';
     const ham = (h, e) => [
       kart('hedef', `${h ? h.yil : ''} hedefleri`, h && h.toplam ? `${h.hedefte}/${h.toplam} hedefte` : '—', h ? `${h.geride} geride • ${h.riskte} riskte` : 'yükleniyor…', h && h.riskte ? 'text-red-300' : 'text-emerald-300'),
       kart('eylem', 'Eylem planı', oran == null ? '—' : '%' + Math.round(oran * 100) + ' tamamlandı', `${c.gecikmis ? c.gecikmis + ' gecikmiş • ' : ''}${kayit(tesis).length} eylem`, c.gecikmis ? 'text-red-300' : 'text-white'),
       kart('etut', 'Enerji etüdü', e ? `${tr0(e.tlYil)} TL/yıl` : '—', e ? `${e.n} öneri • ${e.tamam} tamamlandı • 2022 fiyatı` : 'yükleniyor…', 'text-cyan-300'),
       kart('risk', 'Risk ve fırsat', `${riskler.filter((x) => x.tur === 'Risk').length} risk`, `${yRisk} yüksek seviyeli • ${riskler.filter((x) => x.tur === 'Fırsat').length} fırsat`, yRisk ? 'text-red-300' : 'text-white'),
+      modelKart,
     ].join('');
     el.innerHTML = ham(null, null);
     const t0 = tesis;
@@ -548,6 +556,7 @@
         riskBolumu(); document.getElementById('isoRiskBos').classList.toggle('hidden', !document.getElementById('isoRisk').classList.contains('hidden'));
       }
     },
+    regres() { if (window.Regres) Regres.panel(tesis, document.getElementById('isoRegres'), D.seriler, yil); },
     baz() { if (window.Baz) Baz.panel(tesis, document.getElementById('isoBaz'), D.seriler, yil); },
     enb() { if (window.Enb) Enb.panel(tesis, document.getElementById('isoEnb'), D.seriler); },
     baglam() { if (window.Baglam) Baglam.panel(tesis, document.getElementById('isoBaglam')); },

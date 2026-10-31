@@ -33,7 +33,7 @@
 
   function gesDeger() {
     const v = window.Dash && Dash.veri && Dash.veri();
-    if (!v || !v.PERF) return null;
+    if (!D || !D.gunluk || !v || !v.PERF) return null;
     const yil = String(v.PERF.son_donem.yil), ay = v.PERF.son_donem.ay;
     let tl = 0, kwh = 0, eksik = 0;
     for (let i = 0; i < ay; i++) {
@@ -96,6 +96,7 @@
     cizGrafik('chPtfAy', { type: 'line', data: { labels: AY, datasets: yillar.map((y) => ({ label: y, data: AY.map((_, i) => { const a = o.gunler.filter((g) => g.startsWith(`${y}-${String(i + 1).padStart(2, '0')}`)).map((g) => D.gunluk[g]); return a.length ? ort(a) : null; }), borderColor: yilRenk[y] || '#94a3b8', backgroundColor: yilRenk[y] || '#94a3b8', borderWidth: y === o.son.slice(0, 4) ? 3 : 2, tension: 0.3, pointRadius: 0, spanGaps: false })) },
       options: { ...ek, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10 } }, tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${tr0(c.parsed.y)} TL/MWh` } } } } });
     if (window.lucide) lucide.createIcons();
+    if (window.Dash && Dash.faydaCiz) Dash.faydaCiz();
   }
 
   async function yukle() {
@@ -107,6 +108,6 @@
     } catch (e) { durum = 'yok'; D = null; }
     ciz();
   }
-  window.Ptf = { ciz };
+  window.Ptf = { ciz, gesDeger };
   yukle();
 })();
