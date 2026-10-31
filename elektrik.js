@@ -339,11 +339,12 @@
   }
 
   // Alt sekmeler (ISO sekmesindeki gibi): tek seferde bir bölüm görünür
-  const ALT = [['ozet', 'Özet'], ['db', 'Daire başkanlıkları'], ['tarife', 'Tarife ve tedarikçi'], ['rapor', 'Raporlar']];
+  const ALT = [['ozet', 'Özet'], ['db', 'Daire başkanlıkları'], ['tarife', 'Tarife ve tedarikçi'], ['rapor', 'Raporlar'], ['istirak', 'İştirakler']];
   let altSekme = 'ozet';
   function altGoster() {
     document.getElementById('elAlt').innerHTML = ALT.map(([k, ad]) => `<button onclick="Elek.alt('${k}')" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap ${k === altSekme ? 'bg-amber-500/20 text-amber-300' : 'text-slate-400 hover:text-slate-200'}">${ad}</button>`).join('');
     ALT.forEach(([k]) => { const p = document.getElementById('elP-' + k); if (p) p.classList.toggle('hidden', k !== altSekme); });
+    if (altSekme === 'istirak' && window.Istirak) Istirak.ac(document.getElementById('elP-istirak'));
     setTimeout(() => Object.values(grafik).forEach((g) => g && g.resize()), 50);   // gizliyken çizilen grafikler görününce boyutlansın
   }
 
