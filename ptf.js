@@ -33,7 +33,7 @@
 
   function gesDeger() {
     const v = window.Dash && Dash.veri && Dash.veri();
-    if (!v || !v.PERF) return null;
+    if (!D || !D.gunluk || !v || !v.PERF) return null;
     const yil = String(v.PERF.son_donem.yil), ay = v.PERF.son_donem.ay;
     let tl = 0, kwh = 0, eksik = 0;
     for (let i = 0; i < ay; i++) {
