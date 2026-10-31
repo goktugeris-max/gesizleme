@@ -105,7 +105,7 @@
   // ---------- Özet: modüllerden gelen kart + uyarı kayıtları ----------
   const ozetModul = {};
   let dikkatAcik = false;
-  function ozetKaydet(ad, d) { ozetModul[ad] = d; ozetModulCiz(); }
+  function ozetKaydet(ad, d) { ozetModul[ad] = d; ozetModulCiz(); faydaCiz(); }
   function ozetModulCiz() {
     ['elektrik', 'dogalgaz', 'kaynak', 'iso'].forEach((ad) => { const el = document.getElementById('ozet-' + ad); if (el && ozetModul[ad] && ozetModul[ad].kart) el.innerHTML = ozetModul[ad].kart; });
     const kutu = document.getElementById('ozetDikkat'); if (!kutu) return;
@@ -118,6 +118,31 @@
           <span class="text-[11px] font-semibold ${o.renk} sm:whitespace-nowrap sm:mt-0.5 sm:w-36 sm:shrink-0">${esc(o.etiket)}</span></span>
         <span class="text-xs sm:text-[13px] text-slate-300 min-w-0 break-words">${esc(o.metin)}</span></a>`).join('') : '<p class="px-2 py-4 text-center text-slate-500 text-sm">Şu an dikkat gerektiren bir durum yok.</p>')
       + (hepsi.length > 6 ? `<button onclick="Dash.dikkatGenislet()" class="mt-2 w-full text-center text-xs font-semibold text-slate-400 hover:text-slate-200 py-2 rounded-lg border border-dashed border-slate-700">${dikkatAcik ? 'Daha az göster' : 'Tümünü göster (' + Math.min(12, hepsi.length) + ')'}</button>` : '');
+  }
+
+
+  // ---------- Özet: fayda defteri (kazanç kalemleri, çift sayım yok) ----------
+  let faydaEtut = false;
+  function faydaCiz() {
+    const el = document.getElementById('ozetFayda'); if (!el || !PERF) return;
+    const { yil, ay } = PERF.son_donem, ef = window.Karbon ? Karbon.efElek() : 0.479, EF_GAZ = 1.994;
+    const ges = topla(M.map((m) => m.uretim)), gd = window.Ptf && Ptf.gesDeger ? Ptf.gesDeger() : null;
+    const iso = ozetModul.iso && ozetModul.iso.fayda;
+    const isoCo2 = iso ? (iso.elek * ef + iso.gaz * EF_GAZ) / 1000 : null;
+    const isoTep = iso ? iso.elek * 0.000086 + iso.gaz * 0.000825 : null;
+    const isaret = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + tr0(Math.abs(v));
+    if (window.Etut && Etut.yukle && !faydaEtut) { faydaEtut = true; Promise.resolve(Etut.yukle()).then(faydaCiz).catch(() => {}); }
+    let etut = null;
+    if (window.Etut && Etut.tesisOzet) { const l = ['aassm', 'buz', 'buca'].map((t) => Etut.tesisOzet(t)).filter(Boolean); if (l.length) etut = topla(l.map((x) => x.tlYil)); }
+    const sat = (ad, miktar, co2, tl, yontem) => `<tr class="align-top"><td class="px-4 py-2.5 text-slate-100 font-medium">${ad}</td><td class="px-3 py-2.5 text-right whitespace-nowrap">${miktar}</td><td class="px-3 py-2.5 text-right whitespace-nowrap">${co2}</td><td class="px-3 py-2.5 text-right whitespace-nowrap">${tl}</td><td class="px-4 py-2.5 text-slate-400 min-w-[220px]">${yontem}</td></tr>`;
+    el.innerHTML = `<h3 class="text-sm font-semibold text-white">Fayda defteri</h3>
+      <p class="text-xs text-slate-400 mt-1">Kazanç kalemleri ayrı ayrı ve yöntemiyle gösterilir. Satırlar toplanmaz: birbirini kapsayabilirler.</p>
+      <div class="overflow-x-auto mt-3 -mx-1"><table class="w-full text-xs" style="min-width:680px"><thead class="text-slate-400"><tr class="border-b border-slate-800"><th class="px-4 py-2 text-left font-medium">Kalem</th><th class="px-3 text-right font-medium">Miktar</th><th class="px-3 text-right font-medium">Kaçınılan CO₂ (t)</th><th class="px-3 text-right font-medium">Parasal değer</th><th class="px-4 text-left font-medium">Yöntem ve sınır</th></tr></thead>
+      <tbody class="divide-y divide-slate-800/70">
+      ${sat(`GES öz üretimi, ${yil} Ocak–${AY_UZUN[ay - 1]}`, mwh(ges), tr0((ges * ef) / 1000), gd ? `${tr1(gd.tl / 1e6)} milyon TL` : '—', `Ölçülen üretim × şebeke faktörü ${tr0(ef * 1000)} g/kWh. Parasal değer, üretim × aylık ortalama PTF olan piyasa göstergesidir${gd && gd.eksik ? `; ${gd.eksik} ay PTF verisi eksik` : ''}. Fatura tutarı değildir.`)}
+      ${iso ? sat(`ISO tesisleri, referansa göre fark (${iso.yil})`, `<div>Elektrik ${isaret(iso.elek / 1000)} MWh</div><div>Doğalgaz ${isaret(iso.gaz)} Sm³</div><div class="text-slate-500">${isoTep < 0 ? '−' : '+'}${tr1(Math.abs(isoTep))} TEP</div>`, isaret(isoCo2), '—', `Referans − gerçekleşen, yalnız verisi olan aylar, ${iso.seri} seri. Artı = referansın altında. Referans hava ve etkinlikten arındırılmıştır; GES katkısı bu farkın içinde olabilir, o yüzden GES satırıyla toplanmaz.`) : sat('ISO tesisleri, referansa göre fark', '—', '—', '—', 'Yönetici girişinden sonra görünür.')}
+      ${etut != null ? sat('Etüt raporu önlemleri (potansiyel)', '—', '—', `${tr0(etut)} TL/yıl`, 'Uygulanmamış önlemlerin yıllık potansiyeli, 2022 fiyatı. Gerçekleşmiş fayda sayılmaz.') : ''}
+      </tbody></table></div>`;
   }
 
   // ---------- Özet (modül kartları) ----------
@@ -374,7 +399,7 @@
 
   function hepsiniCiz() {
     if (!PERF) return;
-    kartlar(); dikkat(); tabloCiz(); arizaCiz(); ozetCiz(); if (window.Harita) Harita.yenile(); if (window.Ptf) Ptf.ciz();
+    kartlar(); dikkat(); tabloCiz(); arizaCiz(); ozetCiz(); faydaCiz(); if (window.Harita) Harita.yenile(); if (window.Ptf) Ptf.ciz();
     if (window.Chart) genelGrafikler();
     if (window.lucide) lucide.createIcons();
   }
@@ -416,7 +441,7 @@
     sekme: sekmeGoster,
     yenidenYukle: veriYukle,
     detay,
-    ozetKaydet,
+    ozetKaydet, faydaCiz,
     // Aylık yönetim raporu: Özet sayfası açık temayla yazdırılır (PDF olarak kaydedilebilir)
     raporYazdir() {
       sekmeGoster('ozet');
