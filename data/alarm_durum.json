@@ -1,14 +1,14 @@
 {
- "guncelleme": "2026-11-01T10:21:28+00:00",
+ "guncelleme": "2026-11-02T10:53:33+00:00",
  "sorunlar": {
-  "inv:GoodWe:78b76ed6-118d-4c56-8f96-94362a57875e:5060KMTO22BW0485": {
-   "ilk": "2026-11-01T10:21:28+00:00",
+  "santral:SMA:871175": {
+   "ilk": "2026-11-02T10:53:33+00:00",
    "ardisik": 1,
    "bildirildi": false,
-   "ad": "BERGAMA İTFAİYE — INV1",
+   "ad": "ibbseyrekges",
    "sorun": "Arızalı",
-   "kaynak": "GoodWe",
-   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+   "kaynak": "SMA",
+   "ayrinti": "Santral anlık 11,95 kW, bugün 62,86 kWh"
   }
  }
 }
