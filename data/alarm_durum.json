@@ -1,14 +1,122 @@
 {
- "guncelleme": "2026-11-02T10:53:33+00:00",
+ "guncelleme": "2026-11-03T10:43:55+00:00",
  "sorunlar": {
+  "inv:GoodWe:b331296d-e14e-47c5-a0ca-a86f0ed3eb31:9020KDTU192R0002": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Aliağa İtfaiye Merkezi — ınverter2",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:b331296d-e14e-47c5-a0ca-a86f0ed3eb31:9050KMTU193R0013": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Aliağa İtfaiye Merkezi — inverter",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:78b76ed6-118d-4c56-8f96-94362a57875e:5060KMTO22BW0485": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "BERGAMA İTFAİYE — INV1",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:126f8c03-81df-4dbe-8318-10575322e6a1:9020KDTU192R0013": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Bergama Mezbahası — ınverter1",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:126f8c03-81df-4dbe-8318-10575322e6a1:9050KMTU193R0009": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Bergama Mezbahası — ınverter2",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:b1ffbc3b-fb0f-498d-bdf1-9254d3035823:9060KMTN215W0012": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Bornova havuz Ges — İnvertör 1",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:b1ffbc3b-fb0f-498d-bdf1-9254d3035823:9060KMTN215W0015": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Bornova havuz Ges — İnvertör 2",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:8a36369a-044a-4c67-bc85-d2b0a4856bec:5025KDTT227W0052": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "SEYREK İTFAİYE — INV",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:de7a0671-d98a-4f53-aaae-2c0cf7ac8083:9020KDTU192R0001": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Uzundere Can Çağnay Çok Amaçlı Spor Salonu — ınverter1",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:de7a0671-d98a-4f53-aaae-2c0cf7ac8083:9020KDTU192R0004": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Uzundere Can Çağnay Çok Amaçlı Spor Salonu — ınverter2",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:e242dc8e-c965-46ce-bc89-c467299ca6e7:5020KDTT215W0017": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Çaybaşı İtfaiye — Goodwe",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
+  "inv:GoodWe:114b4df3-8909-4dd5-bc93-4cbf828b9711:5020KDTT215W0019": {
+   "ilk": "2026-11-03T10:43:55+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "Çeşme İtfaiye Ges — 5020KDTT215W0019",
+   "sorun": "Haberleşme Yok",
+   "kaynak": "GoodWe",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 0,0 kWh"
+  },
   "santral:SMA:871175": {
    "ilk": "2026-11-02T10:53:33+00:00",
-   "ardisik": 1,
+   "ardisik": 2,
    "bildirildi": false,
    "ad": "ibbseyrekges",
    "sorun": "Arızalı",
    "kaynak": "SMA",
-   "ayrinti": "Santral anlık 11,95 kW, bugün 62,86 kWh"
+   "ayrinti": "Santral anlık 2,53 kW, bugün 192,0 kWh"
   }
  }
 }
