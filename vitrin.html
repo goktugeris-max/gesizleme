@@ -104,6 +104,31 @@
   .qr-kutu { background: #fff; border: 1px solid var(--cizgi); padding: calc(var(--u)*1.2); border-radius: calc(var(--u)*.6); width: calc(var(--u)*20); height: calc(var(--u)*20); }
   .qr-kutu img, .qr-kutu canvas { width: 100% !important; height: 100% !important; image-rendering: pixelated; }
 
+  /* sistem tanıtımı: solda göstergeler, sağda panelin gerçek ekranı */
+  .modul-govde { flex: 1; display: grid; grid-template-columns: 0.95fr 1.55fr; gap: calc(var(--u)*3); margin-top: calc(var(--u)*2.2); min-height: 0; }
+  .metrik { display: flex; flex-direction: column; justify-content: center; gap: calc(var(--u)*1.6); }
+  .metrik > div { border-bottom: 1px solid var(--cizgi); padding-bottom: calc(var(--u)*1.4); }
+  .metrik > div:last-child { border-bottom: 0; }
+  .metrik.dort { display: grid; grid-template-columns: 1fr 1fr; align-content: center; column-gap: calc(var(--u)*2.4); row-gap: calc(var(--u)*2.2); }
+  .metrik.dort > div { border-bottom: 0; border-top: 1px solid var(--cizgi); padding: calc(var(--u)*1.4) 0 0; }
+  .metrik.dort b { font-size: calc(var(--u)*3.3); }
+  .metrik b { display: block; font-size: calc(var(--u)*3.9); font-weight: 700; line-height: 1; }
+  .metrik b small { font-size: .42em; font-weight: 500; color: var(--yazi-2); margin-left: .15em; }
+  .metrik b.sari { color: var(--gunes); } .metrik b.yesil { color: var(--yesil); } .metrik b.mor { color: var(--veri); }
+  .metrik span { display: block; font-size: calc(var(--u)*1.3); color: var(--yazi-2); margin-top: calc(var(--u)*.6); }
+  .metrik em { display: block; font-style: normal; font-size: calc(var(--u)*1.05); color: var(--yazi-3); margin-top: calc(var(--u)*.2); }
+  .pencere { position: relative; background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 8px; overflow: hidden; }
+  .pencere::before { content: 'Enerji Yönetim Merkezi'; position: absolute; left: 0; right: 0; top: 0; height: calc(var(--u)*2.4); display: flex; align-items: center;
+                     padding-left: calc(var(--u)*1.2); font-size: calc(var(--u)*.95); color: var(--yazi-3); border-bottom: 1px solid var(--cizgi); background: #0b111c; }
+  .modul-liste { display: grid; grid-template-columns: 1fr; gap: 0; align-content: center; }
+  .modul-liste div { display: flex; gap: calc(var(--u)*1.4); align-items: baseline; padding: calc(var(--u)*.8) 0; border-bottom: 1px solid var(--cizgi); }
+  .modul-liste div:last-child { border-bottom: 0; }
+  .modul-liste b { font-size: calc(var(--u)*1.5); font-weight: 600; min-width: calc(var(--u)*13); flex-shrink: 0; color: var(--yazi); }
+  .modul-liste span { font-size: calc(var(--u)*1.15); color: var(--yazi-3); }
+  #panelKatman { position: absolute; z-index: 3; overflow: hidden; opacity: 0; transition: opacity .6s; pointer-events: none; border-radius: 0 0 8px 8px; }
+  #panelKatman.aktif { opacity: 1; }
+  #panelKatman iframe { border: 0; transform-origin: 0 0; position: absolute; left: 0; top: 0; background: #090d16; }
+
   /* video katmanı */
   #videoKatman { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .7s; z-index: 4; }
   #videoKatman.aktif { opacity: 1; }
@@ -209,6 +234,57 @@
     </div>
   </section>
 
+  <section class="sahne" data-ad="sistem">
+    <div class="etiket">Enerji Yönetim Merkezi<span class="e">Energy Management Centre</span></div>
+    <h1 class="baslik" id="sistemBaslik">Kurumun enerjisi tek ekranda</h1>
+    <p class="en" id="sistemEn">The municipality's energy on a single screen</p>
+    <div class="modul-govde"><div class="modul-liste" id="sistemListe"></div><div class="pencere"></div></div>
+  </section>
+
+  <section class="sahne" data-ad="elektrik">
+    <div class="etiket">Elektrik tüketimi<span class="e">Electricity use</span></div>
+    <h1 class="baslik" id="elektrikBaslik">Belediyenin elektriği ay ay izleniyor</h1>
+    <p class="en" id="elektrikEn">Municipal electricity use, tracked month by month</p>
+    <div class="modul-govde"><div class="metrik" id="elektrikM"></div><div class="pencere"></div></div>
+  </section>
+
+  <section class="sahne" data-ad="iso">
+    <div class="etiket">ISO 50001 enerji yönetimi<span class="e">Energy management system</span></div>
+    <h1 class="baslik" id="isoBaslik">Referans çizgisine göre tasarruf</h1>
+    <p class="en" id="isoEn">Savings measured against the energy baseline</p>
+    <div class="modul-govde"><div class="metrik" id="isoM"></div><div class="pencere"></div></div>
+  </section>
+
+  <section class="sahne" data-ad="dogalgaz">
+    <div class="etiket">Doğalgaz<span class="e">Natural gas</span></div>
+    <h1 class="baslik" id="dogalgazBaslik">Abone bazında doğalgaz takibi</h1>
+    <p class="en" id="dogalgazEn">Natural gas tracked meter by meter</p>
+    <div class="modul-govde"><div class="metrik" id="dogalgazM"></div><div class="pencere"></div></div>
+  </section>
+
+  <section class="sahne" data-ad="su">
+    <div class="etiket">Su<span class="e">Water</span></div>
+    <h1 class="baslik" id="suBaslik">Su tüketiminde azaltım hedefi</h1>
+    <p class="en" id="suEn">Cutting the municipality's water use</p>
+    <div class="modul-govde"><div class="metrik" id="suM"></div><div class="pencere"></div></div>
+  </section>
+
+  <section class="sahne" data-ad="karbon">
+    <div class="etiket">Karbon ve iklim<span class="e">Carbon and climate</span></div>
+    <h1 class="baslik" id="karbonBaslik">Kurumsal emisyondan kent hedefine</h1>
+    <p class="en" id="karbonEn">From corporate emissions to the city's climate target</p>
+    <div class="modul-govde"><div class="metrik" id="karbonM"></div><div class="pencere"></div></div>
+  </section>
+
+  <section class="sahne" data-ad="kent">
+    <div class="etiket">İzmir elektriği ve piyasa<span class="e">City electricity and market</span></div>
+    <h1 class="baslik" id="kentBaslik">Kentin elektriği ve piyasa fiyatı</h1>
+    <p class="en" id="kentEn">İzmir's electricity use and the market price</p>
+    <div class="modul-govde"><div class="metrik" id="kentM"></div><div class="pencere"></div></div>
+  </section>
+
+  <div id="panelKatman"><iframe id="panelCerceve" title="Enerji Yönetim Merkezi" tabindex="-1" aria-hidden="true"></iframe></div>
+
   <div id="videoKatman"><video id="video" muted playsinline preload="auto"></video></div>
 
   <div id="alt">
@@ -228,7 +304,15 @@
     <input type="file" id="videoSec" accept="video/*" multiple>
     <ol id="videoListe"></ol>
     <div id="videoUyari"></div>
-    <label>2. Veri sahnesi süresi (saniye)</label>
+    <label>2. Elektrik ve ISO 50001 parolası (isteğe bağlı)</label>
+    <input type="password" id="parolaGir" autocomplete="off" placeholder="Panelin yönetici parolası" style="width:100%;padding:8px 10px;border:1px solid #dbe1e8;border-radius:6px;font:inherit">
+    <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
+      <button id="parolaDene" type="button">Parolayı dene</button>
+      <label style="display:inline;font-weight:400;margin:0"><input type="checkbox" id="parolaHatirla"> Bu bilgisayarda hatırla</label>
+      <span id="parolaDurum" style="font-size:13px;color:#5b6b7e"></span>
+    </div>
+    <p class="k" style="margin:6px 0 0">Girilmezse elektrik ve ISO ekranları atlanır. Parola yalnızca bu tarayıcıda kullanılır, ekranda yalnızca kurum toplamları görünür. "Hatırla" yalnızca stand bilgisayarında işaretlenmeli; bilgisayarı kullanan herkes parolaya erişebilir.</p>
+    <label>3. Veri sahnesi süresi (saniye)</label>
     <input type="number" id="sureGir" min="6" max="60" value="12">
     <div class="dugmeler">
       <button class="ana" id="baslat">Tam ekran başlat</button>
@@ -444,6 +528,226 @@
     if (window.QRCode) { new QRCode($('qr'), { text: hedef, width: 512, height: 512, colorDark: '#211950', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); qrHazir = true; }
   }
 
+  // ---------- Sistem tanıtımı: panelin diğer modülleri ----------
+  // Şifreli veriler (Elektrik, ISO) yalnızca parola girilmişse tarayıcıda çözülür; çözülen veri hiçbir yere kaydedilmez,
+  // ekrana yalnızca kurum toplamları yazılır. Parola panelle aynı anahtarda (sessionStorage 'elp') tutulur, böylece
+  // sağdaki panel penceresi de aynı oturumda açılır.
+  const M = { elek: null, iso: null, dg: null, kr: null, secap: null, epias: null, ptf: null };
+  const oturum = (k, v) => { try { return v === undefined ? sessionStorage.getItem(k) : (v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v)); } catch (e) { return null; } };
+  const b64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+  async function coz(sif, parola) {
+    const malzeme = await crypto.subtle.importKey('raw', new TextEncoder().encode(parola), 'PBKDF2', false, ['deriveKey']);
+    const anahtar = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(sif.salt), iterations: sif.iter, hash: 'SHA-256' },
+      malzeme, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(sif.iv) }, anahtar, b64(sif.data))));
+  }
+  function parolaAl() {
+    let p = oturum('elp');
+    if (!p) { try { p = localStorage.getItem('vitrin_elp'); if (p) oturum('elp', p); } catch (e) {} }
+    return p;
+  }
+  async function sifreliYukle() {
+    const p = parolaAl(); if (!p) { M.elek = M.iso = null; return false; }
+    const [ee, ie] = await Promise.all([getir('data/elektrik.enc.json'), getir('data/iso50001.enc.json')]);
+    try { M.elek = ee ? await coz(ee, p) : null; } catch (e) { M.elek = null; }
+    try { M.iso = ie ? await coz(ie, p) : null; } catch (e) { M.iso = null; }
+    return !!(M.elek || M.iso);
+  }
+  async function modulYukle() {
+    const [dg, kr, sc, ep, pt] = await Promise.all(['data/dogalgaz.json', 'data/kaynak_raporu.json', 'data/secap_izmir.json', 'data/izmir_epias.json', 'data/ptf.json'].map(getir));
+    Object.assign(M, { dg: dg || M.dg, kr: kr || M.kr, secap: sc || M.secap, epias: ep || M.epias, ptf: pt || M.ptf });
+    await sifreliYukle();
+    modulCiz();
+  }
+  const topla = (a, n) => (a || []).slice(0, n == null ? 12 : n).reduce((t, v) => t + (v || 0), 0);
+  const isaret = (v, k = 1) => (v == null || !isFinite(v)) ? '–' : (v > 0 ? '+' : v < 0 ? '−' : '') + '%' + fmt(Math.abs(v) * 100, k);
+  const kisaAy = (ay) => AYLAR[ay - 1].slice(0, 3), kisaAyEn = (ay) => AYLAR_EN[ay - 1].slice(0, 3);
+  const metrikHtml = (l, el) => { if (el) el.classList.toggle('dort', l.length >= 4); return l.map(([deger, birim, tr, en, renk]) => `<div><b class="${renk || ''}">${deger}<small>${birim || ''}</small></b><span>${tr}</span><em>${en}</em></div>`).join(''); };
+  const hazirModul = {};
+
+  function modulCiz() {
+    // Tanıtım listesi
+    $('sistemListe').innerHTML = [
+      ['Güneş enerjisi', 'Çatı GES üretimi, canlı izleme, verim analizi, harita'],
+      ['Elektrik', 'Kurum tüketimi, daire başkanlığı ve tarife kırılımı'],
+      ['Doğalgaz', 'Abone bazında aylık m³, uyarılar, yıl sonu tahmini'],
+      ['Su ve akaryakıt', 'Su azaltım hedefi, motorin ve araç takibi'],
+      ['ISO 50001', 'Referans çizgileri, hedefler, eylem planı, etütler'],
+      ['Karbon ve iklim', 'Sera gazı envanteri, SECAP hedefleri'],
+      ['Kent ve piyasa', 'İzmir elektrik tüketimi, EPİAŞ piyasa fiyatı'],
+    ].map(([a, b]) => `<div><b>${a}</b><span>${b}</span></div>`).join('');
+    hazirModul.sistem = true;
+
+    // Elektrik (şifreli; yalnız kurum toplamları)
+    hazirModul.elektrik = false;
+    if (M.elek && M.elek.son_donem && M.elek.aylik) {
+      const { yil, ay } = M.elek.son_donem, A = M.elek.aylik[String(yil)], O = M.elek.aylik[String(yil - 1)];
+      if (A && O) {
+        const ger = topla(A.gercek, ay), oger = topla(O.gercek, ay), ges = topla(A.ges_net, ay);
+        const d = oger ? ger / oger - 1 : null;
+        $('elektrikM').innerHTML = metrikHtml(([
+          [fmt(ger / 1e6, 2), 'GWh', `Gerçek tüketim, Oca–${kisaAy(ay)} ${yil}`, `Electricity use, Jan–${kisaAyEn(ay)} ${yil}`, 'sari'],
+          [isaret(d), '', `${yil - 1} yılının aynı dönemine göre`, `Compared with the same period of ${yil - 1}`, d != null && d <= 0 ? 'yesil' : ''],
+          [ger ? '%' + fmt(ges / ger * 100, 1) : '–', '', 'Tüketimin çatı GES\'lerinden karşılanan kısmı', 'Share met by municipal rooftop solar', 'mor'],
+        ]), $('elektrikM'));
+        hazirModul.elektrik = true;
+      }
+    }
+
+    // ISO 50001 (şifreli; üç tesisin toplamı)
+    hazirModul.iso = false;
+    if (M.iso && Array.isArray(M.iso.seriler)) {
+      const yillar = [...new Set(M.iso.seriler.flatMap((x) => Object.keys(x.yillar || {})))].sort();
+      const yil = yillar.includes(String(new Date().getFullYear())) ? String(new Date().getFullYear()) : yillar[yillar.length - 1];
+      const TEP = { 'kWh': 0.000086, 'Sm³': 0.000825 };
+      let tep = 0, fElek = 0, fGaz = 0, seri = 0, alti = 0, sonAy = 0;
+      M.iso.seriler.forEach((x) => {
+        const v = x.yillar[yil]; if (!v) return;
+        const o = TEP[x.birim]; if (o) tep += topla(v.takip) * o;
+        let t = 0, rf = 0, n = 0; (v.takip || []).forEach((q, k) => { if (q != null && v.referans && v.referans[k] != null) { t += q; rf += v.referans[k]; n++; sonAy = Math.max(sonAy, k + 1); } });
+        if (!n || !o) return; seri++; if (t <= rf) alti++;
+        if (x.birim === 'kWh') fElek += rf - t; else fGaz += rf - t;
+      });
+      const tesis = (M.iso.tesisler || []).length;
+      if (seri) {
+        $('isoM').innerHTML = metrikHtml(([
+          [fmt(tep), 'TEP', `${tesis} tesiste toplam enerji, ${yil}`, `Total energy at ${tesis} certified sites, ${yil}`, 'sari'],
+          [fmt(Math.abs(fElek) / 1000), 'MWh', fElek >= 0 ? 'Referans çizgisine göre elektrik tasarrufu' : 'Referans çizgisinin üstündeki elektrik', fElek >= 0 ? 'Electricity saved against the baseline' : 'Electricity above the baseline', fElek >= 0 ? 'yesil' : ''],
+          [fmt(Math.abs(fGaz) / 1000, 1), 'bin m³', fGaz >= 0 ? 'Referans çizgisine göre doğalgaz tasarrufu' : 'Referans çizgisinin üstündeki doğalgaz', fGaz >= 0 ? 'Natural gas saved against the baseline' : 'Natural gas above the baseline', fGaz >= 0 ? 'yesil' : ''],
+          [`${fmt(alti)} / ${fmt(seri)}`, '', 'Referansın altında kalan enerji kullanımı', 'Energy uses below their baseline', 'mor'],
+        ]), $('isoM'));
+        hazirModul.iso = true;
+      }
+    }
+
+    // Doğalgaz (herkese açık veri; yalnız toplam)
+    hazirModul.dogalgaz = false;
+    if (M.dg && M.dg.m3 && M.dg.son_donem) {
+      const { yil, ay } = M.dg.son_donem, C = M.dg.m3[String(yil)] || {}, P = M.dg.m3[String(yil - 1)] || {};
+      let c = 0, pv = 0, aktif = 0;
+      Object.keys(C).forEach((id) => { const v = topla(C[id], ay); c += v; if (v > 0) aktif++; });
+      Object.keys(P).forEach((id) => { pv += topla(P[id], ay); });
+      const d = pv ? c / pv - 1 : null;
+      $('dogalgazM').innerHTML = metrikHtml(([
+        [fmt(c / 1000), 'bin m³', `Doğalgaz tüketimi, Oca–${kisaAy(ay)} ${yil}`, `Natural gas use, Jan–${kisaAyEn(ay)} ${yil}`, 'sari'],
+        [isaret(d), '', `${yil - 1} yılının aynı dönemine göre`, `Compared with the same period of ${yil - 1}`, d != null && d <= 0 ? 'yesil' : ''],
+        [fmt(aktif), '', 'Aylık izlenen doğalgaz aboneliği', 'Gas meters tracked every month', 'mor'],
+        [fmt(c * 1.994 / 1000), 't CO₂', 'Bu tüketimin karbon karşılığı', 'Carbon equivalent of this use'],
+      ]), $('dogalgazM'));
+      hazirModul.dogalgaz = true;
+    }
+
+    // Su
+    hazirModul.su = false;
+    const su = M.kr && M.kr.su;
+    if (su && su.aylik) {
+      const ay = su.son_ay || 12, yil = Math.max(...Object.keys(su.aylik).map(Number));
+      const c = topla(su.aylik[String(yil)], ay), pv = topla(su.aylik[String(yil - 1)], ay), d = pv ? c / pv - 1 : null;
+      const h = su.hedef || {};
+      $('suM').innerHTML = metrikHtml(([
+        [fmt(c / 1000), 'bin m³', `Su tüketimi, Oca–${kisaAy(ay)} ${yil}`, `Water use, Jan–${kisaAyEn(ay)} ${yil}`, 'sari'],
+        [isaret(d), '', `${yil - 1} yılının aynı dönemine göre`, `Compared with the same period of ${yil - 1}`, d != null && d <= 0 ? 'yesil' : ''],
+        [h.azaltim ? '−%' + fmt(h.azaltim * 100) : '–', '', `${h.yil || yil} hedefi: ${(h.yil || yil) - 1} yılına göre azaltım`, `${h.yil || yil} target: reduction on ${(h.yil || yil) - 1}`, 'mor'],
+      ]), $('suM'));
+      hazirModul.su = true;
+    }
+
+    // Karbon ve iklim
+    hazirModul.karbon = false;
+    if (M.secap || (M.kr && M.kr.emisyon_h1)) {
+      const hs = hesap(), yilS = hs.son ? String(hs.son.yil) : '';
+      const l = [[fmt((hs.yillar[yilS] || 0) * EF / 1000), 't CO₂', `Çatı GES'leriyle önlenen salım, ${yilS}`, `Emissions avoided by rooftop solar, ${yilS}`, 'yesil']];
+      const em = M.kr && M.kr.emisyon_h1;
+      if (em && em.kalemler) {
+        const top = Object.values(em.kalemler).reduce((a, k) => a + (k['2026'] || 0), 0);
+        if (top) l.push([fmt(top), 't CO₂e', 'Kurumsal emisyon, 2026 ilk yarı (elektrik, doğalgaz, akaryakıt)', 'Corporate emissions, first half of 2026', 'sari']);
+      }
+      const sc = M.secap;
+      if (sc && sc.hedef && sc.envanter_toplam_sanayisiz_t) {
+        const sonI = sc.envanter_toplam_sanayisiz_t.length - 1, sonY = sc.yillar[sonI];
+        l.push([fmt(sc.envanter_toplam_sanayisiz_t[sonI] / 1e6, 1), 'milyon t', `İzmir'in sera gazı envanteri, ${sonY} (SECAP)`, `İzmir's greenhouse gas inventory, ${sonY}`]);
+        l.push(['−%' + sc.hedef['2030_azaltim_yuzde'], '', `İzmir'in 2030 hedefi, ${sc.baz_yil} yılına göre`, `İzmir's 2030 target against ${sc.baz_yil}`, 'mor']);
+      }
+      $('karbonM').innerHTML = metrikHtml(l, $('karbonM'));
+      hazirModul.karbon = true;
+    }
+
+    // İzmir elektriği ve piyasa
+    hazirModul.kent = false;
+    if (M.epias && M.epias.mwh && M.epias.son_donem) {
+      const { yil, ay } = M.epias.son_donem, A = M.epias.mwh[String(yil)] || {}, O = M.epias.mwh[String(yil - 1)] || {};
+      const c = topla(A.toplam, ay), pv = topla(O.toplam, ay), d = pv ? c / pv - 1 : null;
+      const l = [
+        [fmt(c / 1e6, 2), 'TWh', `İzmir'in elektrik tüketimi, Oca–${kisaAy(ay)} ${yil}`, `İzmir's electricity use, Jan–${kisaAyEn(ay)} ${yil}`, 'sari'],
+        [isaret(d), '', `${yil - 1} yılının aynı dönemine göre`, `Compared with the same period of ${yil - 1}`],
+      ];
+      const g = M.ptf && M.ptf.gunluk;
+      if (g) {
+        const gunler = Object.keys(g).sort().slice(-30), ort = gunler.reduce((a, k) => a + g[k], 0) / (gunler.length || 1);
+        l.push([fmt(ort), 'TL/MWh', 'Elektrik piyasa fiyatı, son 30 gün ortalaması (EPİAŞ)', 'Day-ahead market price, 30-day average', 'mor']);
+      }
+      const sb = M.kr && M.kr.surdurulebilirlik_2025, i25 = topla((M.epias.mwh['2025'] || {}).toplam);
+      if (sb && sb.elektrik_sebeke_kwh && i25) l.push(['%' + fmt(sb.elektrik_sebeke_kwh / (i25 * 1000) * 100, 2), '', 'Belediyenin kent tüketimindeki payı, 2025', "The municipality's share of city consumption, 2025"]);
+      $('kentM').innerHTML = metrikHtml(l, $('kentM'));
+      hazirModul.kent = true;
+    }
+    if (akis.length && i >= 0) plan();
+  }
+
+  // ---------- Panel penceresi (panelin gerçek ekranı, ?gomulu=1) ----------
+  const PANEL_HASH = { sistem: 'ozet', elektrik: 'elektrik', iso: 'iso', dogalgaz: 'dogalgaz', su: 'kaynak', karbon: 'karbon', kent: 'ozet' };
+  const panelTaban = () => (location.protocol.startsWith('http') ? '' : YAYIN) + 'index.html?gomulu=1';
+  let panelHazir = false;
+  function panelBaslat() {
+    const f = $('panelCerceve'); if (f.src) return;
+    f.onload = () => { panelHazir = true; };
+    f.src = panelTaban() + '#ozet';
+  }
+  function panelYerlestir(sahne) {
+    const kat = $('panelKatman'), pen = sahne && sahne.querySelector('.pencere');
+    if (!pen) { kat.classList.remove('aktif'); return; }
+    const t = $('tuval').getBoundingClientRect(), b = pen.getBoundingClientRect(), bas = b.height * 0 + parseFloat(getComputedStyle(pen, '::before').height) || 0;
+    const x = b.left - t.left + 1, y = b.top - t.top + bas + 1, w = b.width - 2, h = b.height - bas - 2;
+    Object.assign(kat.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+    const VW = 1440, olcek = w / VW, f = $('panelCerceve');
+    Object.assign(f.style, { width: VW + 'px', height: Math.ceil(h / olcek) + 'px', transform: `scale(${olcek})` });
+  }
+  function panelGoster(ad) {
+    const kat = $('panelKatman');
+    if (!PANEL_HASH[ad]) { kat.classList.remove('aktif'); return; }
+    panelBaslat(); panelYerlestir(S(ad));
+    const f = $('panelCerceve'), hedef = '#' + PANEL_HASH[ad];
+    kat.classList.remove('aktif');
+    try {
+      const w = f.contentWindow;
+      if (w.location.hash !== hedef) w.location.hash = hedef;
+      setTimeout(() => {
+        try {
+          if (ad === 'kent') { const el = w.document.getElementById('ozetIzmir'); if (el) el.scrollIntoView({ block: 'start' }); }
+          else w.scrollTo(0, 0);
+        } catch (e) {}
+        kat.classList.add('aktif');
+      }, PANEL_HASH[ad] === 'ozet' ? 1200 : 2600);
+    } catch (e) { f.src = panelTaban() + hedef; setTimeout(() => kat.classList.add('aktif'), 2500); }
+  }
+  window.addEventListener('resize', () => { const a = akis[i]; if (a && a.t === 's') panelYerlestir(S(a.ad)); });
+
+  // Parola ayarı
+  $('parolaHatirla').checked = (() => { try { return !!localStorage.getItem('vitrin_elp'); } catch (e) { return false; } })();
+  $('parolaDurum').textContent = parolaAl() ? 'Parola girili; elektrik ve ISO ekranları açık.' : '';
+  $('parolaDene').onclick = async () => {
+    const p = $('parolaGir').value; if (!p) return;
+    $('parolaDurum').textContent = 'Deneniyor...';
+    oturum('elp', p);
+    const ok = await sifreliYukle();
+    if (!ok) { oturum('elp', null); $('parolaDurum').textContent = 'Parola yanlış.'; return; }
+    try { if ($('parolaHatirla').checked) localStorage.setItem('vitrin_elp', p); else localStorage.removeItem('vitrin_elp'); } catch (e) {}
+    $('parolaGir').value = ''; $('parolaDurum').textContent = 'Parola doğru; elektrik ve ISO ekranları açıldı.';
+    try { $('panelCerceve').contentWindow.location.reload(); } catch (e) {}
+    modulCiz();
+  };
+  $('parolaHatirla').onchange = (e) => { if (!e.target.checked) { try { localStorage.removeItem('vitrin_elp'); } catch (er) {} } };
+
   // ---------- Videolar (IndexedDB) ----------
   const DB = { db: null,
     async ac() { if (this.db) return this.db; return this.db = await new Promise((ok, no) => {
@@ -476,12 +780,15 @@
   const S = (ad) => sahneler.find((s) => s.dataset.ad === ad);
   let canliVar = false, akis = [], i = -1, zmn = null, bitis = 0, durdu = false;
   function plan() {
-    // iki veri sahnesinden sonra bir video: canlı, V1, portföy, yıllık, V2, harita, plan, V3, qr ...
-    const veri = ['canli', 'portfoy', 'yillik', 'harita', 'plan', 'qr'];
+    // GES bölümü → video → sistem tanıtımı (modüller) → video → kapanış; videolar araya serpiştirilir
+    const veri = ['canli', 'portfoy', 'yillik', 'harita', 'plan', '|', 'sistem', 'elektrik', 'iso', 'dogalgaz', 'su', 'karbon', 'kent', '|', 'qr'];
+    const araVideo = { 0: true };            // canlı ekrandan sonra da bir video
     akis = []; let vi = 0;
     veri.forEach((ad, k) => {
+      if (ad === '|') { if (videolar.length && vi < videolar.length) akis.push({ t: 'v', v: vi++ }); return; }
+      if (hazirModul[ad] === false) return;  // verisi olmayan (ör. parola girilmemiş) modül atlanır
       akis.push({ t: 's', ad });
-      if (videolar.length && (k === 0 || k === 2 || k === 4) && vi < videolar.length) akis.push({ t: 'v', v: vi++ });
+      if (araVideo[k] && videolar.length > 2 && vi < videolar.length) akis.push({ t: 'v', v: vi++ });
     });
     while (vi < videolar.length) akis.push({ t: 'v', v: vi++ });   // fazla video varsa sona
   }
@@ -497,7 +804,7 @@
     if (a.t === 's' && a.ad === 'canli' && !canliVar) return goster(i + 1);   // canlı veri yoksa atla
     sahneler.forEach((s) => s.classList.remove('aktif'));
     if (a.t === 'v') {
-      document.body.classList.add('video'); $('videoKatman').classList.add('aktif');
+      document.body.classList.add('video'); $('videoKatman').classList.add('aktif'); $('panelKatman').classList.remove('aktif');
       vid.src = videolar[a.v].url; vid.currentTime = 0;
       const p = vid.play(); if (p && p.catch) p.catch(() => sonraki());
       vid.onended = sonraki; vid.onerror = sonraki;
@@ -506,7 +813,9 @@
       vid.pause(); vid.removeAttribute('src'); vid.load();
       document.body.classList.remove('video'); $('videoKatman').classList.remove('aktif');
       S(a.ad).classList.add('aktif');
-      $('notSol').textContent = { canli: 'Canlı veri: invertör izleme portalları, saatlik', portfoy: '', yillik: '', harita: '', plan: '', qr: '' }[a.ad] || '';
+      panelGoster(a.ad);
+      $('notSag').style.visibility = PANEL_HASH[a.ad] ? 'hidden' : '';   // GES kaynak notu yalnız GES sahnelerinde
+      $('notSol').textContent = { canli: 'Canlı veri: invertör izleme portalları, saatlik', sistem: 'Sağda: Enerji Yönetim Merkezi\'nin gerçek ekranı', elektrik: 'Yalnızca kurum toplamları', iso: 'AASSM, Buz Sporları Salonu ve Buca Sosyal Yaşam Kampüsü', dogalgaz: 'CO₂ faktörü 1,994 kg/m³', su: 'Kaynak: İzBB Kurumsal Su ve Enerji Kaynakları Yönetimi Raporu', karbon: 'Kaynak: İzmir SECAP (2025–2050), İzBB Kurumsal Sera Gazı Emisyonu Raporu', kent: 'Kaynak: EPİAŞ Şeffaflık Platformu' }[a.ad] || '';
       const ms = SURE * 1000; ilerlemeBasla(ms); bitis = Date.now() + ms;
       if (!durdu) zmn = setTimeout(sonraki, ms);
     }
@@ -550,7 +859,9 @@
   // ---------- Başlangıç ----------
   (async () => {
     await veriYukle(true);
+    await modulYukle();
     await videolariYukle();
+    setInterval(() => modulYukle(), 30 * 60 * 1000);               // modül verileri yarım saatte bir
     setInterval(() => veriYukle(false), 5 * 60 * 1000);          // canlı veri 5 dk'da bir
     if (!depo.al('vitrin_kuruldu') && !prm.has('oto')) ayarAc(true);
     goster(0);

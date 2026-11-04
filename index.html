@@ -19,6 +19,8 @@
   <script>
     // Tema: varsayılan açık; seçim tarayıcıda hatırlanır. TV() = temaya göre grafik vurgu rengi.
     (function () { try { if (localStorage.getItem('tema') === 'koyu') document.documentElement.classList.add('dark'); } catch (e) {} })();
+    // Gömülü görünüm (vitrin.html içindeki pencere): ?gomulu=1 → koyu tema (kaydedilmez), uyarı/arıza listeleri gizli, etkileşim yok
+    (function () { try { if (new URLSearchParams(location.search).has('gomulu')) document.documentElement.classList.add('dark', 'gomulu'); } catch (e) {} })();
     window.koyuMu = () => document.documentElement.classList.contains('dark');
     window.TV = () => (window.koyuMu() ? '#9d95ee' : '#211950');
     window.temaDegistir = () => { try { localStorage.setItem('tema', window.koyuMu() ? 'acik' : 'koyu'); } catch (e) {} location.reload(); };
@@ -75,6 +77,12 @@
       #tab-ozet section, #tab-ozet .glass-card { break-inside: avoid; }
       @page { size: A4; margin: 12mm; }
     }
+      /* Gömülü görünüm: halka açık vitrinde arıza/uyarı listeleri ve giriş düğmeleri görünmez */
+    html.gomulu body { cursor: none; overflow: hidden; }
+    html.gomulu #ozetUyari, html.gomulu #ozetDikkat, html.gomulu #ozetCumle, html.gomulu #dikkatListe,
+    html.gomulu section:has(> #ozetDikkat), html.gomulu .glass-card:has(> #dikkatListe), html.gomulu .glass-card:has(> #dgUyari), html.gomulu :has(> #karbonGiris), html.gomulu #ozetFayda,
+    html.gomulu #liveBar, html.gomulu #temaBtn, html.gomulu header button, html.gomulu header a[href="#veri"] { display: none !important; }
+    html.gomulu header { position: static !important; }
   </style>
 </head>
 <body class="min-h-screen font-sans antialiased pb-14">
