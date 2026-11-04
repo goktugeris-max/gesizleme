@@ -58,10 +58,10 @@
   .orta { margin-top: auto; margin-bottom: auto; }
 
   /* ölçüm şeridi */
-  .serit { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--cizgi); border-bottom: 1px solid var(--cizgi); margin-top: auto; }
+  .serit { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--cizgi); border-bottom: 1px solid var(--cizgi); margin-top: auto; }
   .serit > div { padding: calc(var(--u)*2.2) calc(var(--u)*1.6); border-left: 1px solid var(--cizgi); }
   .serit > div:first-child { border-left: 0; padding-left: 0; }
-  .serit b { display: block; font-size: calc(var(--u)*5); font-weight: 700; line-height: 1; }
+  .serit b { display: block; font-size: calc(var(--u)*4.4); font-weight: 700; line-height: 1; }
   .serit b small { font-size: .38em; font-weight: 500; color: var(--yazi-2); margin-left: .15em; }
   .serit span { display: block; font-size: calc(var(--u)*1.3); color: var(--yazi-2); margin-top: calc(var(--u)*1); }
   .serit em { display: block; font-style: normal; font-size: calc(var(--u)*1.05); color: var(--yazi-3); margin-top: calc(var(--u)*.3); }
@@ -234,6 +234,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="supabase-ayar.js"></script>
+<script src="veridb.js"></script>
 <script>
 (() => {
   'use strict';
@@ -264,10 +266,11 @@
   }
   async function veriYukle(ilk) {
     const [d, p, k, g] = await Promise.all([
-      getir('data/durum.json'), ilk || !V.perf ? getir('data/performans.json') : V.perf,
+      getir('data/durum.json'), getir('data/performans.json'),
       ilk || !V.konum ? getir('data/santral_konumlari.json') : V.konum,
       ilk || !V.ilce ? getir('data/izmir_ilceler.geojson') : V.ilce,
     ]);
+    if (p && p !== V.perf && window.VeriDB) { try { await VeriDB.birlestir(p); } catch (e) {} }   // panelle aynı: Veri Girişi ayları Excel'in üstüne
     if (d) V.durum = d; if (p) V.perf = p; if (k) V.konum = k; if (g) V.ilce = g;
     ciz();
   }
@@ -328,11 +331,16 @@
 
     // 2 · Portföy
     const tCO2 = h.toplam * EF / 1000;
+    const yilS = h.son ? String(h.son.yil) : '';
+    const donemKwh = h.yillar[yilS] || 0;
+    const donemTr = h.son ? `${h.son.yil} üretimi, Oca–${AYLAR[h.son.ay - 1].slice(0, 3)}` : '';
+    const donemEn = h.son ? `${h.son.yil} generation, Jan–${AYLAR_EN[h.son.ay - 1].slice(0, 3)}` : '';
     $('portfoySerit').innerHTML = [
       [fmt(h.sant.length), '', 'Çatı güneş santrali', 'Rooftop solar plants'],
-      [fmt(h.kwp / 1000, 2), 'MWp', 'Kurulu güç', 'Installed capacity'],
-      [fmt(h.toplam / 1e6, 1), 'GWh', `${h.ilkYil} yılından bu yana üretim`, `Generated since ${h.ilkYil}`],
-      [fmt(tCO2), 't', 'Önlenen CO₂ salımı', 'CO₂ emissions avoided'],
+      [fmt(h.kwp), 'kW', 'Kurulu güç', 'Installed capacity'],
+      [fmt(donemKwh / 1000, 1), 'MWh', donemTr, donemEn],
+      [fmt(donemKwh * EF / 1000), 't', `${yilS} önlenen CO₂`, `CO₂ avoided in ${yilS}`],
+      [fmt(h.toplam / 1e6, 1), 'GWh', `${h.ilkYil} yılından bu yana`, `Generated since ${h.ilkYil}`],
     ].map(([n, b, tr, en]) => `<div><b>${n}<small>${b}</small></b><span>${tr}</span><em>${en}</em></div>`).join('');
 
     // 3 · Yıllık grafik
