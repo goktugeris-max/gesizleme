@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İzmir Çatı GES Vitrini</title>
+<link rel="icon" href="logo-dik.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  COP31 İzmir Hub — Sergi / Dijital Vitrin ekranı
+  - Yalnızca zaten herkese açık veriyi okur: data/durum.json (canlı), data/performans.json (aylık), santral_konumlari, ilçe sınırları.
+  - Arıza / haberleşme durumu GÖSTERİLMEZ; yalnızca üretim ve toplamlar.
+  - Videolar depoya YÜKLENMEZ: ekran bilgisayarında "Ayarlar"dan seçilir, tarayıcının kendi deposunda (IndexedDB) saklanır.
+  - Kısayollar: A = ayarlar, F = tam ekran, → / ← = sonraki / önceki sahne, Boşluk = duraklat.
+  - Adres parametreleri: ?sure=12 (veri sahnesi saniye), ?ara=11:30-12:00 (bu saatlerde yalnız logo ekranı), ?qr=<adres>
+-->
+<style>
+  :root {
+    --kurum: #211950; --kurum-koyu: #140f35; --kurum-2: #2c2468;
+    --zemin: #120d30; --yuzey: #1b1545; --cizgi: rgba(255,255,255,.14);
+    --yazi: #ffffff; --yazi-2: rgba(255,255,255,.78); --yazi-3: rgba(255,255,255,.56);
+    --gunes: #f5a524; --gunes-2: #ffd27a; --yesil: #4cc38a;
+    --u: min(1vw, 1.778vh);   /* 16:9 tuvalde 1 birim; ekran ne olursa olsun oran korunur */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; color: var(--yazi); overflow: hidden; }
+  body { font-family: 'IBM Plex Sans', system-ui, sans-serif; font-variant-numeric: tabular-nums; cursor: none; }
+  body.ayar-acik { cursor: default; }
+
+  /* 16:9 sahne, ortada, harfli kutu */
+  #tuval { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 100); height: calc(var(--u) * 56.25);
+           transform: translate(-50%, -50%); background: var(--zemin); overflow: hidden; }
+
+  .sahne { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease; pointer-events: none;
+           padding: calc(var(--u)*4.2) calc(var(--u)*5) calc(var(--u)*5.6); display: flex; flex-direction: column; }
+  .sahne.aktif { opacity: 1; }
+
+  /* üst şerit: logo + saat (video sırasında gizli) */
+  #ust { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--u)*4.2); display: flex; align-items: center;
+         justify-content: space-between; padding: 0 calc(var(--u)*5); z-index: 5; transition: opacity .6s; }
+  #ust img { height: calc(var(--u)*2.2); filter: brightness(0) invert(1); opacity: .92; }
+  #saat { font-size: calc(var(--u)*1.25); color: var(--yazi-3); font-weight: 500; }
+  body.video #ust, body.video #alt { opacity: 0; }
+
+  /* alt şerit: ilerleme + kaynak notu */
+  #alt { position: absolute; left: calc(var(--u)*5); right: calc(var(--u)*5); bottom: calc(var(--u)*2); z-index: 5; transition: opacity .6s; }
+  #ilerleme { height: 2px; background: var(--cizgi); border-radius: 1px; overflow: hidden; }
+  #ilerleme i { display: block; height: 100%; width: 0; background: var(--gunes); }
+  #not { margin-top: calc(var(--u)*.8); font-size: calc(var(--u)*.85); color: var(--yazi-3); display: flex; justify-content: space-between; gap: calc(var(--u)*2); }
+
+  .etiket { font-size: calc(var(--u)*1.35); color: var(--yazi-2); font-weight: 600; }
+  .etiket .e { font-weight: 400; color: var(--yazi-3); margin-left: calc(var(--u)*1.2); }
+  .baslik { font-size: calc(var(--u)*3.6); font-weight: 600; line-height: 1.12; margin-top: calc(var(--u)*.6); max-width: 80%; }
+  .en { font-size: calc(var(--u)*1.55); color: var(--yazi-3); font-weight: 400; margin-top: calc(var(--u)*.5); }
+  .dev { font-size: calc(var(--u)*12); font-weight: 700; line-height: .95; letter-spacing: -.02em; }
+  .dev small { font-size: .32em; font-weight: 500; color: var(--yazi-2); letter-spacing: 0; margin-left: .2em; }
+  .orta { margin-top: auto; margin-bottom: auto; }
+
+  /* ölçüm şeridi */
+  .serit { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--cizgi); border-bottom: 1px solid var(--cizgi); margin-top: auto; }
+  .serit > div { padding: calc(var(--u)*2.2) calc(var(--u)*1.6); border-left: 1px solid var(--cizgi); }
+  .serit > div:first-child { border-left: 0; padding-left: 0; }
+  .serit b { display: block; font-size: calc(var(--u)*5); font-weight: 700; line-height: 1; }
+  .serit b small { font-size: .38em; font-weight: 500; color: var(--yazi-2); margin-left: .15em; }
+  .serit span { display: block; font-size: calc(var(--u)*1.3); color: var(--yazi-2); margin-top: calc(var(--u)*1); }
+  .serit em { display: block; font-style: normal; font-size: calc(var(--u)*1.05); color: var(--yazi-3); margin-top: calc(var(--u)*.3); }
+
+  /* canlı sahne */
+  .canli-izgara { display: grid; grid-template-columns: 1.25fr 1fr; gap: calc(var(--u)*4); align-items: end; margin-top: auto; }
+  .nabiz { display: inline-block; width: calc(var(--u)*1); height: calc(var(--u)*1); border-radius: 50%; background: var(--yesil); margin-right: calc(var(--u)*.7);
+           vertical-align: middle; animation: nabiz 1.8s ease-out infinite; }
+  @keyframes nabiz { 0% { box-shadow: 0 0 0 0 rgba(76,195,138,.6); } 100% { box-shadow: 0 0 0 calc(var(--u)*1.4) rgba(76,195,138,0); } }
+  .gunes-yay { position: absolute; right: calc(var(--u)*-6); top: calc(var(--u)*-10); width: calc(var(--u)*46); height: calc(var(--u)*46);
+               border-radius: 50%; background: radial-gradient(circle, rgba(245,165,36,.30) 0%, rgba(245,165,36,.08) 45%, rgba(245,165,36,0) 70%); }
+  .yan-liste { border-top: 1px solid var(--cizgi); }
+  .yan-liste div { display: flex; justify-content: space-between; align-items: baseline; padding: calc(var(--u)*1.3) 0; border-bottom: 1px solid var(--cizgi); font-size: calc(var(--u)*1.45); color: var(--yazi-2); }
+  .yan-liste span small { font-size: .78em; color: var(--yazi-3); }
+  .yan-liste b { font-size: calc(var(--u)*2.4); color: var(--yazi); font-weight: 600; }
+
+  /* grafik / harita kutuları */
+  .govde { flex: 1; display: grid; gap: calc(var(--u)*4); margin-top: calc(var(--u)*2.4); min-height: 0; }
+  .govde.iki { grid-template-columns: 1.35fr 1fr; }
+  svg text { font-family: inherit; }
+  .yan-not { align-self: center; font-size: calc(var(--u)*1.5); line-height: 1.5; color: var(--yazi-2); }
+  .yan-not b { color: var(--yazi); font-weight: 600; }
+  .yan-not .dev2 { display: block; font-size: calc(var(--u)*6); font-weight: 700; color: var(--yazi); line-height: 1; margin-bottom: calc(var(--u)*.6); }
+  .yan-not .dev2 small { font-size: .38em; font-weight: 500; color: var(--yazi-2); margin-left: .15em; }
+
+  /* planlanan */
+  .plan-liste { columns: 2; column-gap: calc(var(--u)*4); }
+  .plan-liste div { break-inside: avoid; display: flex; justify-content: space-between; padding: calc(var(--u)*1) 0; border-bottom: 1px solid var(--cizgi); font-size: calc(var(--u)*1.5); color: var(--yazi-2); }
+  .plan-liste b { color: var(--yazi); font-weight: 600; }
+  .plan-liste .a { color: var(--gunes-2); }
+
+  /* qr */
+  .qr-kutu { background: #fff; padding: calc(var(--u)*1.2); border-radius: calc(var(--u)*.6); width: calc(var(--u)*20); height: calc(var(--u)*20); }
+  .qr-kutu img, .qr-kutu canvas { width: 100% !important; height: 100% !important; image-rendering: pixelated; }
+
+  /* video katmanı */
+  #videoKatman { position: absolute; inset: 0; background: #000; opacity: 0; transition: opacity .7s; z-index: 4; }
+  #videoKatman.aktif { opacity: 1; }
+  #videoKatman video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+
+  /* ara (Voices vb.) ekranı */
+  #araEkran { position: absolute; inset: 0; z-index: 8; background: var(--zemin); display: none; align-items: center; justify-content: center; flex-direction: column; gap: calc(var(--u)*2); }
+  #araEkran img { height: calc(var(--u)*7); filter: brightness(0) invert(1); }
+  #araEkran p { font-size: calc(var(--u)*1.6); color: var(--yazi-3); }
+  body.ara #araEkran { display: flex; }
+
+  /* ayarlar */
+  #ayar { position: fixed; inset: 0; z-index: 20; background: rgba(5,4,20,.86); display: none; align-items: center; justify-content: center; }
+  body.ayar-acik #ayar { display: flex; }
+  .ayar-ic { width: min(640px, 92vw); max-height: 92vh; overflow: auto; background: #fff; color: #16212e; border-radius: 8px; padding: 24px 28px; font-size: 15px; line-height: 1.5; }
+  .ayar-ic h2 { font-size: 20px; color: var(--kurum); margin-bottom: 4px; }
+  .ayar-ic p.k { color: #5b6b7e; font-size: 13.5px; margin-bottom: 16px; }
+  .ayar-ic label { display: block; font-weight: 600; margin: 14px 0 6px; }
+  .ayar-ic input[type=number] { width: 90px; padding: 6px 8px; border: 1px solid #dbe1e8; border-radius: 6px; font: inherit; }
+  .ayar-ic ol { margin: 8px 0 0 20px; font-size: 14px; color: #3b4a5c; }
+  .ayar-ic ol li { padding: 3px 0; }
+  .ayar-ic .dugmeler { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+  .ayar-ic button { font: inherit; font-weight: 600; padding: 10px 16px; border-radius: 6px; border: 1px solid #dbe1e8; background: #fff; color: #16212e; cursor: pointer; }
+  .ayar-ic button.ana { background: var(--kurum); border-color: var(--kurum); color: #fff; }
+  .ayar-ic .kisayol { margin-top: 18px; padding-top: 14px; border-top: 1px solid #e8ecf1; font-size: 13px; color: #5b6b7e; }
+  .ayar-ic .uyari { margin-top: 10px; font-size: 13px; color: #8a5a00; background: #fff6e0; border-radius: 6px; padding: 8px 10px; }
+</style>
+</head>
+<body>
+<div id="tuval">
+  <div id="ust"><img src="logo-yatay.png" alt="İzmir Büyükşehir Belediyesi"><span id="saat"></span></div>
+
+  <!-- 1. Canlı -->
+  <section class="sahne" data-ad="canli">
+    <div class="gunes-yay"></div>
+    <div class="etiket" id="canliEtiket"><span class="nabiz"></span>Canlı<span class="e">Live</span></div>
+    <h1 class="baslik">İzmir'in çatıları şu an elektrik üretiyor</h1>
+    <p class="en">İzmir's municipal rooftops are generating electricity right now</p>
+    <div class="canli-izgara">
+      <div>
+        <div class="dev" id="canliKw">–</div>
+        <div class="en" id="canliAlt" style="font-size:calc(var(--u)*1.5)"></div>
+      </div>
+      <div class="yan-liste" id="canliYan"></div>
+    </div>
+  </section>
+
+  <!-- 2. Portföy -->
+  <section class="sahne" data-ad="portfoy">
+    <div class="etiket">Belediye çatı GES portföyü<span class="e">Municipal rooftop solar</span></div>
+    <h1 class="baslik">Kamu binalarının çatısı, kentin enerji santrali</h1>
+    <p class="en">Public building rooftops turned into the city's power plants</p>
+    <div class="serit" id="portfoySerit"></div>
+  </section>
+
+  <!-- 3. Yıllık üretim -->
+  <section class="sahne" data-ad="yillik">
+    <div class="etiket">Yıllık üretim<span class="e">Annual generation</span></div>
+    <h1 class="baslik">Her yıl daha fazla güneş</h1>
+    <p class="en">More sunshine harvested every year</p>
+    <div class="govde iki">
+      <svg id="yillikGrafik" viewBox="0 0 900 460" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"></svg>
+      <div class="yan-not" id="yillikNot"></div>
+    </div>
+  </section>
+
+  <!-- 4. Harita -->
+  <section class="sahne" data-ad="harita">
+    <div class="etiket">Kent geneline yayılan üretim<span class="e">Generation across the city</span></div>
+    <h1 class="baslik" id="haritaBaslik">İzmir'in dört bir yanında güneş santrali</h1>
+    <p class="en">Solar plants on municipal buildings across İzmir</p>
+    <div class="govde iki">
+      <svg id="harita" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"></svg>
+      <div class="yan-not" id="haritaNot"></div>
+    </div>
+  </section>
+
+  <!-- 5. Planlanan -->
+  <section class="sahne" data-ad="plan">
+    <div class="etiket">Sıradaki çatılar<span class="e">Coming next</span></div>
+    <h1 class="baslik" id="planBaslik">Yeni santraller yolda</h1>
+    <p class="en" id="planEn">New rooftop plants are on the way</p>
+    <div class="govde" style="grid-template-columns:1fr 2.1fr;align-items:center">
+      <div class="yan-not" id="planOzet"></div>
+      <div class="plan-liste" id="planListe"></div>
+    </div>
+  </section>
+
+  <!-- 6. QR -->
+  <section class="sahne" data-ad="qr">
+    <div class="etiket">Telefonunuzda izleyin<span class="e">Follow on your phone</span></div>
+    <h1 class="baslik">Bu ekranı yanınızda götürün</h1>
+    <p class="en">Scan to open this live screen on your phone</p>
+    <div class="govde" style="grid-template-columns:auto 1fr;align-items:center;gap:calc(var(--u)*5)">
+      <div class="qr-kutu" id="qr"></div>
+      <div class="yan-not">
+        <span style="display:block;font-size:calc(var(--u)*2.2);color:var(--yazi);font-weight:600;margin-bottom:calc(var(--u)*1.2)">İzmir Buluşmaları</span>
+        İzmir Büyükşehir Belediyesi ile birebir görüşme talebi için<br>
+        <b>cop31zmir@izmir.bel.tr</b><br>
+        <span style="color:var(--yazi-3);font-size:calc(var(--u)*1.3)">For one-to-one meeting requests with İzmir Metropolitan Municipality</span>
+        <span id="qrAdres" style="display:block;margin-top:calc(var(--u)*2);font-size:calc(var(--u)*1.1);color:var(--yazi-3)"></span>
+      </div>
+    </div>
+  </section>
+
+  <div id="videoKatman"><video id="video" muted playsinline preload="auto"></video></div>
+
+  <div id="alt">
+    <div id="ilerleme"><i></i></div>
+    <div id="not"><span id="notSol"></span><span id="notSag"></span></div>
+  </div>
+
+  <div id="araEkran"><img src="logo-yatay.png" alt=""><p>İzmir Büyükşehir Belediyesi</p></div>
+</div>
+
+<!-- Ayarlar (A tuşu) -->
+<div id="ayar">
+  <div class="ayar-ic">
+    <h2>Vitrin ayarları</h2>
+    <p class="k">Videolar yalnızca bu bilgisayarın tarayıcısında saklanır; internete yüklenmez. Bir kez seçmeniz yeterli, sayfa yenilense de kalır.</p>
+    <label>1. Videolar (sırasıyla oynatılır)</label>
+    <input type="file" id="videoSec" accept="video/*" multiple>
+    <ol id="videoListe"></ol>
+    <div id="videoUyari"></div>
+    <label>2. Veri sahnesi süresi (saniye)</label>
+    <input type="number" id="sureGir" min="6" max="60" value="12">
+    <div class="dugmeler">
+      <button class="ana" id="baslat">Tam ekran başlat</button>
+      <button id="kapat">Kapat</button>
+      <button id="videoTemizle">Videoları kaldır</button>
+    </div>
+    <div class="kisayol">Kısayollar: <b>A</b> ayarlar, <b>F</b> tam ekran, <b>sağ/sol ok</b> sonraki/önceki sahne, <b>Boşluk</b> duraklat.
+      Adres sonuna <b>?ara=11:30-12:00</b> eklenirse bu saatlerde yalnız logo ekranı gösterilir (aynı TV'de Voices yayını için).</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const YAYIN = 'https://goktugeris-max.github.io/gesizleme/';
+  const EF = 0.479;                       // kg CO₂/kWh — panelin Karbon modülüyle aynı şebeke faktörü
+  const TAZE_SAAT = 3;                    // canlı veri bundan eskiyse "canlı" denmez
+  const prm = new URLSearchParams(location.search);
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n, k = 0) => (n == null || isNaN(n)) ? '–' : Number(n).toLocaleString('tr-TR', { minimumFractionDigits: k, maximumFractionDigits: k });
+  const AYLAR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const AYLAR_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const depo = { al(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+                 koy(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+
+  let SURE = Math.min(60, Math.max(6, parseInt(prm.get('sure') || depo.al('vitrin_sure') || 12, 10)));
+  $('sureGir').value = SURE;
+
+  // ---------- Veri ----------
+  const V = { durum: null, perf: null, konum: null, ilce: null };
+  async function getir(yol) {
+    for (const taban of ['', YAYIN]) {
+      try {
+        const r = await fetch(taban + yol + (yol.endsWith('.geojson') ? '' : '?t=' + Date.now()), { cache: 'no-store' });
+        if (r.ok) { const j = await r.json(); depo.koy('vitrin_' + yol, j); return j; }
+      } catch (e) { /* sıradaki kaynağı dene */ }
+    }
+    return depo.al('vitrin_' + yol);       // çevrimdışı: son başarılı kopya
+  }
+  async function veriYukle(ilk) {
+    const [d, p, k, g] = await Promise.all([
+      getir('data/durum.json'), ilk || !V.perf ? getir('data/performans.json') : V.perf,
+      ilk || !V.konum ? getir('data/santral_konumlari.json') : V.konum,
+      ilk || !V.ilce ? getir('data/izmir_ilceler.geojson') : V.ilce,
+    ]);
+    if (d) V.durum = d; if (p) V.perf = p; if (k) V.konum = k; if (g) V.ilce = g;
+    ciz();
+  }
+
+  function hesap() {
+    const p = V.perf || { santraller: [], planlanan: [] };
+    const sant = p.santraller.filter((s) => s.durum === 'Devrede');
+    const kwp = sant.reduce((a, s) => a + (s.kw || 0), 0);
+    const yillar = {};
+    p.santraller.forEach((s) => Object.entries(s.yillik || {}).forEach(([y, v]) => { yillar[y] = (yillar[y] || 0) + (v || 0); }));
+    const toplam = Object.values(yillar).reduce((a, b) => a + b, 0);
+    const ilkYil = Math.min(...Object.keys(yillar).filter((y) => yillar[y] > 0).map(Number));
+    // Excel'den gelen plan listesinde tablo dışı satırlar olabiliyor: yalnız gerçek proje satırları
+    const plan = (p.planlanan || []).filter((x) => typeof x.kw === 'number' && x.kw >= 1 && /aşama/i.test(x.durum || ''));
+    // Canlı
+    const d = V.durum; let canli = null;
+    if (d && d.santraller) {
+      const yas = (Date.now() - new Date(d.guncelleme).getTime()) / 36e5;
+      const ok = d.santraller.filter((s) => (s.anlik_kw || 0) > 0 || (s.bugun_kwh || 0) > 0);
+      canli = {
+        taze: yas <= TAZE_SAAT, zaman: new Date(d.guncelleme),
+        kw: d.santraller.reduce((a, s) => a + (s.anlik_kw || 0), 0),
+        bugun: d.santraller.reduce((a, s) => a + (s.bugun_kwh || 0), 0),
+        uretenAdet: ok.length,
+        uretenKwp: ok.reduce((a, s) => a + (s.kapasite_kwp || 0), 0),
+      };
+    }
+    return { sant, kwp, yillar, toplam, ilkYil, plan, canli, son: p.son_donem };
+  }
+
+  // ---------- Sahneleri doldur ----------
+  function ciz() {
+    const h = hesap();
+    const sonAy = h.son ? `${AYLAR[h.son.ay - 1]} ${h.son.yil}` : '';
+    const sonAyEn = h.son ? `${AYLAR_EN[h.son.ay - 1]} ${h.son.yil}` : '';
+
+    // 1 · Canlı
+    const c = h.canli;
+    const saat = c ? c.zaman.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul' }) : '';
+    const gunduz = c && c.taze && c.kw > 0.5;
+    canliVar = !!(c && c.taze && (c.kw > 0.5 || c.bugun > 1));
+    if (gunduz) {
+      $('canliEtiket').innerHTML = '<span class="nabiz"></span>Canlı<span class="e">Live</span>';
+      $('canliKw').innerHTML = `${fmt(c.kw, c.kw < 100 ? 1 : 0)}<small>kW</small>`;
+      $('canliAlt').textContent = `Anlık üretim, canlı bağlı santrallerden (${saat}). Instant output.`;
+    } else if (c && c.taze) {
+      $('canliEtiket').innerHTML = 'Bugün<span class="e">Today</span>';
+      $('canliKw').innerHTML = `${fmt(c.bugun)}<small>kWh</small>`;
+      $('canliAlt').textContent = `Bugün üretilen elektrik (${saat}). Generated today.`;
+    }
+    if (c) {
+      $('canliYan').innerHTML = [
+        ['Bugün üretilen<br><small>Today</small>', `${fmt(c.bugun)} kWh`],
+        ['Bugün önlenen CO₂<br><small>Avoided today</small>', `${fmt(c.bugun * EF)} kg`],
+        ['Canlı izlenen kurulu güç<br><small>Monitored capacity</small>', `${fmt(c.uretenKwp)} kWp`],
+      ].map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('');
+    }
+
+    // 2 · Portföy
+    const tCO2 = h.toplam * EF / 1000;
+    $('portfoySerit').innerHTML = [
+      [fmt(h.sant.length), '', 'Çatı güneş santrali', 'Rooftop solar plants'],
+      [fmt(h.kwp / 1000, 2), 'MWp', 'Kurulu güç', 'Installed capacity'],
+      [fmt(h.toplam / 1e6, 1), 'GWh', `${h.ilkYil} yılından bu yana üretim`, `Generated since ${h.ilkYil}`],
+      [fmt(tCO2), 't', 'Önlenen CO₂ salımı', 'CO₂ emissions avoided'],
+    ].map(([n, b, tr, en]) => `<div><b>${n}<small>${b}</small></b><span>${tr}</span><em>${en}</em></div>`).join('');
+
+    // 3 · Yıllık grafik
+    yillikCiz(h, sonAy, sonAyEn);
+
+    // 4 · Harita
+    haritaCiz(h);
+
+    // 5 · Plan
+    const planKw = h.plan.reduce((a, x) => a + x.kw, 0);
+    $('planOzet').innerHTML = `<span class="dev2">+${fmt(planKw / 1000, 2)}<small>MWp</small></span>
+      <b>${fmt(h.plan.length)} yeni çatı GES</b> ihale ve proje aşamasında<br>
+      <span style="color:var(--yazi-3)">${fmt(h.plan.length)} new rooftop plants in tender or design stage</span><br><br>
+      Tamamlandığında kurulu güç<br><b style="font-size:calc(var(--u)*2.4)">${fmt((h.kwp + planKw) / 1000, 2)} MWp</b>`;
+    $('planListe').innerHTML = h.plan.map((x) => `<div><span>${x.ad}</span><span><b>${fmt(x.kw)}</b> kW <span class="a">${/[iİ]hale/.test(x.durum) ? 'İhale' : 'Proje'}</span></span></div>`).join('');
+
+    // 6 · QR
+    qrCiz();
+
+    // alt not
+    $('notSag').textContent = `Kaynak: İzBB İklim Değişikliği ve Temiz Enerji Şube Müdürlüğü. Aylık veri: ${sonAy}. CO₂ faktörü: ${fmt(EF, 3)} kg/kWh`;
+  }
+
+  function yillikCiz(h, sonAy, sonAyEn) {
+    const yil = Object.keys(h.yillar).map(Number).filter((y) => h.yillar[y] > 0).sort();
+    const svg = $('yillikGrafik'); if (!yil.length) return;
+    const W = 900, H = 460, sol = 20, alt = 50, ust = 40;
+    const mx = Math.max(...yil.map((y) => h.yillar[y]));
+    const bw = (W - sol * 2) / yil.length;
+    const kismi = h.son && h.son.ay < 12 ? h.son.yil : null;
+    let s = `<line x1="${sol}" x2="${W - sol}" y1="${H - alt}" y2="${H - alt}" stroke="rgba(255,255,255,.25)"/>`;
+    yil.forEach((y, i) => {
+      const v = h.yillar[y], bh = (H - alt - ust) * v / mx, x = sol + i * bw + bw * .16, w = bw * .68, yy = H - alt - bh;
+      const k = y === kismi;
+      s += `<rect x="${x}" y="${yy}" width="${w}" height="${bh}" rx="3" fill="${k ? 'rgba(245,165,36,.45)' : '#f5a524'}" ${k ? 'stroke="#f5a524" stroke-dasharray="5 4"' : ''}/>`;
+      s += `<text x="${x + w / 2}" y="${yy - 10}" text-anchor="middle" font-size="17" font-weight="600" fill="#fff">${fmt(v / 1e6, 2)}</text>`;
+      s += `<text x="${x + w / 2}" y="${H - alt + 28}" text-anchor="middle" font-size="18" fill="rgba(255,255,255,.7)">${y}${k ? '*' : ''}</text>`;
+    });
+    s += `<text x="${sol}" y="20" font-size="16" fill="rgba(255,255,255,.55)">GWh</text>`;
+    svg.innerHTML = s;
+    const tam = yil.filter((y) => y !== kismi);
+    const enIyi = tam.reduce((a, y) => (h.yillar[y] > h.yillar[a] ? y : a), tam[0]);
+    $('yillikNot').innerHTML = `<span class="dev2">${fmt(h.yillar[enIyi] / 1e6, 2)}<small>GWh</small></span>
+      <b>${enIyi}</b> yılında üretilen en yüksek yıllık elektrik<br><span style="color:var(--yazi-3)">Highest annual generation, ${enIyi}</span><br><br>
+      Bu, yaklaşık <b>${fmt(h.yillar[enIyi] * EF / 1000)} ton</b> CO₂ salımının önüne geçti.<br><span style="color:var(--yazi-3)">≈ ${fmt(h.yillar[enIyi] * EF / 1000)} t CO₂ avoided</span>
+      ${kismi ? `<br><br><span style="font-size:calc(var(--u)*1.1);color:var(--yazi-3)">* ${kismi}: Ocak–${sonAy.split(' ')[0]} (January–${sonAyEn.split(' ')[0]})</span>` : ''}`;
+  }
+
+  function haritaCiz(h) {
+    const svg = $('harita'); if (!V.ilce || !V.konum) return;
+    const W = 900, H = 520, pad = 14;
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    const halkalar = [];
+    V.ilce.features.forEach((f) => {
+      const g = f.geometry; const ps = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
+      ps.forEach((poly) => { const r = poly[0]; halkalar.push(r); r.forEach(([lo, la]) => { x0 = Math.min(x0, lo); x1 = Math.max(x1, lo); y0 = Math.min(y0, la); y1 = Math.max(y1, la); }); });
+    });
+    const kx = Math.cos((y0 + y1) / 2 * Math.PI / 180);
+    const olc = Math.min((W - pad * 2) / ((x1 - x0) * kx), (H - pad * 2) / (y1 - y0));
+    const ox = (W - (x1 - x0) * kx * olc) / 2, oy = (H - (y1 - y0) * olc) / 2;
+    const P = (lo, la) => [ox + (lo - x0) * kx * olc, oy + (y1 - la) * olc];
+    let s = '';
+    halkalar.forEach((r) => {
+      const d = r.map(([lo, la], i) => { const [x, y] = P(lo, la); return (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); }).join('') + 'Z';
+      s += `<path d="${d}" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.22)" stroke-width="0.8"/>`;
+    });
+    const ilceler = new Set();
+    h.sant.forEach((st) => {
+      const k = V.konum[st.id];
+      if (k && k.ilce) ilceler.add(k.ilce);            // ilçe sayımı gizli tesisi de kapsar (ilçe adı hassas değil)
+      if (!k || k.gizli) return;                       // konumu gizli tesis işaretlenmez
+      const [x, y] = P(k.lon, k.lat); const r = 5 + Math.sqrt(st.kw || 0) * 0.9;
+      s += `<circle cx="${x}" cy="${y}" r="${r * 2.2}" fill="rgba(245,165,36,.16)"/><circle cx="${x}" cy="${y}" r="${r}" fill="#f5a524" stroke="#fff" stroke-width="1.5"/>`;
+    });
+    svg.innerHTML = s;
+    $('haritaNot').innerHTML = `<span class="dev2">${fmt(ilceler.size)}</span>
+      ilçede belediye binalarının çatısında güneş santrali<br><span style="color:var(--yazi-3)">districts hosting municipal rooftop solar</span><br><br>
+      İtfaiye merkezlerinden kültür merkezlerine, spor salonlarından hayvan hastanesine kadar kamu binaları kendi elektriğini üretiyor.<br>
+      <span style="color:var(--yazi-3)">Fire stations, cultural centres, sports halls and more generate their own power.</span><br><br>
+      <span style="font-size:calc(var(--u)*1.1);color:var(--yazi-3)">Daire büyüklüğü kurulu güçle orantılı. Circle size shows capacity.</span>`;
+  }
+
+  let qrHazir = false;
+  function qrCiz() {
+    if (qrHazir) return;
+    const hedef = prm.get('qr') || (location.protocol.startsWith('http') && !/localhost|127\.0\.0\.1/.test(location.host) ? location.origin + location.pathname : YAYIN + 'vitrin.html');
+    $('qrAdres').textContent = hedef.replace(/^https?:\/\//, '');
+    if (window.QRCode) { new QRCode($('qr'), { text: hedef, width: 512, height: 512, colorDark: '#211950', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); qrHazir = true; }
+  }
+
+  // ---------- Videolar (IndexedDB) ----------
+  const DB = { db: null,
+    async ac() { if (this.db) return this.db; return this.db = await new Promise((ok, no) => {
+      const r = indexedDB.open('vitrin', 1); r.onupgradeneeded = () => r.result.createObjectStore('video'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }); },
+    async islem(mod, fn) { const db = await this.ac(); return new Promise((ok, no) => { const t = db.transaction('video', mod); const st = t.objectStore('video'); const r = fn(st); t.oncomplete = () => ok(r && r.result); t.onerror = () => no(t.error); }); },
+  };
+  let videolar = [];   // [{ad, url}]
+  async function videolariYukle() {
+    try {
+      const liste = (await DB.islem('readonly', (st) => st.get('liste'))) || [];
+      videolar.forEach((v) => URL.revokeObjectURL(v.url));
+      videolar = liste.map((v) => ({ ad: v.ad, url: URL.createObjectURL(v.blob) }));
+    } catch (e) { videolar = []; }
+    $('videoListe').innerHTML = videolar.length ? videolar.map((v) => `<li>${v.ad.replace(/</g, '&lt;')}</li>`).join('') : '<li style="list-style:none;margin-left:-20px;color:#7d8b9c">Henüz video seçilmedi — vitrin yalnız veri ekranlarıyla döner.</li>';
+    plan();
+  }
+  $('videoSec').addEventListener('change', async (e) => {
+    const dosyalar = [...e.target.files]; if (!dosyalar.length) return;
+    const buyuk = dosyalar.filter((f) => f.size > 700 * 1024 * 1024);
+    $('videoUyari').innerHTML = buyuk.length ? `<div class="uyari">${buyuk.length} dosya 700 MB'tan büyük; tarayıcı saklamayı reddedebilir. Mümkünse 1080p'ye sıkıştırın.</div>` : '';
+    try { await DB.islem('readwrite', (st) => st.put(dosyalar.map((f) => ({ ad: f.name, blob: f })), 'liste')); }
+    catch (err) { $('videoUyari').innerHTML = '<div class="uyari">Videolar tarayıcıya kaydedilemedi (yer yetersiz olabilir). Bu oturumda yine de oynatılır.</div>';
+      videolar = dosyalar.map((f) => ({ ad: f.name, url: URL.createObjectURL(f) })); plan(); return; }
+    await videolariYukle(); goster(0);
+  });
+  $('videoTemizle').onclick = async () => { try { await DB.islem('readwrite', (st) => st.delete('liste')); } catch (e) {} videolariYukle(); };
+
+  // ---------- Akış ----------
+  const sahneler = [...document.querySelectorAll('.sahne')];
+  const S = (ad) => sahneler.find((s) => s.dataset.ad === ad);
+  let canliVar = false, akis = [], i = -1, zmn = null, bitis = 0, durdu = false;
+  function plan() {
+    // iki veri sahnesinden sonra bir video: canlı, V1, portföy, yıllık, V2, harita, plan, V3, qr ...
+    const veri = ['canli', 'portfoy', 'yillik', 'harita', 'plan', 'qr'];
+    akis = []; let vi = 0;
+    veri.forEach((ad, k) => {
+      akis.push({ t: 's', ad });
+      if (videolar.length && (k === 0 || k === 2 || k === 4) && vi < videolar.length) akis.push({ t: 'v', v: vi++ });
+    });
+    while (vi < videolar.length) akis.push({ t: 'v', v: vi++ });   // fazla video varsa sona
+  }
+  function ilerlemeBasla(ms) {
+    const el = $('ilerleme').firstElementChild; el.style.transition = 'none'; el.style.width = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transition = `width ${ms}ms linear`; el.style.width = '100%'; }));
+  }
+  function goster(n) {
+    clearTimeout(zmn); const vid = $('video');
+    if (!akis.length) plan();
+    i = (n + akis.length) % akis.length;
+    let a = akis[i];
+    if (a.t === 's' && a.ad === 'canli' && !canliVar) return goster(i + 1);   // canlı veri yoksa atla
+    sahneler.forEach((s) => s.classList.remove('aktif'));
+    if (a.t === 'v') {
+      document.body.classList.add('video'); $('videoKatman').classList.add('aktif');
+      vid.src = videolar[a.v].url; vid.currentTime = 0;
+      const p = vid.play(); if (p && p.catch) p.catch(() => sonraki());
+      vid.onended = sonraki; vid.onerror = sonraki;
+      zmn = setTimeout(sonraki, 15 * 60 * 1000);                 // takılma emniyeti
+    } else {
+      vid.pause(); vid.removeAttribute('src'); vid.load();
+      document.body.classList.remove('video'); $('videoKatman').classList.remove('aktif');
+      S(a.ad).classList.add('aktif');
+      $('notSol').textContent = { canli: 'Canlı veri: invertör izleme portalları, saatlik', portfoy: '', yillik: '', harita: '', plan: '', qr: '' }[a.ad] || '';
+      const ms = SURE * 1000; ilerlemeBasla(ms); bitis = Date.now() + ms;
+      if (!durdu) zmn = setTimeout(sonraki, ms);
+    }
+  }
+  const sonraki = () => goster(i + 1);
+  const onceki = () => goster(i - 1);
+
+  // ---------- Saat ve "ara" penceresi ----------
+  function dk(t) { const [a, b] = t.split(':').map(Number); return a * 60 + (b || 0); }
+  const ara = (prm.get('ara') || '').split(',').filter(Boolean).map((x) => x.split('-').map(dk));
+  setInterval(tik, 1000); tik();
+  function tik() {
+    const n = new Date();
+    $('saat').textContent = n.toLocaleString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Istanbul' });
+    const m = dk(n.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Istanbul' }));
+    const icinde = ara.some(([a, b]) => m >= a && m < b);
+    if (icinde !== document.body.classList.contains('ara')) {
+      document.body.classList.toggle('ara', icinde);
+      const v = $('video'); if (icinde) v.pause(); else if (akis[i] && akis[i].t === 'v') v.play().catch(() => {});
+    }
+  }
+
+  // ---------- Ayarlar ve tuşlar ----------
+  const ayarAc = (ac) => document.body.classList.toggle('ayar-acik', ac);
+  $('kapat').onclick = () => ayarAc(false);
+  $('sureGir').onchange = (e) => { SURE = Math.min(60, Math.max(6, parseInt(e.target.value, 10) || 12)); depo.koy('vitrin_sure', SURE); };
+  $('baslat').onclick = () => { ayarAc(false); depo.koy('vitrin_kuruldu', 1); document.documentElement.requestFullscreen?.().catch(() => {}); goster(0); };
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    const k = e.key.toLowerCase();
+    if (k === 'a') ayarAc(!document.body.classList.contains('ayar-acik'));
+    else if (k === 'f') document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+    else if (e.key === 'ArrowRight') sonraki();
+    else if (e.key === 'ArrowLeft') onceki();
+    else if (e.key === ' ') { e.preventDefault(); durdu = !durdu; const v = $('video');
+      if (akis[i] && akis[i].t === 'v') durdu ? v.pause() : v.play(); else if (durdu) clearTimeout(zmn); else sonraki(); }
+  });
+  // dokunmatik/fare: köşeye çift tıklayınca ayarlar
+  document.addEventListener('dblclick', () => ayarAc(true));
+
+  // ---------- Başlangıç ----------
+  (async () => {
+    await veriYukle(true);
+    await videolariYukle();
+    setInterval(() => veriYukle(false), 5 * 60 * 1000);          // canlı veri 5 dk'da bir
+    if (!depo.al('vitrin_kuruldu') && !prm.has('oto')) ayarAc(true);
+    goster(0);
+  })();
+})();
+</script>
+</body>
+</html>
