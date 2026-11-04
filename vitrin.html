@@ -18,9 +18,10 @@
 <style>
   :root {
     --kurum: #211950; --kurum-koyu: #140f35; --kurum-2: #2c2468;
-    --zemin: #120d30; --yuzey: #1b1545; --cizgi: rgba(255,255,255,.14);
-    --yazi: #ffffff; --yazi-2: rgba(255,255,255,.78); --yazi-3: rgba(255,255,255,.56);
-    --gunes: #f5a524; --gunes-2: #ffd27a; --yesil: #4cc38a;
+    /* Panelin (Enerji Yönetim Merkezi) açık kurumsal teması: tema.css :root ile aynı tonlar */
+    --zemin: #eef0f3; --yuzey: #ffffff; --cizgi: #dbe1e8; --cizgi-2: #e8ecf1;
+    --yazi: #16212e; --yazi-2: #3b4a5c; --yazi-3: #5b6b7e;
+    --veri: #3f8fd2; --gunes: #f5a524; --yesil: #1f9d63;
     --u: min(1vw, 1.778vh);   /* 16:9 tuvalde 1 birim; ekran ne olursa olsun oran korunur */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,17 +40,17 @@
   /* üst şerit: logo + saat (video sırasında gizli) */
   #ust { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--u)*4.2); display: flex; align-items: center;
          justify-content: space-between; padding: 0 calc(var(--u)*5); z-index: 5; transition: opacity .6s; }
-  #ust img { height: calc(var(--u)*2.2); filter: brightness(0) invert(1); opacity: .92; }
+  #ust img { height: calc(var(--u)*2.2); }
   #saat { font-size: calc(var(--u)*1.25); color: var(--yazi-3); font-weight: 500; }
   body.video #ust, body.video #alt { opacity: 0; }
 
   /* alt şerit: ilerleme + kaynak notu */
   #alt { position: absolute; left: calc(var(--u)*5); right: calc(var(--u)*5); bottom: calc(var(--u)*2); z-index: 5; transition: opacity .6s; }
   #ilerleme { height: 2px; background: var(--cizgi); border-radius: 1px; overflow: hidden; }
-  #ilerleme i { display: block; height: 100%; width: 0; background: var(--gunes); }
+  #ilerleme i { display: block; height: 100%; width: 0; background: var(--kurum); }
   #not { margin-top: calc(var(--u)*.8); font-size: calc(var(--u)*.85); color: var(--yazi-3); display: flex; justify-content: space-between; gap: calc(var(--u)*2); }
 
-  .etiket { font-size: calc(var(--u)*1.35); color: var(--yazi-2); font-weight: 600; }
+  .etiket { font-size: calc(var(--u)*1.35); color: var(--kurum); font-weight: 600; }
   .etiket .e { font-weight: 400; color: var(--yazi-3); margin-left: calc(var(--u)*1.2); }
   .baslik { font-size: calc(var(--u)*3.6); font-weight: 600; line-height: 1.12; margin-top: calc(var(--u)*.6); max-width: 80%; }
   .en { font-size: calc(var(--u)*1.55); color: var(--yazi-3); font-weight: 400; margin-top: calc(var(--u)*.5); }
@@ -59,6 +60,11 @@
 
   /* ölçüm şeridi */
   .serit { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--cizgi); border-bottom: 1px solid var(--cizgi); margin-top: auto; }
+  .serit { background: var(--yuzey); border: 1px solid var(--cizgi) !important; border-radius: 8px; }
+  .serit > div:first-child { padding-left: calc(var(--u)*2) !important; }
+  .govde > svg, .yan-liste, .plan-liste { background: var(--yuzey); border: 1px solid var(--cizgi); border-radius: 8px; padding: calc(var(--u)*1.6); }
+  .yan-liste { padding-top: 0; padding-bottom: 0; } .yan-liste div:last-child { border-bottom: 0; }
+  .plan-liste div:last-child { border-bottom: 0; }
   .serit > div { padding: calc(var(--u)*2.2) calc(var(--u)*1.6); border-left: 1px solid var(--cizgi); }
   .serit > div:first-child { border-left: 0; padding-left: 0; }
   .serit b { display: block; font-size: calc(var(--u)*4.4); font-weight: 700; line-height: 1; }
@@ -70,10 +76,10 @@
   .canli-izgara { display: grid; grid-template-columns: 1.25fr 1fr; gap: calc(var(--u)*4); align-items: end; margin-top: auto; }
   .nabiz { display: inline-block; width: calc(var(--u)*1); height: calc(var(--u)*1); border-radius: 50%; background: var(--yesil); margin-right: calc(var(--u)*.7);
            vertical-align: middle; animation: nabiz 1.8s ease-out infinite; }
-  @keyframes nabiz { 0% { box-shadow: 0 0 0 0 rgba(76,195,138,.6); } 100% { box-shadow: 0 0 0 calc(var(--u)*1.4) rgba(76,195,138,0); } }
+  @keyframes nabiz { 0% { box-shadow: 0 0 0 0 rgba(31,157,99,.5); } 100% { box-shadow: 0 0 0 calc(var(--u)*1.4) rgba(31,157,99,0); } }
   .gunes-yay { position: absolute; right: calc(var(--u)*-6); top: calc(var(--u)*-10); width: calc(var(--u)*46); height: calc(var(--u)*46);
-               border-radius: 50%; background: radial-gradient(circle, rgba(245,165,36,.30) 0%, rgba(245,165,36,.08) 45%, rgba(245,165,36,0) 70%); }
-  .yan-liste { border-top: 1px solid var(--cizgi); }
+               border-radius: 50%; background: radial-gradient(circle, rgba(245,165,36,.16) 0%, rgba(245,165,36,.05) 45%, rgba(245,165,36,0) 70%); }
+  .yan-liste { }
   .yan-liste div { display: flex; justify-content: space-between; align-items: baseline; padding: calc(var(--u)*1.3) 0; border-bottom: 1px solid var(--cizgi); font-size: calc(var(--u)*1.45); color: var(--yazi-2); }
   .yan-liste span small { font-size: .78em; color: var(--yazi-3); }
   .yan-liste b { font-size: calc(var(--u)*2.4); color: var(--yazi); font-weight: 600; }
@@ -88,13 +94,14 @@
   .yan-not .dev2 small { font-size: .38em; font-weight: 500; color: var(--yazi-2); margin-left: .15em; }
 
   /* planlanan */
-  .plan-liste { columns: 2; column-gap: calc(var(--u)*4); }
-  .plan-liste div { break-inside: avoid; display: flex; justify-content: space-between; padding: calc(var(--u)*1) 0; border-bottom: 1px solid var(--cizgi); font-size: calc(var(--u)*1.5); color: var(--yazi-2); }
+  .plan-liste { columns: 2; column-gap: calc(var(--u)*3); font-size: calc(var(--u)*1.4); }
+  .plan-liste div { break-inside: avoid; display: flex; justify-content: space-between; gap: calc(var(--u)*1.5); padding: calc(var(--u)*1) 0; border-bottom: 1px solid var(--cizgi); font-size: calc(var(--u)*1.4); color: var(--yazi-2); }
   .plan-liste b { color: var(--yazi); font-weight: 600; }
-  .plan-liste .a { color: var(--gunes-2); }
+  .plan-liste div > span:last-child { white-space: nowrap; }
+  .plan-liste .a { color: var(--kurum); font-weight: 600; }
 
   /* qr */
-  .qr-kutu { background: #fff; padding: calc(var(--u)*1.2); border-radius: calc(var(--u)*.6); width: calc(var(--u)*20); height: calc(var(--u)*20); }
+  .qr-kutu { background: #fff; border: 1px solid var(--cizgi); padding: calc(var(--u)*1.2); border-radius: calc(var(--u)*.6); width: calc(var(--u)*20); height: calc(var(--u)*20); }
   .qr-kutu img, .qr-kutu canvas { width: 100% !important; height: 100% !important; image-rendering: pixelated; }
 
   /* video katmanı */
@@ -104,7 +111,7 @@
 
   /* ara (Voices vb.) ekranı */
   #araEkran { position: absolute; inset: 0; z-index: 8; background: var(--zemin); display: none; align-items: center; justify-content: center; flex-direction: column; gap: calc(var(--u)*2); }
-  #araEkran img { height: calc(var(--u)*7); filter: brightness(0) invert(1); }
+  #araEkran img { height: calc(var(--u)*7); }
   #araEkran p { font-size: calc(var(--u)*1.6); color: var(--yazi-3); }
   body.ara #araEkran { display: flex; }
 
@@ -133,8 +140,8 @@
   <section class="sahne" data-ad="canli">
     <div class="gunes-yay"></div>
     <div class="etiket" id="canliEtiket"><span class="nabiz"></span>Canlı<span class="e">Live</span></div>
-    <h1 class="baslik">İzmir'in çatıları şu an elektrik üretiyor</h1>
-    <p class="en">İzmir's municipal rooftops are generating electricity right now</p>
+    <h1 class="baslik" id="canliBaslik">İzmir'in çatıları şu an elektrik üretiyor</h1>
+    <p class="en" id="canliEn">İzmir's municipal rooftops are generating electricity right now</p>
     <div class="canli-izgara">
       <div>
         <div class="dev" id="canliKw">–</div>
@@ -179,7 +186,7 @@
     <div class="etiket">Sıradaki çatılar<span class="e">Coming next</span></div>
     <h1 class="baslik" id="planBaslik">Yeni santraller yolda</h1>
     <p class="en" id="planEn">New rooftop plants are on the way</p>
-    <div class="govde" style="grid-template-columns:1fr 2.1fr;align-items:center">
+    <div class="govde" style="grid-template-columns:1fr 2.7fr;align-items:center">
       <div class="yan-not" id="planOzet"></div>
       <div class="plan-liste" id="planListe"></div>
     </div>
@@ -314,16 +321,20 @@
     canliVar = !!(c && c.taze && (c.kw > 0.5 || c.bugun > 1));
     if (gunduz) {
       $('canliEtiket').innerHTML = '<span class="nabiz"></span>Canlı<span class="e">Live</span>';
+      $('canliBaslik').textContent = "İzmir'in çatıları şu an elektrik üretiyor";
+      $('canliEn').textContent = "İzmir's municipal rooftops are generating electricity right now";
       $('canliKw').innerHTML = `${fmt(c.kw, c.kw < 100 ? 1 : 0)}<small>kW</small>`;
       $('canliAlt').textContent = `Anlık üretim, canlı bağlı santrallerden (${saat}). Instant output.`;
     } else if (c && c.taze) {
       $('canliEtiket').innerHTML = 'Bugün<span class="e">Today</span>';
+      $('canliBaslik').textContent = "İzmir'in çatıları bugün ne üretti?";
+      $('canliEn').textContent = "What did İzmir's municipal rooftops generate today?";
       $('canliKw').innerHTML = `${fmt(c.bugun)}<small>kWh</small>`;
       $('canliAlt').textContent = `Bugün üretilen elektrik (${saat}). Generated today.`;
     }
     if (c) {
       $('canliYan').innerHTML = [
-        ['Bugün üretilen<br><small>Today</small>', `${fmt(c.bugun)} kWh`],
+        gunduz ? ['Bugün üretilen<br><small>Today</small>', `${fmt(c.bugun)} kWh`] : ['Son ölçüm<br><small>Last reading</small>', saat],
         ['Bugün önlenen CO₂<br><small>Avoided today</small>', `${fmt(c.bugun * EF)} kg`],
         ['Canlı izlenen kurulu güç<br><small>Monitored capacity</small>', `${fmt(c.uretenKwp)} kWp`],
       ].map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('');
@@ -371,15 +382,15 @@
     const mx = Math.max(...yil.map((y) => h.yillar[y]));
     const bw = (W - sol * 2) / yil.length;
     const kismi = h.son && h.son.ay < 12 ? h.son.yil : null;
-    let s = `<line x1="${sol}" x2="${W - sol}" y1="${H - alt}" y2="${H - alt}" stroke="rgba(255,255,255,.25)"/>`;
+    let s = `<line x1="${sol}" x2="${W - sol}" y1="${H - alt}" y2="${H - alt}" stroke="#c3cad6"/>`;
     yil.forEach((y, i) => {
       const v = h.yillar[y], bh = (H - alt - ust) * v / mx, x = sol + i * bw + bw * .16, w = bw * .68, yy = H - alt - bh;
       const k = y === kismi;
-      s += `<rect x="${x}" y="${yy}" width="${w}" height="${bh}" rx="3" fill="${k ? 'rgba(245,165,36,.45)' : '#f5a524'}" ${k ? 'stroke="#f5a524" stroke-dasharray="5 4"' : ''}/>`;
-      s += `<text x="${x + w / 2}" y="${yy - 10}" text-anchor="middle" font-size="17" font-weight="600" fill="#fff">${fmt(v / 1e6, 2)}</text>`;
-      s += `<text x="${x + w / 2}" y="${H - alt + 28}" text-anchor="middle" font-size="18" fill="rgba(255,255,255,.7)">${y}${k ? '*' : ''}</text>`;
+      s += `<rect x="${x}" y="${yy}" width="${w}" height="${bh}" rx="3" fill="${k ? '#211950' : '#3f8fd2'}"/>`;
+      s += `<text x="${x + w / 2}" y="${yy - 10}" text-anchor="middle" font-size="17" font-weight="600" fill="#16212e">${fmt(v / 1e6, 2)}</text>`;
+      s += `<text x="${x + w / 2}" y="${H - alt + 28}" text-anchor="middle" font-size="18" fill="#3b4a5c">${y}${k ? '*' : ''}</text>`;
     });
-    s += `<text x="${sol}" y="20" font-size="16" fill="rgba(255,255,255,.55)">GWh</text>`;
+    s += `<text x="${sol}" y="20" font-size="16" fill="#5b6b7e">GWh</text>`;
     svg.innerHTML = s;
     const tam = yil.filter((y) => y !== kismi);
     const enIyi = tam.reduce((a, y) => (h.yillar[y] > h.yillar[a] ? y : a), tam[0]);
@@ -396,16 +407,18 @@
     const halkalar = [];
     V.ilce.features.forEach((f) => {
       const g = f.geometry; const ps = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
-      ps.forEach((poly) => { const r = poly[0]; halkalar.push(r); r.forEach(([lo, la]) => { x0 = Math.min(x0, lo); x1 = Math.max(x1, lo); y0 = Math.min(y0, la); y1 = Math.max(y1, la); }); });
+      ps.forEach((poly) => { const r = poly[0]; halkalar.push([r, (f.properties && f.properties.adi) || '']); r.forEach(([lo, la]) => { x0 = Math.min(x0, lo); x1 = Math.max(x1, lo); y0 = Math.min(y0, la); y1 = Math.max(y1, la); }); });
     });
     const kx = Math.cos((y0 + y1) / 2 * Math.PI / 180);
     const olc = Math.min((W - pad * 2) / ((x1 - x0) * kx), (H - pad * 2) / (y1 - y0));
     const ox = (W - (x1 - x0) * kx * olc) / 2, oy = (H - (y1 - y0) * olc) / 2;
     const P = (lo, la) => [ox + (lo - x0) * kx * olc, oy + (y1 - la) * olc];
+    const buyuk = (t) => String(t || '').toLocaleUpperCase('tr-TR');
+    const gesIlce = new Set(h.sant.map((st) => V.konum[st.id] && buyuk(V.konum[st.id].ilce)).filter(Boolean));
     let s = '';
-    halkalar.forEach((r) => {
+    halkalar.forEach(([r, adi]) => {
       const d = r.map(([lo, la], i) => { const [x, y] = P(lo, la); return (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); }).join('') + 'Z';
-      s += `<path d="${d}" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.22)" stroke-width="0.8"/>`;
+      s += `<path d="${d}" fill="${gesIlce.has(buyuk(adi)) ? '#f1e4c8' : '#e6e9ef'}" stroke="#ffffff" stroke-width="1.2"/>`;
     });
     const ilceler = new Set();
     h.sant.forEach((st) => {
@@ -413,14 +426,14 @@
       if (k && k.ilce) ilceler.add(k.ilce);            // ilçe sayımı gizli tesisi de kapsar (ilçe adı hassas değil)
       if (!k || k.gizli) return;                       // konumu gizli tesis işaretlenmez
       const [x, y] = P(k.lon, k.lat); const r = 5 + Math.sqrt(st.kw || 0) * 0.9;
-      s += `<circle cx="${x}" cy="${y}" r="${r * 2.2}" fill="rgba(245,165,36,.16)"/><circle cx="${x}" cy="${y}" r="${r}" fill="#f5a524" stroke="#fff" stroke-width="1.5"/>`;
+      s += `<circle cx="${x}" cy="${y}" r="${r * 2.2}" fill="rgba(33,25,80,.10)"/><circle cx="${x}" cy="${y}" r="${r}" fill="#211950" stroke="#fff" stroke-width="1.5"/>`;
     });
     svg.innerHTML = s;
     $('haritaNot').innerHTML = `<span class="dev2">${fmt(ilceler.size)}</span>
       ilçede belediye binalarının çatısında güneş santrali<br><span style="color:var(--yazi-3)">districts hosting municipal rooftop solar</span><br><br>
       İtfaiye merkezlerinden kültür merkezlerine, spor salonlarından hayvan hastanesine kadar kamu binaları kendi elektriğini üretiyor.<br>
       <span style="color:var(--yazi-3)">Fire stations, cultural centres, sports halls and more generate their own power.</span><br><br>
-      <span style="font-size:calc(var(--u)*1.1);color:var(--yazi-3)">Daire büyüklüğü kurulu güçle orantılı. Circle size shows capacity.</span>`;
+      <span style="font-size:calc(var(--u)*1.1);color:var(--yazi-3)">Daire büyüklüğü kurulu güçle orantılı, renkli ilçelerde santral var. Circle size shows capacity.</span>`;
   }
 
   let qrHazir = false;
