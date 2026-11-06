@@ -251,6 +251,7 @@
     panel,
     sec(kod) { secili = kod; ciz(); },
     ornek(v) { ornek = !!v; yenile(); },
+    ornekVeri,   // Ekran döngüsü (sunum.js) için: simülasyon verisi
     uyarilar,   // test/rapor için
     ESIK,
   };

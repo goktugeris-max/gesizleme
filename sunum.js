@@ -107,9 +107,9 @@
   const LOGO = 'logo-izbb-cop31.png';
   function sayfa(i, renk, kick, baslik, alt, hero, hu1, hu2, ct, grafik, stats, not) {
     const st = stats.map(([v, l, c]) => `<div class="sn-st"><div class="sn-sv ${v.length <= 6 ? 'a' : v.length <= 10 ? 'b' : 'c'}" style="color:${c}">${v}</div><div class="sn-sl">${l}</div></div>`).join('');
-    const dots = [0, 1, 2, 3, 4].map((k) => `<i class="${k + 1 === i ? 'on' : ''}"></i>`).join('');
+    const dots = '@@';
     return `<div class="sn-top"><img src="${LOGO}" alt=""></div><div class="sn-body"><div class="sn-sol"><div class="sn-kick" style="color:${renk}">${kick}</div><h1>${baslik}</h1><div class="sn-sub">${alt}</div>
-      <div class="sn-hero" style="border-left-color:${renk}"><div class="sn-hv ${hero.length <= 6 ? '' : 'k'}" style="color:${renk}">${hero}</div><div class="sn-hu">${hu1}<span>${hu2}</span></div></div></div>
+      <div class="sn-hero" style="border-left-color:${renk}"><div class="sn-hv ${hero.length <= 5 ? '' : 'k'}" style="color:${renk}">${hero}</div><div class="sn-hu">${hu1}<span>${hu2}</span></div></div></div>
       <div class="sn-sag"><div class="sn-ct">${ct}</div><div class="sn-ch">${grafik}</div><div class="sn-sts">${st}</div></div></div><div class="sn-ft"><div>${not}</div><div class="sn-dots">${dots}</div></div>`;
   }
   function olustur(R) {
@@ -173,7 +173,22 @@
         [...(dh != null ? [[pct(dh), tr ? 'Huzurevi doğalgazı, referansa göre' : 'Huzurevi gas vs reference', GRN]] : []), [`${num(son / 1e6)} GWh`, tr ? '9 iştirakin tüketimi, Ocak–Eylül 2024' : '9 municipal companies, Jan–Sep 2024', GRN], [tr ? `%${num(R.ist.dusuk / son * 100)}–${num(R.ist.yuksek / son * 100)}` : `${num(R.ist.dusuk / son * 100)}–${num(R.ist.yuksek / son * 100)}%`, tr ? 'tahmini tasarruf potansiyeli, sahada doğrulanmadı' : 'estimated savings potential, not field-verified', NAVY]],
         tr ? 'İştirak rakamları ön tahmindir; ISO tesis rakamları aylık sayaç verisine dayanır.' : 'Company figures are preliminary estimates; ISO facility figures use monthly meter data.'));
     }
-    return out;
+    // Ölçüm: analizörler için hazırlanan ÖRNEK (simülasyon) veri; gerçek ölçüm değildir
+    if (window.Olcum && Olcum.ornekVeri) {
+      const O = Olcum.ornekVeri(), on = O.nokta.filter((n) => O.son[n.kod].durum === 'cevrimici'), TEAL = '#0f8b8d';
+      const adim = (kod) => O.d15.filter((x) => x.nokta_kod === kod).slice(-96);
+      const toplam = Array.from({ length: 96 }, (_, k) => on.reduce((t, n) => t + (adim(n.kod)[k] ? adim(n.kod)[k].ort_p_w : 0), 0));
+      const sonP = on.reduce((t, n) => t + O.son[n.kod].deger.p_top, 0) / 1000, ortV = on.reduce((t, n) => t + O.son[n.kod].deger.v_l1, 0) / on.length, ortPf = on.reduce((t, n) => t + O.son[n.kod].deger.pf_top, 0) / on.length;
+      const uyari = O.nokta.filter((n) => { const d = O.son[n.kod]; return d.durum !== 'cevrimici' || d.deger.pf_top < 0.9 || d.deger.thd_v_l1 > 8 || d.deger.i_dengesizlik > 10; }).length;
+      const saat = (k) => (k % 12 === 0 ? String(new Date(new Date(adim(on[0].kod)[k].donem)).getHours()).padStart(2, '0') + ':00' : '');
+      out.push(sayfa(0, TEAL, tr ? 'ÖLÇÜM ALTYAPISI, ÖRNEK VERİ' : 'METERING, SAMPLE DATA', tr ? 'Analizör verisi canlı ekranda' : 'Analyzer data on a live screen',
+        tr ? 'Cihazlar kurulunca ölçüm ekranı böyle çalışacak (simülasyon verisi)' : 'How the metering screen will work once devices are installed (simulated data)', `${num(sonP, 0)} kW`,
+        tr ? `anlık toplam güç, ${on.length} örnek analizör` : `instantaneous total power, ${on.length} sample analyzers`, tr ? 'Gerçek ölçüm değildir' : 'Not a real measurement',
+        tr ? 'Son 24 saat, 15 dakikalık ortalama güç, kW (örnek)' : 'Last 24 hours, 15-minute average power, kW (sample)', cizgi([toplam], [TEAL], Array.from({ length: 96 }, (_, k) => saat(k)), [tr ? 'kW' : 'kW'], 936, CH),
+        [[`${num(ortV, 0)} V`, tr ? 'ortalama faz gerilimi' : 'average phase voltage', TEAL], [num(ortPf, 2), tr ? 'ortalama güç faktörü (cos φ)' : 'average power factor (cos φ)', TEAL], [String(uyari), tr ? 'örnek uyarı sayısı' : 'sample alerts', NAVY]],
+        tr ? 'Örnek veri: gerçek tesis ölçümü değildir. 34 analizörlük altyapı cihazlar monte edilince devreye girer.' : 'Sample data, not a real facility measurement. The 34-analyzer infrastructure goes live once devices are installed.'));
+    }
+    return out.map((h, k) => (k === 0 ? h : h.replace('@@', out.slice(1).map((_, q) => `<i class="${q + 1 === k ? 'on' : ''}"></i>`).join(''))));
   }
   let SU_AYLIK = null;
   async function hazirla(parola) { const v = await yukle(parola); SU_AYLIK = v.K.su.aylik; D = hesapla(v); }
