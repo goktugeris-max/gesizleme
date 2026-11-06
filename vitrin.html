@@ -127,6 +127,8 @@
   .modul-liste span { font-size: calc(var(--u)*1.15); color: var(--yazi-3); }
   #panelKatman { position: absolute; z-index: 3; overflow: hidden; pointer-events: none; border-radius: 0 0 8px 8px; }
   #panelKatman:not(.aktif) { opacity: 0 !important; }
+  #adimEtiket { position: absolute; left: calc(var(--u)*1); bottom: calc(var(--u)*1); padding: calc(var(--u)*.35) calc(var(--u)*.9); border-radius: 6px; background: rgba(9,13,22,.86); border: 1px solid var(--cizgi); color: var(--yazi); font-size: calc(var(--u)*1.05); font-weight: 600; opacity: 0; transition: opacity .4s; }
+  #adimEtiket.var { opacity: 1; }
   #panelKatman iframe { border: 0; transform-origin: 0 0; position: absolute; left: 0; top: 0; background: #090d16; }
 
   html.kayit .sahne { transition: none; } html.kayit #saat, html.kayit #ilerleme, html.kayit #notSol { visibility: hidden; }
@@ -286,7 +288,7 @@
     <div class="modul-govde"><div class="metrik" id="kentM"></div><div class="pencere"></div></div>
   </section>
 
-  <div id="panelKatman"><iframe id="panelCerceve" title="Enerji Yönetim Merkezi" tabindex="-1" aria-hidden="true"></iframe></div>
+  <div id="panelKatman"><iframe id="panelCerceve" title="Enerji Yönetim Merkezi" tabindex="-1" aria-hidden="true"></iframe><div id="adimEtiket"></div></div>
 
   <div id="videoKatman"><video id="video" muted playsinline preload="auto"></video></div>
 
@@ -715,15 +717,53 @@
     const VW = 1440, olcek = w / VW, f = $('panelCerceve');
     Object.assign(f.style, { width: VW + 'px', height: Math.ceil(h / olcek) + 'px', transform: `scale(${olcek})` });
   }
+  // ---------- Uzun gezinti: panelin gerçek ekranı alt sekmeleri sırayla gezilir, sayfa yukarıdan aşağı yavaşça kayar ----------
+  // (kayıt modunda kapalı: video sahne başına tek süredir)
+  const ADIMLAR = {
+    elektrik: [['ozet', 'Özet / Summary'], ['db', 'Daire başkanlıkları / Departments'], ['tarife', 'Tarife ve tedarikçi / Tariff and supplier'], ['istirak', 'İştirakler / Municipal companies']],
+    iso: [['ozet', 'Özet / Summary'], ['ref', 'Referans çizgisi / Reference line'], ['baz', 'Baz yük / Base load'], ['regres', 'Regresyon aracı / Regression tool'], ['ikiz', 'Dijital ikiz / Digital twin']],
+    dogalgaz: [['ozet', 'Özet / Summary'], ['abone', 'Aboneler / Accounts'], ['dagilim', 'Dağılım ve harita / Distribution and map']],
+    su: [['su', 'Su / Water'], ['abone', 'Su aboneleri / Water accounts'], ['yakit', 'Akaryakıt ve araçlar / Fuel and vehicles'], ['profil', 'Enerji profili ve emisyon / Energy profile and emissions']],
+    sistem: [[null, '']], karbon: [[null, '']], kent: [[null, '']],
+  };
+  const ADIM_NESNE = { elektrik: 'Elek', iso: 'Iso', dogalgaz: 'Dogalgaz', su: 'Kaynak' };
+  const adimSayisi = (ad) => (KAYIT ? 1 : (ADIMLAR[ad] || [1]).length);
+  let gezKimlik = 0;
+  function gezDurdur() { gezKimlik++; const e = $('adimEtiket'); if (e) e.classList.remove('var'); }
+  function gezBasla(ad, adimMs) {
+    if (KAYIT) return;
+    const kim = ++gezKimlik, adimlar = ADIMLAR[ad] || [[null, '']], t0 = performance.now();
+    let son = -1;
+    const kare = () => {
+      if (kim !== gezKimlik) return;
+      const gecen = performance.now() - t0, s = Math.min(adimlar.length - 1, Math.floor(gecen / adimMs)), yerel = gecen - s * adimMs;
+      let w; try { w = $('panelCerceve').contentWindow; } catch (e) { return; }
+      if (s !== son) {
+        son = s;
+        const [k, etiket] = adimlar[s];
+        try { if (k && ADIM_NESNE[ad] && w[ADIM_NESNE[ad]]) w[ADIM_NESNE[ad]].alt(k); } catch (e) {}
+        const el = $('adimEtiket'); el.textContent = etiket; el.classList.toggle('var', adimlar.length > 1);
+        try { if (ad === 'kent') { const z = w.document.getElementById('ozetIzmir'); if (z) z.scrollIntoView({ block: 'start' }); } else w.scrollTo(0, 0); } catch (e) {}
+      }
+      try {
+        const d = w.document.documentElement, taban = ad === 'kent' && w.document.getElementById('ozetIzmir') ? w.document.getElementById('ozetIzmir').offsetTop : 0;
+        const enAz = Math.max(0, d.scrollHeight - w.innerHeight - taban), p = Math.min(1, Math.max(0, (yerel - 1400) / Math.max(1000, adimMs - 2800)));
+        if (yerel > 600) w.scrollTo(0, taban + enAz * p);   // alt sekme çizilsin diye kısa bekleme, sonra sabit hızla kayar
+      } catch (e) {}
+      requestAnimationFrame(kare);
+    };
+    requestAnimationFrame(kare);
+  }
   function panelGoster(ad) {
     const kat = $('panelKatman');
+    gezDurdur();
     if (!PANEL_HASH[ad]) { kat.classList.remove('aktif'); return; }
     panelBaslat(); panelYerlestir(S(ad));
     const f = $('panelCerceve'), hedef = '#' + PANEL_HASH[ad];
     kat.classList.remove('aktif');
     if (!panelHazir) {                       // pencere henüz yükleniyor: doğru sekmeyle yeniden yükle
       if (panelSon !== hedef) { f.src = panelTaban() + hedef; panelSon = hedef; }
-      setTimeout(() => { if (panelSon === hedef) kat.classList.add('aktif'); }, 3000);
+      setTimeout(() => { if (panelSon === hedef) { kat.classList.add('aktif'); gezBasla(ad, SURE * 1000); } }, 3000);
       return;
     }
     try {
@@ -734,10 +774,10 @@
           if (ad === 'kent') { const el = w.document.getElementById('ozetIzmir'); if (el) el.scrollIntoView({ block: 'start' }); }
           else w.scrollTo(0, 0);
         } catch (e) {}
-        kat.classList.add('aktif');
+        kat.classList.add('aktif'); gezBasla(ad, SURE * 1000);
       }, panelSon === hedef ? 150 : (PANEL_HASH[ad] === 'ozet' ? 1200 : 2600));
       panelSon = hedef;
-    } catch (e) { f.src = panelTaban() + hedef; setTimeout(() => kat.classList.add('aktif'), 2500); }
+    } catch (e) { f.src = panelTaban() + hedef; setTimeout(() => { kat.classList.add('aktif'); gezBasla(ad, SURE * 1000); }, 2500); }
   }
   window.addEventListener('resize', () => { const a = akis[i]; if (a && a.t === 's') panelYerlestir(S(a.ad)); });
 
@@ -870,7 +910,7 @@
       giris(S(a.ad));
       $('notSag').style.visibility = PANEL_HASH[a.ad] ? 'hidden' : '';   // GES kaynak notu yalnız GES sahnelerinde
       $('notSol').textContent = { canli: 'Canlı veri: invertör izleme portalları, saatlik', sistem: 'Sağda: Enerji Yönetim Merkezi\'nin gerçek ekranı', elektrik: 'Yalnızca kurum toplamları', iso: 'AASSM, Buz Sporları Salonu ve Buca Sosyal Yaşam Kampüsü', dogalgaz: 'CO₂ faktörü 1,994 kg/m³', su: 'Kaynak: İzBB Kurumsal Su ve Enerji Kaynakları Yönetimi Raporu', karbon: 'Kaynak: İzmir SECAP (2025–2050), İzBB Kurumsal Sera Gazı Emisyonu Raporu', kent: 'Kaynak: EPİAŞ Şeffaflık Platformu' }[a.ad] || '';
-      const ms = SURE * 1000; ilerlemeBasla(ms); bitis = Date.now() + ms;
+      const ms = SURE * 1000 * adimSayisi(a.ad); ilerlemeBasla(ms); bitis = Date.now() + ms;
       if (!durdu) zmn = setTimeout(sonraki, ms);
     }
   }
