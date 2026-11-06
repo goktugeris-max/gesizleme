@@ -7,7 +7,7 @@
 (function () {
   const AY = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
   const AY_UZUN = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'karbon', 'veri', 'canli', 'ariza'];
+  const SEKMELER = ['ozet', 'genel', 'santraller', 'harita', 'analiz', 'elektrik', 'dogalgaz', 'kaynak', 'iso', 'karbon', 'sunum', 'veri', 'canli', 'ariza'];
 
   const GES_ALT = ['genel', 'santraller', 'harita', 'analiz', 'canli', 'ariza'];
 
@@ -389,6 +389,7 @@
     if (ad === 'iso' && window.Iso) Iso.ac();
     if (ad === 'harita' && window.Harita) Harita.ac();
     if (ad === 'karbon' && window.Karbon) Karbon.ac();
+    if (ad === 'sunum' && window.Sunum) Sunum.ac();
     if (ad === 'analiz' && window.Analiz) Analiz.ac();
     if (ad === 'veri' && window.Veri) Veri.ac();
     if (history.replaceState) history.replaceState(null, '', '#' + ad);
