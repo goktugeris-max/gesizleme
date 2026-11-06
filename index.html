@@ -118,6 +118,7 @@
       <button id="nav-kaynak" onclick="Dash.sekme('kaynak')"><i data-lucide="droplets" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Su &amp; Akaryakıt</button>
       <button id="nav-iso" onclick="Dash.sekme('iso')"><i data-lucide="award" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>ISO 50001</button>
       <button id="nav-karbon" onclick="Dash.sekme('karbon')"><i data-lucide="leaf" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Karbon &amp; İklim</button>
+      <button id="nav-sunum" onclick="Dash.sekme('sunum')"><i data-lucide="presentation" class="w-3.5 h-3.5 inline -mt-0.5 mr-1"></i>Ekran</button>
     </nav>
     <nav id="subNav" class="hidden border-t border-slate-800/60 bg-slate-900/40">
       <div id="altNav" class="max-w-[1760px] mx-auto px-4 sm:px-6 lg:px-10 py-2.5 flex flex-wrap items-stretch gap-2">
@@ -195,6 +196,9 @@
 
     <!-- SEKME: KARBON & İKLİM -->
     <div id="tab-karbon" data-tab class="hidden"><div id="karbonIcerik"></div></div>
+
+    <!-- SEKME: EKRAN DÖNGÜSÜ (yönetici girişi gerekir) -->
+    <div id="tab-sunum" data-tab class="hidden"><div id="sunumIcerik"></div></div>
 
     <!-- SEKME: HARİTA (CBS) -->
     <div id="tab-harita" data-tab class="hidden space-y-3"><div id="haritaPano" class="space-y-3"></div></div>
@@ -875,6 +879,7 @@
   <script src="dashboard.js"></script>
   <script src="elektrik.js"></script>
   <script src="istirak.js"></script>
+  <script src="sunum.js"></script>
   <script src="topharita.js"></script>
   <script src="dogalgaz.js"></script>
   <script src="kaynak.js"></script>
