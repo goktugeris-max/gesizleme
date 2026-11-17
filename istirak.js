@@ -48,6 +48,43 @@
     return { t22: t('2022'), t23, t24, izsuPay: izsu ? oe(izsu, '2024') / t24 : null, dig24: topla(dig.map((s) => oe(s, '2024'))), dig23: topla(dig.map((s) => oe(s, '2023'))), tep: t24 * tp, co2: t24 * ef / 1000, tp, ef };
   }
 
+
+  // ---------- yıllık rapor (2023 ve 2024 ayrı) ----------
+  function raporSatirlar() {
+    const S = D.sirketler;
+    const say = (s, y) => (s.aylik[y] ? s.aylik[y].filter((v) => v != null).length : 0);
+    const top = (s, y) => (s.aylik[y] && say(s, y) ? topla(s.aylik[y]) : null);
+    const satir = S.map((s) => ({ ad: s.ad, k23: top(s, '2023'), n23: say(s, '2023'), k24: top(s, '2024'), n24: say(s, '2024'), e23: oe(s, '2023'), e24: oe(s, '2024') }));
+    const t = (f) => topla(satir.map((r) => r[f]));
+    return { satir, toplam: { k23: t('k23'), k24: t('k24'), e23: t('e23'), e24: t('e24') } };
+  }
+  function raporHtml() {
+    const R = raporSatirlar();
+    const ay = (n) => (n < 12 ? `<span class="text-amber-300" title="${n} aylık veri"> (${n} ay)</span>` : '');
+    const sat = R.satir.map((r) => `<tr class="border-t border-slate-800/70"><td class="px-3 py-2 text-slate-100 font-medium">${esc(r.ad)}</td><td class="px-3 py-2 text-right">${gwh(r.k23, 2)}${ay(r.n23)}</td><td class="px-3 py-2 text-right font-semibold">${gwh(r.k24, 2)}${ay(r.n24)}</td><td class="px-3 py-2 text-right">${gwh(r.e23, 2)}</td><td class="px-3 py-2 text-right">${gwh(r.e24, 2)}</td><td class="px-3 py-2 text-right ${renk(degisim(r.e24, r.e23))}">${yuzde(degisim(r.e24, r.e23))}</td></tr>`).join('');
+    const T = R.toplam;
+    return `<div class="glass-card overflow-hidden" id="istRapor"><div class="px-4 py-3 border-b border-slate-800 flex flex-wrap items-baseline justify-between gap-2"><div><h3 class="text-sm font-bold text-white">Yıllık rapor: şirket toplamları, 2023 ve 2024 ayrı</h3><p class="text-[11px] text-slate-500">GWh. İlk iki sütun verisi olan tüm aylar toplamıdır (2024 çoğu şirkette Eylül'e kadar, yıl sonu değildir; kısa olan şirketin yanında ay sayısı yazar). Son üç sütun aynı dönemi (Oca–Eyl) karşılaştırır.</p></div><div class="flex gap-3"><button onclick="Istirak.raporCsv()" class="text-[11px] font-semibold text-amber-300 hover:underline">CSV indir</button><button onclick="Istirak.raporYazdir()" class="text-[11px] font-semibold text-amber-300 hover:underline">Yazdır</button></div></div>
+      <div class="overflow-x-auto"><table class="w-full text-xs" style="min-width:520px"><thead class="text-slate-400"><tr><th class="px-3 py-2 text-left font-medium">Şirket</th><th class="px-3 text-right font-medium">2023 toplam</th><th class="px-3 text-right font-medium">2024 toplam</th><th class="px-3 text-right font-medium">Oca–Eyl 2023</th><th class="px-3 text-right font-medium">Oca–Eyl 2024</th><th class="px-3 text-right font-medium">Değişim</th></tr></thead><tbody>${sat}<tr class="border-t-2 border-slate-700 font-bold text-white"><td class="px-3 py-2">Toplam</td><td class="px-3 py-2 text-right">${gwh(T.k23, 2)}</td><td class="px-3 py-2 text-right">${gwh(T.k24, 2)}</td><td class="px-3 py-2 text-right">${gwh(T.e23, 2)}</td><td class="px-3 py-2 text-right">${gwh(T.e24, 2)}</td><td class="px-3 py-2 text-right ${renk(degisim(T.e24, T.e23))}">${yuzde(degisim(T.e24, T.e23))}</td></tr></tbody></table></div></div>`;
+  }
+  function indir(ad, metin, tip) {
+    const u = URL.createObjectURL(new Blob([metin], { type: tip })), l = document.createElement('a');
+    l.href = u; l.download = ad; l.click(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+  }
+  function raporCsv() {
+    if (!D) return;
+    const R = raporSatirlar(), k = (v) => (v == null ? '' : Math.round(v));
+    const satir = ['Şirket;2023 toplam (kWh);2023 ay sayısı;2024 toplam (kWh);2024 ay sayısı;Oca–Eyl 2023 (kWh);Oca–Eyl 2024 (kWh)'];
+    R.satir.forEach((r) => satir.push([r.ad, k(r.k23), r.n23, k(r.k24), r.n24, k(r.e23), k(r.e24)].join(';')));
+    satir.push(['Toplam', k(R.toplam.k23), '', k(R.toplam.k24), '', k(R.toplam.e23), k(R.toplam.e24)].join(';'));
+    indir('istirak-yillik-rapor.csv', '﻿' + satir.join('\n'), 'text/csv;charset=utf-8');
+  }
+  function raporYazdir() {
+    const e = document.getElementById('istRapor'); if (!e) return;
+    const w = window.open('', '_blank'); if (!w) return;
+    w.document.write('<!doctype html><meta charset="utf-8"><title>İştirak elektrik tüketimi, 2023 ve 2024</title><style>body{font:13px IBM Plex Sans,Arial,sans-serif;margin:24px;color:#111}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ccc;padding:6px 8px;text-align:right}td:first-child,th:first-child{text-align:left}button{display:none}h3{font-size:16px}p{color:#555}.hidden{display:table-cell}span{color:#a60}</style><h3>İştirak elektrik tüketimi: 2023 ve 2024 (GWh)</h3>' + e.innerHTML.replace(/<h3[^>]*>.*?<\/h3>/, ''));
+    w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
+  }
+
   // ---------- görünüm ----------
   const kart = (b, d, alt, r) => `<div class="p-4"><div class="text-xs text-slate-400">${b}</div><div class="text-2xl font-bold mt-1 ${r || 'text-white'}">${d}</div><div class="text-[11px] text-slate-500 mt-1">${alt}</div></div>`;
   const chip = (act, onclick, txt) => `<button onclick="${onclick}" class="px-2.5 py-1 rounded-md text-[11px] font-semibold ${act ? 'bg-amber-500/20 text-amber-300' : 'bg-slate-800 text-slate-300 hover:text-white'}">${txt}</button>`;
@@ -90,6 +127,7 @@
         ${kart('İZSU payı', `%${tr(o.izsuPay * 100, 0)}`, 'Detayı verilen 193 abone, İZSU toplamının yaklaşık dörtte beşi')}
         ${kart('Enerji karşılığı', `${tr(o.tep, 0)} <span class="text-sm text-slate-400">TEP</span>`, `Elektrik kWh × ${tr(o.tp * 1e6, 0)} TEP/GWh`)}
         ${kart('Emisyon', `${tr(o.co2, 0)} <span class="text-sm text-slate-400">tCO₂e</span>`, `Şebeke faktörü ${tr(o.ef * 1000, 0)} g/kWh`)}</section>
+      ${raporHtml()}
       <div class="glass-card overflow-hidden"><div class="px-4 py-3 border-b border-slate-800"><h3 class="text-sm font-bold text-white">Şirketler</h3><p class="text-[11px] text-slate-500">GWh. Yıllık sütunlar yılın 12 ayı da varsa gösterilir. Yıldızlı şirketin 2024 verisi dokuz aydan kısa. Satıra tıklayınca aşağıdaki grafik ve abone listesi o şirkete geçer.</p></div>
         <div class="overflow-x-auto"><table class="w-full text-xs" style="min-width:420px"><thead class="text-slate-400"><tr><th class="px-3 py-2 text-left font-medium">Şirket</th><th class="px-3 text-left font-medium hidden md:table-cell">Tür</th><th class="px-3 text-right font-medium hidden sm:table-cell">2022</th><th class="px-3 text-right font-medium hidden sm:table-cell">2023</th><th class="px-3 text-right font-medium">Oca–Eyl 2024</th><th class="px-3 text-right font-medium">2023'e göre</th><th class="px-3 text-right font-medium">Pay (%)</th><th class="px-3 text-right font-medium hidden md:table-cell">Abone</th><th class="px-3 text-left font-medium hidden lg:table-cell">Kapsam ve veri notu</th></tr></thead><tbody>${sirketSatir}</tbody></table></div></div>
       <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -125,5 +163,5 @@
     const u = URL.createObjectURL(new Blob(['﻿' + satir.join('\n')], { type: 'text/csv;charset=utf-8' })), l = document.createElement('a');
     l.href = u; l.download = 'istirak-aboneler.csv'; l.click(); setTimeout(() => URL.revokeObjectURL(u), 2000);
   }
-  window.Istirak = { ac, csv, sec(s) { secili = s; tumAbone = false; if (kap) ciz(kap); }, tum() { tumAbone = !tumAbone; if (kap) ciz(kap); } };
+  window.Istirak = { ac, csv, raporCsv, raporYazdir, sec(s) { secili = s; tumAbone = false; if (kap) ciz(kap); }, tum() { tumAbone = !tumAbone; if (kap) ciz(kap); } };
 })();
