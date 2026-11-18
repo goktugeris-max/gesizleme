@@ -1,5 +1,5 @@
 {
-  "guncelleme": "2026-11-18T11:29:40+00:00",
+  "guncelleme": "2026-11-18T20:24:02+00:00",
   "kaynaklar": {
     "GoodWe": {
       "ok": false,
@@ -8,7 +8,7 @@
     },
     "SMA": {
       "ok": true,
-      "zaman": "2026-11-18T11:29:40+00:00",
+      "zaman": "2026-11-18T20:24:02+00:00",
       "adet": 2
     }
   },
@@ -225,10 +225,10 @@
       "ad": "ibbseyrekges",
       "kapasite_kwp": 401.76,
       "durum": "Kontrol Edilmedi",
-      "anlik_kw": 11.05,
-      "bugun_kwh": 401.77,
+      "anlik_kw": 0.0,
+      "bugun_kwh": 440.12,
       "invertorler": [],
-      "zaman": "2026-11-18T11:29:40+00:00"
+      "zaman": "2026-11-18T20:24:02+00:00"
     },
     {
       "kaynak": "SMA",
@@ -237,9 +237,9 @@
       "kapasite_kwp": 77.25,
       "durum": "Çalışıyor",
       "anlik_kw": 0.0,
-      "bugun_kwh": 66.05,
+      "bugun_kwh": 70.87,
       "invertorler": [],
-      "zaman": "2026-11-18T11:29:40+00:00"
+      "zaman": "2026-11-18T20:24:02+00:00"
     }
   ]
 }
