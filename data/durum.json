@@ -1,5 +1,5 @@
 {
-  "guncelleme": "2026-11-19T20:27:18+00:00",
+  "guncelleme": "2026-11-20T11:22:58+00:00",
   "kaynaklar": {
     "GoodWe": {
       "ok": false,
@@ -8,7 +8,7 @@
     },
     "SMA": {
       "ok": true,
-      "zaman": "2026-11-19T20:27:18+00:00",
+      "zaman": "2026-11-20T11:22:58+00:00",
       "adet": 2
     }
   },
@@ -225,21 +225,21 @@
       "ad": "ibbseyrekges",
       "kapasite_kwp": 401.76,
       "durum": "Kontrol Edilmedi",
-      "anlik_kw": 0.0,
-      "bugun_kwh": 641.19,
+      "anlik_kw": 47.47,
+      "bugun_kwh": 327.01,
       "invertorler": [],
-      "zaman": "2026-11-19T20:27:18+00:00"
+      "zaman": "2026-11-20T11:22:58+00:00"
     },
     {
       "kaynak": "SMA",
       "kaynakId": "12593168",
       "ad": "yesilyurt kultur merkezi",
       "kapasite_kwp": 77.25,
-      "durum": "Arızalı",
-      "anlik_kw": 0.0,
-      "bugun_kwh": 210.88,
+      "durum": "Çalışıyor",
+      "anlik_kw": 7.8,
+      "bugun_kwh": 102.43,
       "invertorler": [],
-      "zaman": "2026-11-19T20:27:18+00:00"
+      "zaman": "2026-11-20T11:22:58+00:00"
     }
   ]
 }
