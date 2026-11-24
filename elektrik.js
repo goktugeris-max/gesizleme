@@ -143,6 +143,58 @@
         <td class="px-3 py-2 text-right font-mono text-slate-400">${tr0(r.fazla)}</td><td class="px-3 py-2 text-right font-mono text-emerald-400">${yuzde(r.pay, 1)}</td></tr>`).join('')}</tbody>`;
   }
 
+
+  // ---------- daire başkanlığı: tam yıl karşılaştırması ----------
+  function dbYilKars() {
+    const el = document.getElementById('elDbYil'); if (!el) return;
+    const { yil, ay } = E.son_donem, Y = ay === 12 ? yil : yil - 1, P = Y - 1;
+    const satir = Object.entries(E.db).map(([ad, y]) => { const a = topla(y[String(P)]), b = topla(y[String(Y)]); return { ad, a, b, f: b - a }; }).filter((r) => r.a > 0 || r.b > 0);
+    if (!satir.length || !(E.aylik[String(P)] && E.aylik[String(Y)])) { el.innerHTML = ''; return; }
+    satir.sort((x, y) => x.f - y.f);
+    const ta = satir.reduce((t, r) => t + r.a, 0), tb = satir.reduce((t, r) => t + r.b, 0);
+    const art = satir.filter((r) => r.f > 0).length, azal = satir.filter((r) => r.f < 0).length;
+    const enArt = satir.slice(-1)[0], enAzal = satir[0];
+    const tasinma = (r) => Math.abs(r.f) >= 100000 && (r.a < 1000 || Math.abs(r.b / r.a - 1) > 0.5);
+    el.innerHTML = `<section class="glass-card rounded-xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800"><h2 class="text-sm font-semibold text-white">Tam yıl karşılaştırması: ${P} ve ${Y}</h2>
+        <p class="text-[11px] text-slate-500 mt-1">Daire başkanlığı toplamları, genel aydınlatma hariç faturalı tüketim (kWh). ${P}: ${gwh(ta)} GWh, ${Y}: ${gwh(tb)} GWh, değişim ${fark(ta ? tb / ta - 1 : null)}. ${azal} daire başkanlığında azalma, ${art} daire başkanlığında artış var. En büyük azalma ${esc(enAzal.ad)} (${tr0(enAzal.f)} kWh), en büyük artış ${esc(enArt.ad)} (${tr0(enArt.f)} kWh). Sıralama kWh farkına göredir. Ham veride aboneler yıllar içinde daire başkanlıkları arasında yeniden atandığı için çok büyük sıçramalar gerçek tüketim değişimi olmayabilir; bunlar "taşınma olabilir" diye işaretlenir. Ekibin Analiz Dosyası'ndaki 16 gruplu toplamlar tutarlı gruplamayla hazırlandığından kesin kıyas için onunla birlikte okuyun.</p></div>
+      <div class="overflow-x-auto"><table class="w-full text-xs">
+        <thead class="bg-slate-900/80 text-slate-400 text-[11px]"><tr><th class="text-left px-3 py-3">Daire başkanlığı</th><th class="px-3 text-right">${P} (kWh)</th><th class="px-3 text-right">${Y} (kWh)</th><th class="px-3 text-right">Fark (kWh)</th><th class="px-3 text-right">Değişim</th></tr></thead>
+        <tbody class="divide-y divide-slate-800/70">${satir.map((r) => { const d = r.a > 1000 ? r.b / r.a - 1 : null; return `<tr><td class="px-3 py-2 text-slate-100">${esc(r.ad)}${tasinma(r) ? ' <span class="text-[11px] text-amber-300" title="Büyük sıçrama; aboneler daire başkanlıkları arasında taşınmış olabilir">taşınma olabilir</span>' : ''}</td><td class="px-3 py-2 text-right font-mono text-slate-400">${tr0(r.a)}</td><td class="px-3 py-2 text-right font-mono">${tr0(r.b)}</td>
+          <td class="px-3 py-2 text-right font-mono ${r.f > 0 ? 'text-red-400' : 'text-emerald-400'}">${(r.f > 0 ? '+' : '') + tr0(r.f)}</td><td class="px-3 py-2 text-right font-mono ${d != null && d > 0.1 ? 'text-red-400' : d != null && d < -0.1 ? 'text-emerald-400' : 'text-slate-300'}">${fark(d)}</td></tr>`; }).join('')}
+          <tr class="border-t-2 border-slate-700 font-semibold text-white"><td class="px-3 py-2">Toplam</td><td class="px-3 py-2 text-right font-mono">${tr0(ta)}</td><td class="px-3 py-2 text-right font-mono">${tr0(tb)}</td><td class="px-3 py-2 text-right font-mono">${(tb - ta > 0 ? '+' : '') + tr0(tb - ta)}</td><td class="px-3 py-2 text-right font-mono">${fark(ta ? tb / ta - 1 : null)}</td></tr></tbody></table></div></section>`;
+  }
+
+  // ---------- genel aydınlatma yönetmeliği senaryosu ----------
+  // Genel aydınlatma bedelinin kuruma yazılan payı şimdi %20 (Excel'deki "Genel aydınlatmadan gelen tüketim (%20)"); yönetmelik değişikliği dosyasında %60 senaryosu var.
+  // Genel aydınlatma toplamı = mevcut pay ÷ 0,20; senaryoda gerçek tüketim = gerçek tüketim − mevcut pay + toplam × yeni pay. TL tutarı veride yoktur, burada yalnız kWh.
+  let gaPay = 60;
+  function gaDeger(y, n, p) {
+    const A = E.aylik[String(y)]; if (!A) return null;
+    const pay = topla(A.aydinlatma_pay, n), ger = topla(A.gercek, n), ga = pay / 0.2, yeni = ga * p / 100;
+    return { n, pay, ga, yeni, ger, ger2: ger - pay + yeni };
+  }
+  function gaSenaryo() {
+    const el = document.getElementById('elGaSenaryo'); if (!el) return;
+    const { yil, ay } = E.son_donem, p = gaPay;
+    const satir = yilSayi().map((y) => ({ y, ...(gaDeger(y, y === yil ? ay : 12, p) || {}) })).filter((r) => r.ger > 0);
+    if (!satir.length) { el.innerHTML = ''; return; }
+    const onceki = (r) => gaDeger(r.y - 1, r.n, p);
+    const son = satir[satir.length - 1], tam = [...satir].reverse().find((r) => r.n === 12) || son;
+    const ek = tam.yeni - tam.pay;
+    el.innerHTML = `<section class="glass-card rounded-xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex flex-wrap items-end justify-between gap-3"><div class="max-w-3xl"><h2 class="text-sm font-semibold text-white">Genel aydınlatma yönetmeliği senaryosu</h2>
+        <p class="text-[11px] text-slate-500 mt-1">Genel aydınlatma bedelinin kuruma yazılan payı şimdi %20. Yönetmelik değişikliği dosyasında %${p} senaryosu hesaplanmıştır. Aynı genel aydınlatma tüketimi daha büyük pay olarak kurumun gerçek tüketimine yazılır, gerçek bir tüketim artışı olmaz. ${tam.y} için senaryoda kuruma yazılan ek tüketim ${gwh(ek)} GWh, gerçek tüketimin ${yuzde(tam.ger ? ek / tam.ger : null, 1)} kadarıdır. Yürürlük tarihi bilinmediği için bu bir senaryodur; TL tutarı bu tabloda yoktur.</p></div>
+        <label class="text-[11px] text-slate-400">Kuruma yazılan pay (%)<br><input type="number" min="20" max="100" step="5" value="${p}" onchange="Elek.gaPay(this.value)" class="mt-1 w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-100"></label></div>
+      <div class="overflow-x-auto"><table class="w-full text-xs" style="min-width:760px">
+        <thead class="bg-slate-900/80 text-slate-400 text-[11px]"><tr><th class="text-left px-3 py-3">Yıl</th><th class="px-3 text-right">Genel aydınlatma (kWh)</th><th class="px-3 text-right">Kuruma yazılan, şimdi %20</th><th class="px-3 text-right">Kuruma yazılan, %${p}</th><th class="px-3 text-right">Ek tüketim (kWh)</th><th class="px-3 text-right">Gerçek tüketim, şimdi</th><th class="px-3 text-right">Gerçek tüketim, %${p}</th><th class="px-3 text-right">Önceki yıla göre, şimdi</th><th class="px-3 text-right">Önceki yıla göre, %${p}</th></tr></thead>
+        <tbody class="divide-y divide-slate-800/70">${satir.map((r) => { const o = onceki(r); return `<tr><td class="px-3 py-2 font-medium text-slate-100">${r.y}${r.n < 12 ? ` <span class="text-[11px] text-slate-500">(Oca–${AY[r.n - 1]})</span>` : ''}</td>
+          <td class="px-3 py-2 text-right font-mono text-slate-400">${tr0(r.ga)}</td><td class="px-3 py-2 text-right font-mono">${tr0(r.pay)}</td><td class="px-3 py-2 text-right font-mono text-amber-300">${tr0(r.yeni)}</td><td class="px-3 py-2 text-right font-mono text-red-400">+${tr0(r.yeni - r.pay)}</td>
+          <td class="px-3 py-2 text-right font-mono">${tr0(r.ger)}</td><td class="px-3 py-2 text-right font-mono text-amber-300">${tr0(r.ger2)}</td>
+          <td class="px-3 py-2 text-right font-mono">${o ? fark(o.ger ? r.ger / o.ger - 1 : null) : '—'}</td><td class="px-3 py-2 text-right font-mono">${o ? fark(o.ger2 ? r.ger2 / o.ger2 - 1 : null) : '—'}</td></tr>`; }).join('')}</tbody></table></div>
+      <p class="px-4 py-3 text-[11px] text-slate-500 border-t border-slate-800">Yıllar arası kıyas, iki yılı da aynı kuralla hesapladığı için yönetmelik değişse bile karşılaştırılabilir kalır. Kural değiştikten sonraki ilk yılı değişmemiş yılla doğrudan kıyaslamak, %20 ile %${p} arasındaki farkı gerçek artış gibi gösterir; kıyas için sağdaki iki sütunu kullanın.</p></section>`;
+  }
+
   function notlar() {
     const n = E.veri_notlari || [];
     document.getElementById('elNotlar').innerHTML = n.length ? `
@@ -231,7 +283,7 @@
     kartlar(); aylikGrafik(); gesGrafik(); dbTablosu();
     dagilim('chElTarife', E.tarife);
     dagilim('chElTedarikci', E.tedarikci);
-    yillikTablo(); notlar();
+    yillikTablo(); gaSenaryo(); dbYilKars(); notlar();
     raporKur(); raporCiz();
     const { yil, ay } = E.son_donem;
     document.getElementById('elKaynak').textContent = `Veri: ${AY_UZUN[ay - 1]} ${yil} sonuna kadar (Excel, abone bazında toplanmış). Abone numarası, adres ve fatura tutarı yayınlanmaz.`;
@@ -359,6 +411,7 @@
     },
     alt(k) { if (!ALT.some((x) => x[0] === k)) return; altSekme = k; altGoster(); },
     csv: csvIndir,
+    gaPay(v) { const n = Math.min(100, Math.max(20, parseFloat(v) || 60)); gaPay = n; if (yuklendi) setTimeout(gaSenaryo, 0); },
     sec(k) { secim = k; if (yuklendi) aylikGrafik(); },
   };
   // Sayfa doğrudan #elektrik ile açıldıysa (dashboard.js bu dosyadan önce çalışır) kendini başlat;
