@@ -157,12 +157,33 @@
     const tasinma = (r) => Math.abs(r.f) >= 100000 && (r.a < 1000 || Math.abs(r.b / r.a - 1) > 0.5);
     el.innerHTML = `<section class="glass-card rounded-xl overflow-hidden">
       <div class="p-4 border-b border-slate-800"><h2 class="text-sm font-semibold text-white">Tam yıl karşılaştırması: ${P} ve ${Y}</h2>
-        <p class="text-[11px] text-slate-500 mt-1">Daire başkanlığı toplamları, genel aydınlatma hariç faturalı tüketim (kWh). ${P}: ${gwh(ta)} GWh, ${Y}: ${gwh(tb)} GWh, değişim ${fark(ta ? tb / ta - 1 : null)}. ${azal} daire başkanlığında azalma, ${art} daire başkanlığında artış var. En büyük azalma ${esc(enAzal.ad)} (${tr0(enAzal.f)} kWh), en büyük artış ${esc(enArt.ad)} (${tr0(enArt.f)} kWh). Sıralama kWh farkına göredir. Ham veride aboneler yıllar içinde daire başkanlıkları arasında yeniden atandığı için çok büyük sıçramalar gerçek tüketim değişimi olmayabilir; bunlar "taşınma olabilir" diye işaretlenir. Ekibin Analiz Dosyası'ndaki 16 gruplu toplamlar tutarlı gruplamayla hazırlandığından kesin kıyas için onunla birlikte okuyun.</p></div>
+        <p class="text-[11px] text-slate-500 mt-1">Daire başkanlığı toplamları, genel aydınlatma hariç faturalı tüketim (kWh). ${P}: ${gwh(ta)} GWh, ${Y}: ${gwh(tb)} GWh, değişim ${fark(ta ? tb / ta - 1 : null)}. ${azal} daire başkanlığında azalma, ${art} daire başkanlığında artış var. En büyük azalma ${esc(enAzal.ad)} (${tr0(enAzal.f)} kWh), en büyük artış ${esc(enArt.ad)} (${tr0(enArt.f)} kWh). Sıralama kWh farkına göredir. Ham veride aboneler yıllar içinde daire başkanlıkları arasında yeniden atandığı için çok büyük sıçramalar gerçek tüketim değişimi olmayabilir; bunlar "taşınma olabilir" diye işaretlenir. ${E.analiz16 ? 'Kesin yıllar arası kıyas için aşağıdaki ekip analizi tablosunu (16 grup, tutarlı gruplama) kullanın.' : "Ekibin Analiz Dosyası'ndaki 16 gruplu toplamlar tutarlı gruplamayla hazırlandığından kesin kıyas için onunla birlikte okuyun (araclar/elektrik-yukle.html ile panele eklenebilir)."}</p></div>
       <div class="overflow-x-auto"><table class="w-full text-xs">
         <thead class="bg-slate-900/80 text-slate-400 text-[11px]"><tr><th class="text-left px-3 py-3">Daire başkanlığı</th><th class="px-3 text-right">${P} (kWh)</th><th class="px-3 text-right">${Y} (kWh)</th><th class="px-3 text-right">Fark (kWh)</th><th class="px-3 text-right">Değişim</th></tr></thead>
         <tbody class="divide-y divide-slate-800/70">${satir.map((r) => { const d = r.a > 1000 ? r.b / r.a - 1 : null; return `<tr><td class="px-3 py-2 text-slate-100">${esc(r.ad)}${tasinma(r) ? ' <span class="text-[11px] text-amber-300" title="Büyük sıçrama; aboneler daire başkanlıkları arasında taşınmış olabilir">taşınma olabilir</span>' : ''}</td><td class="px-3 py-2 text-right font-mono text-slate-400">${tr0(r.a)}</td><td class="px-3 py-2 text-right font-mono">${tr0(r.b)}</td>
           <td class="px-3 py-2 text-right font-mono ${r.f > 0 ? 'text-red-400' : 'text-emerald-400'}">${(r.f > 0 ? '+' : '') + tr0(r.f)}</td><td class="px-3 py-2 text-right font-mono ${d != null && d > 0.1 ? 'text-red-400' : d != null && d < -0.1 ? 'text-emerald-400' : 'text-slate-300'}">${fark(d)}</td></tr>`; }).join('')}
           <tr class="border-t-2 border-slate-700 font-semibold text-white"><td class="px-3 py-2">Toplam</td><td class="px-3 py-2 text-right font-mono">${tr0(ta)}</td><td class="px-3 py-2 text-right font-mono">${tr0(tb)}</td><td class="px-3 py-2 text-right font-mono">${(tb - ta > 0 ? '+' : '') + tr0(tb - ta)}</td><td class="px-3 py-2 text-right font-mono">${fark(ta ? tb / ta - 1 : null)}</td></tr></tbody></table></div></section>`;
+  }
+
+
+  // ---------- ekip analizi: 16 gruplu tutarlı karşılaştırma (data/elektrik.enc.json → analiz16; araclar/elektrik-yukle.html üretir) ----------
+  function analiz16Kars() {
+    const el = document.getElementById('elAnaliz16'); if (!el) return;
+    const A = E.analiz16;
+    if (!A || !A.gruplar) { el.innerHTML = ''; return; }
+    const ys = Object.keys(A.gruplar).sort(); if (ys.length < 2) { el.innerHTML = ''; return; }
+    const P = ys[ys.length - 2], Y = ys[ys.length - 1], gp = A.gruplar[P], gy = A.gruplar[Y];
+    const satir = Object.keys(gy).map((ad) => { const a = gp[ad] ? gp[ad].toplam : 0, b = gy[ad].toplam; return { ad, ab: gy[ad].abone, abp: gp[ad] ? gp[ad].abone : null, a, b, f: b - a }; }).sort((x, y) => x.f - y.f);
+    const ta = satir.reduce((t, r) => t + r.a, 0), tb = satir.reduce((t, r) => t + r.b, 0);
+    const yl = A.yillik ? Object.keys(A.yillik).sort().map((y) => [y, topla(A.yillik[y].gercek)]) : [];
+    el.innerHTML = `<section class="glass-card rounded-xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800"><h2 class="text-sm font-semibold text-white">Ekip analizi: 16 grupta tutarlı karşılaştırma, ${P} ve ${Y}</h2>
+        <p class="text-[11px] text-slate-500 mt-1">Ekibin Analiz Dosyası'ndaki gruplamayla (genel aydınlatma hariç faturalı tüketim, kWh). Abonelerin daire başkanlıkları arasında taşınması bu gruplamada yapılmadığı için yıllar arası kıyas için bunu kullanın. ${P}: ${gwh(ta)} GWh, ${Y}: ${gwh(tb)} GWh, değişim ${fark(ta ? tb / ta - 1 : null)}.${yl.length ? ` Gerçek tüketim (ekip analizi): ${yl.map(([y, v]) => y + ': ' + gwh(v) + ' GWh').join(', ')}.` : ''}</p></div>
+      <div class="overflow-x-auto"><table class="w-full text-xs">
+        <thead class="bg-slate-900/80 text-slate-400 text-[11px]"><tr><th class="text-left px-3 py-3">Grup</th><th class="px-3 text-right">Abone ${Y}</th><th class="px-3 text-right">${P} (kWh)</th><th class="px-3 text-right">${Y} (kWh)</th><th class="px-3 text-right">Fark (kWh)</th><th class="px-3 text-right">Değişim</th></tr></thead>
+        <tbody class="divide-y divide-slate-800/70">${satir.map((r) => { const d = r.a > 1000 ? r.b / r.a - 1 : null; return `<tr><td class="px-3 py-2 text-slate-100">${esc(r.ad)}</td><td class="px-3 py-2 text-right font-mono text-slate-400">${tr0(r.ab)}${r.abp != null && r.abp !== r.ab ? ` <span class="text-[11px] text-slate-500">(${tr0(r.abp)})</span>` : ''}</td><td class="px-3 py-2 text-right font-mono text-slate-400">${tr0(r.a)}</td><td class="px-3 py-2 text-right font-mono">${tr0(r.b)}</td>
+          <td class="px-3 py-2 text-right font-mono ${r.f > 0 ? 'text-red-400' : 'text-emerald-400'}">${(r.f > 0 ? '+' : '') + tr0(r.f)}</td><td class="px-3 py-2 text-right font-mono ${d != null && d > 0.1 ? 'text-red-400' : d != null && d < -0.1 ? 'text-emerald-400' : 'text-slate-300'}">${fark(d)}</td></tr>`; }).join('')}
+          <tr class="border-t-2 border-slate-700 font-semibold text-white"><td class="px-3 py-2">Toplam</td><td></td><td class="px-3 py-2 text-right font-mono">${tr0(ta)}</td><td class="px-3 py-2 text-right font-mono">${tr0(tb)}</td><td class="px-3 py-2 text-right font-mono">${(tb - ta > 0 ? '+' : '') + tr0(tb - ta)}</td><td class="px-3 py-2 text-right font-mono">${fark(ta ? tb / ta - 1 : null)}</td></tr></tbody></table></div></section>`;
   }
 
   // ---------- genel aydınlatma yönetmeliği senaryosu ----------
@@ -283,7 +304,7 @@
     kartlar(); aylikGrafik(); gesGrafik(); dbTablosu();
     dagilim('chElTarife', E.tarife);
     dagilim('chElTedarikci', E.tedarikci);
-    yillikTablo(); gaSenaryo(); dbYilKars(); notlar();
+    yillikTablo(); gaSenaryo(); dbYilKars(); analiz16Kars(); notlar();
     raporKur(); raporCiz();
     const { yil, ay } = E.son_donem;
     document.getElementById('elKaynak').textContent = `Veri: ${AY_UZUN[ay - 1]} ${yil} sonuna kadar (Excel, abone bazında toplanmış). Abone numarası, adres ve fatura tutarı yayınlanmaz.`;
