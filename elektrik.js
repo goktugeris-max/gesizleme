@@ -411,6 +411,59 @@
     }
   }
 
+
+  // ---------- Excel'den geçici analiz (GitHub'a yüklemeden) ----------
+  // Elektrik.xlsx (+ isteğe bağlı Analiz Dosyası) tarayıcıda okunur, panel o veriyle çizilir. Hiçbir yere yazılmaz/gönderilmez;
+  // sayfa yenilenince kaybolur. Kalıcı yayın için araclar/elektrik-yukle.html ile şifreli dosya üretilip GitHub'a yüklenir.
+  let yayindaki = null, geciciAd = null;
+  function betikYukle(src, hazir) {
+    if (hazir()) return Promise.resolve();
+    return new Promise((ok, hata) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => hata(new Error('Okuyucu yüklenemedi (internet bağlantısı?)')); document.head.appendChild(s); });
+  }
+  function geciciBanner() {
+    const kap = document.getElementById('elGecici'); if (!kap) return;
+    let b = document.getElementById('elGeciciBanner');
+    if (!geciciAd) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('div'); b.id = 'elGeciciBanner'; b.className = 'mb-3 border border-amber-500/40 bg-amber-500/10 rounded-lg px-4 py-2 text-xs text-amber-200 flex flex-wrap items-center gap-2'; const ic = document.getElementById('elIcerik'); ic.insertBefore(b, ic.firstChild); }
+    b.innerHTML = `<span class="font-semibold">Geçici analiz:</span> <span>${esc(geciciAd)} gösteriliyor. Yayına alınmadı, yalnız bu tarayıcıda; sayfa yenilenince yayındaki veriye dönülür.</span><button type="button" onclick="Elek.geciciKaldir()" class="ml-auto px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-100">Yayındaki veriye dön</button>`;
+  }
+  function yenidenCiz() {
+    Object.values(grafik).forEach((g) => g && g.destroy()); Object.keys(grafik).forEach((k) => delete grafik[k]);
+    const rs = document.getElementById('elRaporSec'); if (rs) rs.innerHTML = '';
+    cizildi = false; ciz();
+    try { ozetSerit(); ozetKayit(); } catch (e) { console.error('Elektrik özeti çizilemedi:', e); }
+    geciciBanner(); altGoster();
+  }
+  async function geciciUygula(f1, f2) {
+    const ms = document.getElementById('elGeciciMesaj'); const mesaj = (t, h) => { if (ms) { ms.textContent = t; ms.className = h ? 'text-rose-400' : 'text-slate-400'; } };
+    try {
+      mesaj('Excel okunuyor… (birkaç saniye sürebilir)');
+      await betikYukle('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', () => window.XLSX);
+      await betikYukle('elektrik-oku.js', () => window.ElkOku);
+      const v = ElkOku.elektrikOku(XLSX.read(await f1.arrayBuffer(), { type: 'array', sheets: ['Veri', 'Yıllık Durum', 'Genel Aydınlatma', 'Sonuç'] }));
+      if (f2) v.analiz16 = ElkOku.analizOku(XLSX.read(await f2.arrayBuffer(), { type: 'array' }));
+      delete v._satir;
+      if (!yayindaki) yayindaki = E;
+      E = v; geciciAd = f1.name + (f2 ? ' + ' + f2.name : '');
+      yenidenCiz(); mesaj('');
+    } catch (e) { mesaj('Hata: ' + e.message, true); }
+  }
+  function geciciKur() {
+    const kap = document.getElementById('elGecici'); if (!kap || kap.dataset.hazir) return; kap.dataset.hazir = '1';
+    kap.innerHTML = `<details class="inline-block text-left"><summary class="cursor-pointer text-center underline">Excel'den geçici analiz (GitHub'a yüklemeden)</summary>
+      <div class="mt-2 border border-slate-700 rounded-lg p-3 space-y-2 bg-slate-800/40 max-w-md">
+        <p>Dosya yalnız bu tarayıcıda okunur, hiçbir yere gönderilmez ya da kaydedilmez.</p>
+        <label class="block">Elektrik.xlsx<br><input id="elGecElk" type="file" accept=".xlsx" class="text-[11px]"></label>
+        <label class="block">Analiz Dosyası.xlsx (isteğe bağlı, 16 gruplu tablo için)<br><input id="elGecAnaliz" type="file" accept=".xlsx" class="text-[11px]"></label>
+        <button id="elGecBtn" type="button" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-100">Analiz et</button>
+        <p id="elGeciciMesaj" class="text-slate-400"></p></div></details>`;
+    document.getElementById('elGecBtn').onclick = () => {
+      const f1 = document.getElementById('elGecElk').files[0], f2 = document.getElementById('elGecAnaliz').files[0];
+      if (!f1) { const m = document.getElementById('elGeciciMesaj'); m.textContent = 'Önce Elektrik.xlsx dosyasını seçin.'; m.className = 'text-rose-400'; return; }
+      geciciUygula(f1, f2);
+    };
+  }
+
   // Alt sekmeler (ISO sekmesindeki gibi): tek seferde bir bölüm görünür
   const ALT = [['ozet', 'Özet'], ['db', 'Daire başkanlıkları'], ['tarife', 'Tarife ve tedarikçi'], ['rapor', 'Raporlar'], ['istirak', 'İştirakler']];
   let altSekme = 'ozet';
@@ -428,10 +481,11 @@
       document.getElementById('elGirisKap').innerHTML = '';
       document.getElementById('elIcerik').classList.remove('hidden');
       if (!cizildi) ciz();
-      altGoster();
+      geciciKur(); altGoster();
     },
     alt(k) { if (!ALT.some((x) => x[0] === k)) return; altSekme = k; altGoster(); },
     csv: csvIndir,
+    geciciKaldir() { if (!yayindaki) return; E = yayindaki; yayindaki = null; geciciAd = null; yenidenCiz(); },
     gaPay(v) { const n = Math.min(100, Math.max(20, parseFloat(v) || 60)); gaPay = n; if (yuklendi) setTimeout(gaSenaryo, 0); },
     sec(k) { secim = k; if (yuklendi) aylikGrafik(); },
   };
