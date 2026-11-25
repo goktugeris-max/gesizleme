@@ -1,5 +1,5 @@
 {
- "guncelleme": "2026-11-24T13:32:50+00:00",
+ "guncelleme": "2026-11-25T12:39:35+00:00",
  "sorunlar": {
   "inv:GoodWe:b331296d-e14e-47c5-a0ca-a86f0ed3eb31:9020KDTU192R0002": {
    "ilk": "2026-11-03T10:43:55+00:00",
@@ -129,12 +129,21 @@
   },
   "portal:GoodWe": {
    "ilk": "2026-11-16T11:00:24+00:00",
-   "ardisik": 9,
+   "ardisik": 10,
    "bildirildi": false,
    "ad": "GoodWe portalı",
    "sorun": "Veri alınamıyor (portal erişim hatası)",
    "kaynak": "GoodWe",
    "ayrinti": ""
+  },
+  "santral:SMA:12593168": {
+   "ilk": "2026-11-25T12:39:35+00:00",
+   "ardisik": 1,
+   "bildirildi": false,
+   "ad": "yesilyurt kultur merkezi",
+   "sorun": "Arızalı",
+   "kaynak": "SMA",
+   "ayrinti": "Santral anlık 0,0 kW, bugün 54,7 kWh"
   }
  }
 }
