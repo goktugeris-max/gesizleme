@@ -8,3 +8,6 @@ data/elektrik.json
 collector/olcum/noktalar.yerel.json
 masaustu/node_modules/
 masaustu/dist/
+
+# graphify çıktıları (yerel, üretilmiş)
+graphify-out/
